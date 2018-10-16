@@ -199,6 +199,10 @@ def main():
     a = arg_parse()
     make_bio_sample(a.data, a.frames)
     file = open('Specific_Dep.voc', 'w')
+    file.write('<pad>')
+    file.write('\n')
+    file.write('No_Link')
+    file.write('\n')
     for label in Predicate_labels_set:
         file.write(label)
         file.write('\n')
