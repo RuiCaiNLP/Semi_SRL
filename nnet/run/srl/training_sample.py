@@ -119,14 +119,12 @@ def make_bio_sample(data, frames):
 
         predicate = target + 1
         # record with dep_parse modifier->head , dep_dict head->modifier
-        Predicate_specific_Labels = []
-        Predicate_specific_Relation = []
+        Predicate_Labels = ['No_Link' for _ in labels]
+        Predicate_Labels_nd = ['No_Link' for _ in labels]
         Predicate_link = ['3' for _ in labels]
         Pair_label_table = [['0' for _ in labels] for _ in labels]
         for item in data[doc_id][sent_id]['d_parsing']:
             label, tail, head = item
-            Predicate_specific_Labels.append('NULL')
-            Predicate_specific_Relation.append('0')
 
             tail, head = tail[0], head[0]
             dep_parse.append("%s|%s|%s" % (label, head, tail))
@@ -135,13 +133,18 @@ def make_bio_sample(data, frames):
             if head == predicate:
                 if tail != 0:
                     Predicate_link[tail-1] = '2'
+                    Predicate_Labels[tail-1] = label + '_rev'
+                    Predicate_Labels_nd[tail - 1] = label
+                    if label + '_rev' not in Predicate_labels_set:
+                        Predicate_labels_set.append(label + '_rev')
             elif tail == predicate:
                 Predicate_link[head-1] ='1'
+                Predicate_Labels[head-1] = label
+                Predicate_Labels_nd[head - 1] = label
+                if label not in Predicate_labels_set:
+                    Predicate_labels_set.append(label)
             # label, child, parent
             child2parent_pairs.append([label, int(head), int(tail)])
-            if int(head)>0 and int(tail)>0:
-                Pair_label_table[int(head)-1][int(tail)-1] = label
-                Pair_label_table[int(tail)-1][int(head)-1] = label
 
         sent = ' '.join([normalize(w) for w in sent])
         labels = ' '.join(labels)
@@ -150,6 +153,8 @@ def make_bio_sample(data, frames):
         dep_parse = ' '.join(dep_parse)
         root_dep_parse = ' '.join(root_dep_parse)
         Predicate_link_str = ' '.join(Predicate_link)
+        Predicate_Labels_str = ' '.join(Predicate_Labels)
+        Predicate_Labels_nd_str = ' '.join(Predicate_Labels_nd)
 
 
 
@@ -166,9 +171,9 @@ def make_bio_sample(data, frames):
         all_l = ' '.join(all_lemmas)
         all_t = ' '.join(all_targets)
         all_l_ids = ' '.join(all_lemma_ids)
-        print("#%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
+        print("#%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
             dbg_header, sent, pos_tags, dep_parse, root_dep_parse, frame_name, target, all_l, all_t, roles_voc, labels,
-            all_l_ids, Predicate_link_str))
+            all_l_ids, Predicate_link_str, Predicate_Labels_nd_str, Predicate_Labels_str,))
 
 
 
@@ -193,7 +198,7 @@ def arg_parse():
 def main():
     a = arg_parse()
     make_bio_sample(a.data, a.frames)
-    file = open('Specific_Dep_2.voc', 'w')
+    file = open('Specific_Dep.voc', 'w')
     for label in Predicate_labels_set:
         file.write(label)
         file.write('\n')
