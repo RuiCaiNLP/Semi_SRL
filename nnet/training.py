@@ -26,19 +26,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
     #log(optimizer.param_groups[0]['lr'])
     #optimizer.param_groups[0]['lr'] = 0.001
 
-    """
-    Best_BiLSTM_0_data = []
-    for weight in model.BiLSTM_0.parameters():
-        Best_BiLSTM_0_data.append(weight.data.clone())
-    Best_BiLSTM_1_data = []
-    for weight in model.BiLSTM_1.parameters():
-        Best_BiLSTM_1_data.append(weight.data.clone())
-    best_word_embeddings_DEP = model.word_embeddings_DEP.weight.data.clone()
-    best_pos_embeddings_DEP = model.pos_embeddings_DEP.weight.data.clone()
-    best_word_fixed_embeddings_DEP = model.word_fixed_embeddings_DEP.weight.data.clone()
-    best_hidden2tag = model.hidden2tag.weight.data.clone()
-    best_MLP = model.MLP.weight.data.clone()
-    """
+
     Best_DEP_score = -0.1
 
     random.seed(1234)
@@ -70,10 +58,6 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             sentence_in = torch.from_numpy(sentence).to(device)
             p_sentence_in = torch.from_numpy(p_sentence).to(device)
-            #log(sentence_in)
-            #log(p_sentence_in)
-            #sentence_in.requires_grad_(False)
-            #p_sentence_in.requires_grad_(False)
 
             pos_tags = model_input[2]
             pos_tags_in = torch.from_numpy(pos_tags).to(device)
@@ -85,7 +69,6 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             frames = model_input[5]
             frames_in = torch.from_numpy(frames).to(device)
-            #frames_in.requires_grad_(False)
 
             local_roles_voc = model_input[6]
             local_roles_voc_in = torch.from_numpy(local_roles_voc).to(device)
@@ -111,18 +94,20 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             dep_heads = model_input[12]
 
-            #root_dep_tags = model_input[12]
-            #root_dep_tags_in = Variable(torch.from_numpy(root_dep_tags), requires_grad=False)
-
             tags = model_input[13]
             targets = torch.tensor(tags).to(device)
 
-            specific_dep_tags = model_input[14]
-            specific_dep_tags_in = torch.from_numpy(specific_dep_tags).to(device)
+            all_l_ids = model_input[14]
+            all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
 
-            specific_dep_relations = model_input[15]
-            specific_dep_relations_in = torch.from_numpy(specific_dep_relations).to(device)
+            Predicate_link = model_input[15]
+            Predicate_link_in = torch.from_numpy(Predicate_link).to(device)
 
+            Predicate_Labels_nd = model_input[16]
+            Predicate_Labels_nd = torch.from_numpy(Predicate_Labels_nd).to(device)
+
+            Predicate_Labels = model_input[17]
+            Predicate_Labels = torch.from_numpy(Predicate_Labels).to(device)
 
             #log(dep_tags_in)
             #log(specific_dep_relations)
@@ -132,7 +117,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                        targets, specific_dep_tags_in, specific_dep_relations_in)
+                        targets, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd, Predicate_Labels)
 
 
 
@@ -151,10 +136,6 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             #clip_grad_value_(parameters=model.parameters(), clip_value=3)
             #DEPloss.backward()
             optimizer.step()
-
-
-            #if idx % 10000 == 0:
-            #    optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.75
 
             if idx % 100 ==0:
                 log(idx)
@@ -377,40 +358,6 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 R = right_noNull_predict_spe / (noNUll_truth_spe + 0.0001)
                 F_link = 2 * P * R / (P + R + 0.0001)
                 log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_link))
-                if F_label> Best_DEP_score and e < 20 and False:
-                    Best_DEP_score = F_label
-                    log('New Dep best:' + str(Best_DEP_score))
-                    for best_weight_i, weight_i in zip(Best_BiLSTM_0_data, model.BiLSTM_0.parameters()):
-                        best_weight_i.copy_(weight_i.data)
-                    for best_weight_i, weight_i in zip(Best_BiLSTM_1_data, model.BiLSTM_1.parameters()):
-                        best_weight_i.copy_(weight_i.data)
-                    best_word_embeddings_DEP = model.word_embeddings_DEP.weight.data.clone()
-                    best_pos_embeddings_DEP = model.pos_embeddings_DEP.weight.data.clone()
-                    best_word_fixed_embeddings_DEP = model.word_fixed_embeddings_DEP.weight.data.clone()
-                    best_hidden2tag = model.hidden2tag.weight.data.clone()
-                    best_MLP = model.MLP.weight.data.clone()
-                    log("best dep params preserved")
-
-
-
-                """
-                if F1 < Last_SRL_score and F_label+F_link < Last_DEP_score:
-                    for weight_i, last_weight_i in zip(model.BiLSTM_0.parameters(), Best_BiLSTM_0_data):
-                        weight_i.data.copy_(last_weight_i)
-                    for weight_i, last_weight_i in zip(model.BiLSTM_1.parameters(), Last_BiLSTM_1_data):
-                        weight_i.data.copy_(last_weight_i)
-                    for weight_i, last_weight_i in zip(model.BiLSTM_2.parameters(), Last_BiLSTM_2_data):
-                        weight_i.data.copy_(last_weight_i)
-                    log('backward!')
-                """
-
-
-
-                Last_SRL_score = F1
-                Last_DEP_score = F_label + F_link
-
-
-
 
 
        ##########################################################################################
