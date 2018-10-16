@@ -9,7 +9,7 @@ def make_local_voc(labels):
 
 def bio_reader(record):
     dbg_header, sent,  pos_tags, dep_parsing, root_dep_parsing, frame, target, f_lemmas, f_targets, labels_voc, \
-    labels, specific_dep_labels, specific_dep_relations = record.split('\t')
+    labels, all_l_ids, Predicate_link, Predicate_Labels_nd, Predicate_Labels = record.split('\t')
     labels_voc = labels_voc.split(' ')
 
     labels_voc.insert(0, '<pad>')
@@ -20,10 +20,10 @@ def bio_reader(record):
 
     pos_tags = pos_tags.split(' ')
     labels = labels.split(' ')
-    specific_dep_labels = specific_dep_labels.split(' ')
-    specific_dep_relations = specific_dep_relations.split(' ')
-
-
+    all_l_ids = all_l_ids.split(' ')
+    Predicate_link = Predicate_link.split(' ')
+    Predicate_Labels_nd = Predicate_Labels_nd.split(' ')
+    Predicate_Labels = Predicate_Labels.split(' ')
 
     if pos_tags[int(target)].startswith("V"):
         dbg_header = 'V'
@@ -50,7 +50,8 @@ def bio_reader(record):
 
 
     return dbg_header, words, pos_tags, dep_parsing, root_dep_parsing, frame, \
-           np.int64(target), f_lemmas, np.int64(f_targets), labels_voc, labels, specific_dep_labels, specific_dep_relations
+           np.int64(target), f_lemmas, np.int64(f_targets), labels_voc, labels, \
+           all_l_ids, Predicate_link, Predicate_Labels_nd, Predicate_Labels
 
 
 
@@ -129,7 +130,8 @@ class SRLRunner(Runner):
     def get_converter(self):
         def bio_converter(batch):
             header, sent_, pos_tags, dep_parsing, root_dep_parsing, frames, \
-            targets, f_lemmas, f_targets, labels_voc, labels, specific_dep_labels, specific_dep_relations  = list(zip(*batch))
+            targets, f_lemmas, f_targets, labels_voc, labels, all_l_ids, \
+            Predicate_link, Predicate_Labels_nd, Predicate_Labels = list(zip(*batch))
 
             sent = [self.word_voc.vocalize(w) for w in sent_]
 
@@ -146,23 +148,21 @@ class SRLRunner(Runner):
             for w in dep_parsing:
                 dep_seq.append([p[0] for p in w])
             dep_tags = [self.dep_voc.vocalize(p) for p in dep_seq]
-            specific_dep_tags = [self.specific_dep_voc.vocalize(p) for p in specific_dep_labels]
 
-            specific_dep_relations = [[int(r) for r in s ]for s in specific_dep_relations]
+            all_l_ids = [[int(r) for r in s ]for s in all_l_ids]
+            Predicate_link = [[int(r) for r in s ]for s in Predicate_link]
+            Predicate_Labels_nd = [self.dep_voc.vocalize(p) for p in Predicate_Labels_nd]
+            Predicate_Labels = [self.specific_dep_voc.vocalize(p) for p in Predicate_Labels]
 
             dep_head = []
             for w in dep_parsing:
                 dep_head.append([int(p[2]) for p in w])
 
-
             frames = [self.frame_voc.vocalize(f) for f in frames]
             labels_voc = [self.role_voc.vocalize(r) for r in labels_voc]
-
-
             lemmas_idx = [self.frame_voc.vocalize(f) for f in f_lemmas]
 
             sent_batch, sent_mask = mask_batch(sent)
-
             p_sent_batch, _ = mask_batch(p_sent)
             freq_batch, _ = mask_batch(freq)
             freq_batch = freq_batch.astype(dtype='float32')
@@ -170,26 +170,15 @@ class SRLRunner(Runner):
             pos_batch, _ = mask_batch(pos_tags)
             dep_tag_batch, _ = mask_batch(dep_tags)
 
-            specific_dep_tag_batch, _ = mask_batch(specific_dep_tags)
-            specific_dep_relations_batch, _ = mask_batch(specific_dep_relations)
+
+            all_l_ids_batch, _ = mask_batch(all_l_ids)
+            Predicate_link_batch, _ = mask_batch(Predicate_link)
+            Predicate_Labels, _ = mask_batch(Predicate_Labels)
+            Predicate_Labels_nd, _ = mask_batch(Predicate_Labels_nd)
+
             dep_head_batch, _ = mask_batch(dep_head)
             labels_voc_batch, labels_voc_mask = mask_batch(labels_voc)
 
-
-
-            ##mask no predicate deptags"
-
-            for i in range(len(dep_tag_batch)):
-                for j in range(len(dep_tag_batch[0])):
-                    if specific_dep_relations_batch[i][j] == 2:
-                        dep_tag_batch[i][j] = dep_tag_batch[i][targets[i]]
-
-
-
-            for i in range(len(dep_tag_batch)):
-                for j in range(len(dep_tag_batch[0])):
-                    if specific_dep_relations_batch[i][j] == 3:
-                        dep_tag_batch[i][j] = 1
 
 
 
@@ -229,7 +218,9 @@ class SRLRunner(Runner):
                    labels_voc_mask, freq_batch, \
                    region_mark, \
                    sent_pred_lemmas_idx, \
-                   dep_tag_batch, dep_head_batch, labels_batch, specific_dep_tag_batch, specific_dep_relations_batch
+                   dep_tag_batch, dep_head_batch, labels_batch, all_l_ids_batch, Predicate_link_batch,\
+                   Predicate_Labels_nd,\
+                   Predicate_Labels
         return bio_converter
 
 
