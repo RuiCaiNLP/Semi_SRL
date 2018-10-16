@@ -51,6 +51,7 @@ dict_labels = dict()
 
 
 def from_2009(block, preserve_sense):
+    preserve_sense = True
     record = defaultdict(list)
     block_frames, block_arguments, block_targets = [], [], []
     for line in block:
