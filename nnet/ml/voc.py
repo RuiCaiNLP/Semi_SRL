@@ -58,7 +58,7 @@ class FileVoc(TwoWayVoc):
 
             # unk, eos, bos = 'UNK', '$', '^'
             # voc += [unk, bos, eos]
-            voc.append('_UNK')
+            #voc.append('_UNK')
             self.direct = [l.split('\t')[0] for l in voc]
             self.inverted = {id: token for token, id in enumerate(self.direct)}
             #print(self.inverted)
