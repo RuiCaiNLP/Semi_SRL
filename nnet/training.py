@@ -297,7 +297,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         noNUll_truth_spe += noNUll_truth_spe_b
 
                         for i, sent_labels in enumerate(labels):
-                            labels_voc = batch[i][-4]
+                            labels_voc = batch[i][-6]
                             local_voc = make_local_voc(labels_voc)
                             for j in range(len(labels[i])):
                                 best = local_voc[labels[i][j]]
