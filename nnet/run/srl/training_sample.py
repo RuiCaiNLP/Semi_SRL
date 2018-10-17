@@ -198,14 +198,6 @@ def arg_parse():
 def main():
     a = arg_parse()
     make_bio_sample(a.data, a.frames)
-    file = open('Specific_Dep.voc', 'w')
-    file.write('<pad>')
-    file.write('\n')
-    file.write('No_Link')
-    file.write('\n')
-    for label in Predicate_labels_set:
-        file.write(label)
-        file.write('\n')
     #data = 'CoNLL2009-ST-English-trial.txt.jason'
     #frames = "nombank_descriptions-1.0+prop3.1.json"
 
