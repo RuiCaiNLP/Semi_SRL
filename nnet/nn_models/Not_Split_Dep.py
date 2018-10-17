@@ -74,7 +74,7 @@ class BiLSTMTagger(nn.Module):
 
 
         self.hidden2tag = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
-        self.MLP = nn.Linear(2*lstm_hidden_dim, self.speciif_dep_size)
+        self.MLP = nn.Linear(2*lstm_hidden_dim, self.specific_dep_size)
         self.tag2hidden = nn.Linear(self.specific_dep_size, self.pos_size)
 
 
