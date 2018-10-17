@@ -232,8 +232,10 @@ class BiLSTMTagger(nn.Module):
         left_part = torch.mm(head_hidden.view(self.batch_size*len(sentence[0]), -1), self.W_R+self.W_share)
         left_part = left_part.view(self.batch_size*len(sentence[0]), self.dep_size, -1)
         dep_hidden = dep_hidden.view(self.batch_size*len(sentence[0]), -1, 1)
-        dep_tag_space = torch.bmm(left_part, dep_hidden)
-        dep_tag_space_use = dep_tag_space
+        dep_tag_space = torch.bmm(left_part, dep_hidden).view(
+            len(sentence[0]) * self.batch_size, -1)
+        dep_tag_space_use = dep_tag_space.view(
+            len(sentence[0]) * self.batch_size, -1)
 
 
         TagProbs_use = F.softmax(dep_tag_space_use, dim=1).view(self.batch_size, len(sentence[0]), -1)
