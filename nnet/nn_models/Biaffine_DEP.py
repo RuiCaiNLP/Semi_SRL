@@ -250,7 +250,7 @@ class BiLSTMTagger(nn.Module):
             len(sentence[0]) * self.batch_size, -1)
 
 
-        dep_tag_space = torch.cat((dep_tag_space, dep_tag_space_rev[: ,1:]), 1)
+        dep_tag_space = torch.cat((dep_tag_space, dep_tag_space_rev[:, 2:]), 1)
         dep_tag_space_use = dep_tag_space
 
 
