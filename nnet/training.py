@@ -104,10 +104,10 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             Predicate_link_in = torch.from_numpy(Predicate_link).to(device)
 
             Predicate_Labels_nd = model_input[16]
-            Predicate_Labels_nd = torch.from_numpy(Predicate_Labels_nd).to(device)
+            Predicate_Labels_nd_in = torch.from_numpy(Predicate_Labels_nd).to(device)
 
             Predicate_Labels = model_input[17]
-            Predicate_Labels = torch.from_numpy(Predicate_Labels).to(device)
+            Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
 
             #log(dep_tags_in)
             #log(specific_dep_relations)
@@ -117,7 +117,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                        targets, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd, Predicate_Labels)
+                        targets, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in)
 
 
 
@@ -262,11 +262,17 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         tags = model_input[13]
                         targets = torch.tensor(tags).to(device)
 
-                        specific_dep_tags = model_input[14]
-                        specific_dep_tags_in = torch.from_numpy(specific_dep_tags).to(device)
+                        all_l_ids = model_input[14]
+                        all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
 
-                        specific_dep_relations = model_input[15]
-                        specific_dep_relations_in = Variable(torch.from_numpy(specific_dep_relations)).to(device)
+                        Predicate_link = model_input[15]
+                        Predicate_link_in = torch.from_numpy(Predicate_link).to(device)
+
+                        Predicate_Labels_nd = model_input[16]
+                        Predicate_Labels_nd_in = torch.from_numpy(Predicate_Labels_nd).to(device)
+
+                        Predicate_Labels = model_input[17]
+                        Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
 
                         SRLloss, DEPloss, SPEDEPloss, loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
                         right_noNull_predict_b, noNull_predict_b, noNUll_truth_b, \
@@ -274,7 +280,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                             = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                                     local_roles_voc_in,
                                     frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                                    targets, specific_dep_tags_in, specific_dep_relations_in, True)
+                                    targets, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in, True)
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)
