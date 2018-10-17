@@ -1,5 +1,5 @@
-file = open('conll2009.train', 'r')
-file2 = open('conll2009_batch.train', 'w')
+file = open('conll2009.train.dep_l', 'r')
+file2 = open('conll2009_batch.train.dep_l', 'w')
 idx = 1
 
 for line in file.readlines():
@@ -12,8 +12,8 @@ file.close()
 file2.close()
 
 
-file = open('conll2009.dev', 'r')
-file2 = open('conll2009_batch.dev', 'w')
+file = open('conll2009.dev.dep_l', 'r')
+file2 = open('conll2009_batch.dev.dep_l', 'w')
 idx = 1
 
 for line in file.readlines():
