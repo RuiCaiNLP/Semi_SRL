@@ -75,7 +75,7 @@ class BiLSTMTagger(nn.Module):
 
         self.hidden2tag = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.MLP = nn.Linear(2*lstm_hidden_dim, self.specific_dep_size)
-        self.tag2hidden = nn.Linear(self.dep_size, self.pos_size)
+        self.tag2hidden = nn.Linear(self.specific_dep_size, self.pos_size)
 
         self.Head_Proj = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
         self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim, self.dep_size * lstm_hidden_dim))
@@ -224,6 +224,8 @@ class BiLSTMTagger(nn.Module):
             device)
         concat_embeds_1 = (added_embeds + predicate_embeds).transpose(0, 1)
 
+
+
         Word_hidden = torch.cat((hidden_states_0, hidden_states_1), 2)
         Predicate_hidden = torch.cat((concat_embeds_0, concat_embeds_1), 2)
 
@@ -234,8 +236,22 @@ class BiLSTMTagger(nn.Module):
         dep_hidden = dep_hidden.view(self.batch_size*len(sentence[0]), -1, 1)
         dep_tag_space = torch.bmm(left_part, dep_hidden).view(
             len(sentence[0]) * self.batch_size, -1)
-        dep_tag_space_use = dep_tag_space.view(
+
+
+        Word_hidden = torch.cat((hidden_states_0, hidden_states_1), 2)
+        Predicate_hidden = torch.cat((concat_embeds_0, concat_embeds_1), 2)
+
+        head_hidden = F.relu(self.Head_Proj(Word_hidden))
+        dep_hidden = F.relu(self.Dep_Proj(Predicate_hidden))
+        left_part = torch.mm(head_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
+        left_part = left_part.view(self.batch_size * len(sentence[0]), self.dep_size, -1)
+        dep_hidden = dep_hidden.view(self.batch_size * len(sentence[0]), -1, 1)
+        dep_tag_space_rev = torch.bmm(left_part, dep_hidden).view(
             len(sentence[0]) * self.batch_size, -1)
+
+
+        dep_tag_space = torch.cat((dep_tag_space, dep_tag_space_rev[: ,1:]), 1)
+        dep_tag_space_use = dep_tag_space
 
 
         TagProbs_use = F.softmax(dep_tag_space_use, dim=1).view(self.batch_size, len(sentence[0]), -1)
@@ -329,7 +345,7 @@ class BiLSTMTagger(nn.Module):
         noNull_predict = 0.0
         noNUll_truth = 0.0
         dep_labels = np.argmax(dep_tag_space.cpu().data.numpy(), axis=1)
-        for predict_l, gold_l in zip(dep_labels, Predicate_Labels_nd.cpu().view(-1).data.numpy()):
+        for predict_l, gold_l in zip(dep_labels, Predicate_Labels.cpu().view(-1).data.numpy()):
             if predict_l > 1:
                 noNull_predict += 1
             if gold_l != 0:
@@ -355,7 +371,7 @@ class BiLSTMTagger(nn.Module):
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
 
         SRLloss = loss_function(tag_space, targets)
-        DEPloss = loss_function(dep_tag_space, Predicate_Labels_nd.view(-1))
+        DEPloss = loss_function(dep_tag_space, Predicate_Labels.view(-1))
 
 
         loss = SRLloss + 0.5 *DEPloss
