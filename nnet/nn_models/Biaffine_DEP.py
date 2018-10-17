@@ -227,8 +227,8 @@ class BiLSTMTagger(nn.Module):
         Word_hidden = torch.cat((hidden_states_0, hidden_states_1), 2)
         Predicate_hidden = torch.cat((concat_embeds_0, concat_embeds_1), 2)
 
-        head_hidden = torch.nn.ReLU(self.Head_Proj(Predicate_hidden))
-        dep_hidden = torch.nn.ReLU(self.Dep_Proj(Word_hidden))
+        head_hidden = F.relu(self.Head_Proj(Predicate_hidden))
+        dep_hidden = F.relu(self.Dep_Proj(Word_hidden))
         left_part = torch.mm(head_hidden.view(self.batch_size*len(sentence[0]), -1), self.W_R+self.W_share)
         left_part = left_part.view(self.batch_size*len(sentence[0]), self.dep_size, -1)
         dep_hidden = dep_hidden.view(self.batch_size*len(sentence[0]), -1, 1)
