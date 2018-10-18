@@ -36,7 +36,7 @@ class BiLSTMTagger(nn.Module):
 
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
-        sent_embedding_dim_DEP = 2*hps['sent_edim'] + 1*hps['pos_edim']
+        sent_embedding_dim_DEP = 2*hps['sent_edim'] + 1*hps['pos_edim'] + 16
         sent_embedding_dim_SRL = 3 * hps['sent_edim'] + 1 * hps['pos_edim'] + 16
         ## for the region mark
         role_embedding_dim = hps['role_edim']
@@ -95,8 +95,8 @@ class BiLSTMTagger(nn.Module):
         self.SRL_input_dropout = nn.Dropout(p=0.3)
         self.DEP_input_dropout = nn.Dropout(p=0.3)
         self.hidden_state_dropout = nn.Dropout(p=0.3)
-        self.label_dropout = nn.Dropout(p=0.5)
-        self.link_dropout = nn.Dropout(p=0.5)
+        self.label_dropout = nn.Dropout(p=0.3)
+        self.link_dropout = nn.Dropout(p=0.3)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
@@ -183,7 +183,7 @@ class BiLSTMTagger(nn.Module):
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
 
-        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, pos_embeds), 2)
+        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, pos_embeds, region_marks), 2)
         embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
 
 
@@ -210,23 +210,24 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
 
         ###########################################
-        Label_composer = hidden_states_0
-        predicate_embeds = Label_composer[np.arange(0, Label_composer.size()[0]), target_idx_in]
+        Label_composer_0 = self.label_dropout(hidden_states_0)
+
+        predicate_embeds = Label_composer_0[np.arange(0, Label_composer_0.size()[0]), target_idx_in]
         # T * B * H
-        added_embeds = torch.zeros(Label_composer.size()[1], Label_composer.size()[0], Label_composer.size()[2]).to(
+        added_embeds = torch.zeros(Label_composer_0.size()[1], Label_composer_0.size()[0], Label_composer_0.size()[2]).to(
             device)
         concat_embeds_0 = (added_embeds + predicate_embeds).transpose(0, 1)
 
-        Label_composer = hidden_states_1
-        predicate_embeds = Label_composer[np.arange(0, Label_composer.size()[0]), target_idx_in]
+        Label_composer_1 = self.label_dropout(hidden_states_1)
+        predicate_embeds = Label_composer_1[np.arange(0, Label_composer_1.size()[0]), target_idx_in]
         # T * B * H
-        added_embeds = torch.zeros(Label_composer.size()[1], Label_composer.size()[0], Label_composer.size()[2]).to(
+        added_embeds = torch.zeros(Label_composer_1.size()[1], Label_composer_1.size()[0], Label_composer_1.size()[2]).to(
             device)
         concat_embeds_1 = (added_embeds + predicate_embeds).transpose(0, 1)
 
 
 
-        Word_hidden = torch.cat((hidden_states_0, hidden_states_1), 2)
+        Word_hidden = torch.cat((Label_composer_0, Label_composer_1), 2)
         Predicate_hidden = torch.cat((concat_embeds_0, concat_embeds_1), 2)
 
         head_hidden = F.relu(self.Head_Proj(Predicate_hidden))
