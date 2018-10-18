@@ -36,7 +36,7 @@ class BiLSTMTagger(nn.Module):
 
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
-        sent_embedding_dim_DEP = 2*hps['sent_edim'] + 1*hps['pos_edim'] + 16
+        sent_embedding_dim_DEP = 2*hps['sent_edim'] + 1*hps['pos_edim']
         sent_embedding_dim_SRL = 3 * hps['sent_edim'] + 1 * hps['pos_edim'] + 16
         ## for the region mark
         role_embedding_dim = hps['role_edim']
@@ -82,6 +82,8 @@ class BiLSTMTagger(nn.Module):
         self.W_share = nn.Parameter(torch.rand(lstm_hidden_dim, self.dep_size * lstm_hidden_dim))
         self.Dep_Proj = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
 
+        self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
         self.elmo_emb_size = 200
         self.elmo_mlp_word = nn.Sequential(nn.Linear(1024, self.elmo_emb_size), nn.ReLU())
@@ -164,7 +166,7 @@ class BiLSTMTagger(nn.Module):
 
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
-                sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, all_l_ids,
+                sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, predicate_identification, all_l_ids,
                 Predicate_link, Predicate_Labels_nd, Predicate_Labels, test=False):
 
         """
@@ -183,7 +185,7 @@ class BiLSTMTagger(nn.Module):
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
 
-        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, pos_embeds, region_marks), 2)
+        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, pos_embeds), 2)
         embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
 
 
@@ -250,17 +252,18 @@ class BiLSTMTagger(nn.Module):
         dep_tag_space_rev = torch.bmm(left_part, dep_hidden).view(
             len(sentence[0]) * self.batch_size, -1)
 
-
-
         dep_tag_space = torch.cat((dep_tag_space, dep_tag_space_rev[:, 2:]), 1)
         dep_tag_space_use = dep_tag_space
-
-
         TagProbs_use = F.softmax(dep_tag_space_use, dim=1).view(self.batch_size, len(sentence[0]), -1)
         # construct SRL input
         TagProbs_noGrad = TagProbs_use.detach()
         h1 = F.tanh(self.tag2hidden(TagProbs_noGrad))
 
+
+
+        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(torch.cat(Label_composer_0, Label_composer_1), 2)))
+        Predicate_identification_space = Predicate_identification.view(
+            len(sentence[0]) * self.batch_size, -1)
 
         h_layer_0 = hidden_states_0  # .detach()
         h_layer_1 = hidden_states_1  # .detach()
@@ -367,17 +370,28 @@ class BiLSTMTagger(nn.Module):
         noNull_predict_spe = 0.0
         noNUll_truth_spe = 0.0
 
+        dep_labels = np.argmax(Predicate_identification_space.cpu().data.numpy(), axis=1)
+        for predict_l, gold_l in zip(dep_labels,predicate_identification.cpu().view(-1).data.numpy()):
+            if predict_l > 1:
+                noNull_predict_spe += 1
+            if gold_l != 0:
+                all_l_nums_spe += 1
+                if gold_l != 1:
+                    noNUll_truth_spe += 1
+                    if gold_l == predict_l:
+                        right_noNull_predict_spe += 1
+            if predict_l != gold_l and gold_l != 0:
+                wrong_l_nums_spe += 1
 
-        targets = targets.view(-1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
 
-        SRLloss = loss_function(tag_space, targets)
+        SRLloss = loss_function(tag_space, targets.view(-1))
         DEPloss = loss_function(dep_tag_space, Predicate_Labels.view(-1))
+        IDloss = loss_function(Predicate_identification_space, predicate_identification.view(-1))
 
-
-        loss = SRLloss + 0.5 *DEPloss
-        return SRLloss, DEPloss, DEPloss, loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
+        loss = SRLloss + 0.5 *DEPloss + 0.5*IDloss
+        return SRLloss, DEPloss, IDloss, loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
                right_noNull_predict, noNull_predict, noNUll_truth,\
                right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe
 

@@ -160,13 +160,13 @@ def make_bio_sample(data, frames):
 
         all_targets = []
         all_lemmas = []
-        all_lemma_ids = ['0']*len(Predicate_link)
+        all_lemma_ids = ['1']*len(Predicate_link)
         for a in data[doc_id][str(doc_id)]:
             if a.startswith('f_'):
                 for fr in data[doc_id][str(doc_id)][a]:
                     lemma, frame_id = a[2:].split('.')
                     all_lemmas.append(lemma)
-                    all_lemma_ids[fr['target']['index'][0][0]] = frame_id[-1]
+                    all_lemma_ids[fr['target']['index'][0][0]] = str(int(frame_id[-1]) + 1)
                     all_targets.append(str(fr['target']['index'][0][0]))
         all_l = ' '.join(all_lemmas)
         all_t = ' '.join(all_targets)

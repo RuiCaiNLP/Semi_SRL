@@ -97,7 +97,19 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             tags = model_input[13]
             targets = torch.tensor(tags).to(device)
 
+
+
+
             all_l_ids = model_input[14]
+            predicate_idenfication = np.ones_like(all_l_ids)
+            for i in range(len(predicate_idenfication)):
+                for j in range(len(predicate_idenfication[0])):
+                    if all_l_ids[i][j] == 1:
+                        predicate_idenfication[i][j] = 1
+                    elif all_l_ids[i][j] > 1:
+                        predicate_idenfication[i][j] = 2
+            predicate_idenfication_in = torch.from_numpy(predicate_idenfication).to(device)
+
             all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
 
             Predicate_link = model_input[15]
@@ -117,7 +129,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                        targets, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in)
+                        targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in)
 
 
 
@@ -263,6 +275,14 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         targets = torch.tensor(tags).to(device)
 
                         all_l_ids = model_input[14]
+                        predicate_idenfication = np.zeros_like(all_l_ids)
+                        for i in range(len(predicate_idenfication)):
+                            for j in range(len(predicate_idenfication[0])):
+                                if all_l_ids[i][j] ==1:
+                                    predicate_idenfication[i][j] = 1
+                                elif all_l_ids[i][j] >1:
+                                    predicate_idenfication[i][j] = 2
+                        predicate_idenfication_in = torch.from_numpy(predicate_idenfication).to(device)
                         all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
 
                         Predicate_link = model_input[15]
@@ -280,7 +300,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                             = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                                     local_roles_voc_in,
                                     frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                                    targets, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in, True)
+                                    targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in, True)
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)
