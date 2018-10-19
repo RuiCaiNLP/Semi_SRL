@@ -85,8 +85,8 @@ class BiLSTMTagger(nn.Module):
         self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
-        self.Non_Predicate_Proj = nn.Linear(4 * lstm_hidden_dim, 4*lstm_hidden_dim)
-        self.Predicate_Proj = nn.Linear(4 * lstm_hidden_dim, 4 * lstm_hidden_dim)
+        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
+        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
 
         self.elmo_emb_size = 200
         self.elmo_mlp_word = nn.Sequential(nn.Linear(1024, self.elmo_emb_size), nn.ReLU())
@@ -310,8 +310,9 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = predicate_embeds.transpose(0, 1)
         predicate_embeds = F.relu(self.Non_Predicate_Proj(predicate_embeds))
 
+        hidden_states_3 = F.relu(self.Predicate_Proj(hidden_states_3))
         hidden_states = torch.cat((hidden_states_3, predicate_embeds), 2)
-        hidden_states = F.relu(self.Predicate_Proj(hidden_states))
+
         # print(hidden_states)
         # non-linear map and rectify the roles' embeddings
         # roles = Variable(torch.from_numpy(np.arange(0, self.tagset_size)))
