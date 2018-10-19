@@ -85,8 +85,8 @@ class BiLSTMTagger(nn.Module):
         self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
-        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2*lstm_hidden_dim)
-        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
+        self.Non_Predicate_Proj = nn.Linear(4 * lstm_hidden_dim, 4*lstm_hidden_dim)
+        self.Predicate_Proj = nn.Linear(4 * lstm_hidden_dim, 4 * lstm_hidden_dim)
 
         self.elmo_emb_size = 200
         self.elmo_mlp_word = nn.Sequential(nn.Linear(1024, self.elmo_emb_size), nn.ReLU())
