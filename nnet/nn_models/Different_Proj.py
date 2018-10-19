@@ -85,6 +85,9 @@ class BiLSTMTagger(nn.Module):
         self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
+        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
+
         self.elmo_emb_size = 200
         self.elmo_mlp_word = nn.Sequential(nn.Linear(1024, self.elmo_emb_size), nn.ReLU())
         self.elmo_word = nn.Parameter(torch.Tensor([0.5, 0.5]))
@@ -124,7 +127,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_1.all_weights[1][1])
 
 
-        self.num_layers = 4
+        self.num_layers = 3
         self.BiLSTM_SRL = nn.LSTM(input_size=sent_embedding_dim_SRL + self.elmo_emb_size * 1 + 1 * self.pos_size, hidden_size=lstm_hidden_dim, batch_first=True,
                                     bidirectional=True, num_layers=self.num_layers)
 
@@ -150,8 +153,8 @@ class BiLSTMTagger(nn.Module):
         # The axes semantics are (num_layers, minibatch_size, hidden_dim)
         #return (Variable(torch.zeros(1, self.batch_size, self.hidden_dim)),
         #        Variable(torch.zeros(1, self.batch_size, self.hidden_dim)))
-        return (torch.zeros(4 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
-                torch.zeros(4 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
+        return (torch.zeros(3 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
+                torch.zeros(3 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
     def init_hidden_spe(self):
         # Before we've done anything, we dont have any hidden state.
@@ -306,7 +309,10 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = added_embeds + predicate_embeds
         # B * T * H
         predicate_embeds = predicate_embeds.transpose(0, 1)
+        predicate_embeds = F.relu(self.Non_Predicate_Proj(predicate_embeds))
+
         hidden_states = torch.cat((hidden_states_3, predicate_embeds), 2)
+        hidden_states = F.relu(self.Predicate_Proj(hidden_states))
         # print(hidden_states)
         # non-linear map and rectify the roles' embeddings
         # roles = Variable(torch.from_numpy(np.arange(0, self.tagset_size)))
