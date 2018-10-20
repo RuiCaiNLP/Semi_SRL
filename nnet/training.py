@@ -111,6 +111,9 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             predicate_idenfication_in = torch.from_numpy(predicate_idenfication).to(device)
             all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
 
+            log(predicate_idenfication_in)
+            log(all_l_ids_in)
+
             Predicate_link = model_input[15]
             Predicate_link_in = torch.from_numpy(Predicate_link).to(device)
 
