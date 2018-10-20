@@ -264,7 +264,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(torch.cat((Label_composer_0, Label_composer_1), 2))))
+        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(Word_hidden)))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
