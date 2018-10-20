@@ -113,6 +113,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             log('++++++++++++++++++')
             log(all_l_ids)
             log(predicate_idenfication_in)
+            log('++++++++++++++++++')
 
             all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
 
