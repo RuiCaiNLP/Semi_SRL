@@ -101,7 +101,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
 
             all_l_ids = model_input[14]
-            predicate_idenfication = np.ones_like(all_l_ids)
+            predicate_idenfication = np.zeros_like(all_l_ids)
             for i in range(len(predicate_idenfication)):
                 for j in range(len(predicate_idenfication[0])):
                     if all_l_ids[i][j] == 1:
