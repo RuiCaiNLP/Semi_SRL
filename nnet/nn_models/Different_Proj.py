@@ -244,7 +244,7 @@ class BiLSTMTagger(nn.Module):
             len(sentence[0]) * self.batch_size, -1)
 
 
-        Word_hidden = torch.cat((hidden_states_0, hidden_states_1), 2)
+        Word_hidden = torch.cat((Label_composer_0, Label_composer_1), 2)
         Predicate_hidden = torch.cat((concat_embeds_0, concat_embeds_1), 2)
 
         head_hidden = F.relu(self.Head_Proj(Word_hidden))
