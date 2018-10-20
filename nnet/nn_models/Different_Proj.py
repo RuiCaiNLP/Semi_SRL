@@ -244,9 +244,6 @@ class BiLSTMTagger(nn.Module):
             len(sentence[0]) * self.batch_size, -1)
 
 
-        Word_hidden = torch.cat((Label_composer_0, Label_composer_1), 2)
-        Predicate_hidden = torch.cat((concat_embeds_0, concat_embeds_1), 2)
-
         head_hidden = F.relu(self.Head_Proj(Word_hidden))
         dep_hidden = F.relu(self.Dep_Proj(Predicate_hidden))
         left_part = torch.mm(head_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
@@ -264,7 +261,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(Word_hidden)))
+        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(torch.cat((hidden_states_0, hidden_states_1),2))))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
