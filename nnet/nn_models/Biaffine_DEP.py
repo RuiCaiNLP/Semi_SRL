@@ -278,7 +278,7 @@ class BiLSTMTagger(nn.Module):
         sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         embeds_SRL = self.word_embeddings_SRL(sentence)
         embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        region_marks = region_marks.view(self.batch_size, len(sentence[0]), 1)
+        #region_marks = region_marks.view(self.batch_size, len(sentence[0]), 1)
 
         SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds, sent_pred_lemmas_embeds, pos_embeds, region_marks,
                                        h1, SRL_composer), 2)
