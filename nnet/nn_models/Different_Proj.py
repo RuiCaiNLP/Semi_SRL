@@ -100,7 +100,10 @@ class BiLSTMTagger(nn.Module):
         self.SRL_input_dropout = nn.Dropout(p=0.3)
         self.DEP_input_dropout = nn.Dropout(p=0.3)
         self.hidden_state_dropout = nn.Dropout(p=0.3)
-        self.label_dropout = nn.Dropout(p=0.3)
+        self.label_dropout_1 = nn.Dropout(p=0.3)
+        self.label_dropout_2 = nn.Dropout(p=0.3)
+        self.label_dropout_3 = nn.Dropout(p=0.3)
+        self.label_dropout_4 = nn.Dropout(p=0.3)
         self.id_dropout = nn.Dropout(p=0.3)
         #self.use_dropout = nn.Dropout(p=0.2)
 
@@ -215,7 +218,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
 
         ###########################################
-        Label_composer_0 = self.label_dropout(hidden_states_0)
+        Label_composer_0 = hidden_states_0
 
         predicate_embeds = Label_composer_0[np.arange(0, Label_composer_0.size()[0]), target_idx_in]
         # T * B * H
@@ -223,7 +226,7 @@ class BiLSTMTagger(nn.Module):
             device)
         concat_embeds_0 = (added_embeds + predicate_embeds).transpose(0, 1)
 
-        Label_composer_1 = self.label_dropout(hidden_states_1)
+        Label_composer_1 = hidden_states_1
         predicate_embeds = Label_composer_1[np.arange(0, Label_composer_1.size()[0]), target_idx_in]
         # T * B * H
         added_embeds = torch.zeros(Label_composer_1.size()[1], Label_composer_1.size()[0], Label_composer_1.size()[2]).to(
@@ -235,8 +238,8 @@ class BiLSTMTagger(nn.Module):
         Word_hidden = torch.cat((Label_composer_0, Label_composer_1), 2)
         Predicate_hidden = torch.cat((concat_embeds_0, concat_embeds_1), 2)
 
-        head_hidden = F.relu(self.Head_Proj(Predicate_hidden))
-        dep_hidden = F.relu(self.Dep_Proj(Word_hidden))
+        head_hidden = self.label_dropout_1(F.relu(self.Head_Proj(Predicate_hidden)))
+        dep_hidden = self.label_dropout_2(F.relu(self.Dep_Proj(Word_hidden)))
         left_part = torch.mm(head_hidden.view(self.batch_size*len(sentence[0]), -1), self.W_R+self.W_share)
         left_part = left_part.view(self.batch_size*len(sentence[0]), self.dep_size, -1)
         dep_hidden = dep_hidden.view(self.batch_size*len(sentence[0]), -1, 1)
@@ -244,8 +247,8 @@ class BiLSTMTagger(nn.Module):
             len(sentence[0]) * self.batch_size, -1)
 
 
-        head_hidden = F.relu(self.Head_Proj(Word_hidden))
-        dep_hidden = F.relu(self.Dep_Proj(Predicate_hidden))
+        head_hidden = self.label_dropout_3(F.relu(self.Head_Proj(Word_hidden)))
+        dep_hidden = self.label_dropout_4(F.relu(self.Dep_Proj(Predicate_hidden)))
         left_part = torch.mm(head_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
         left_part = left_part.view(self.batch_size * len(sentence[0]), self.dep_size, -1)
         dep_hidden = dep_hidden.view(self.batch_size * len(sentence[0]), -1, 1)
@@ -260,8 +263,8 @@ class BiLSTMTagger(nn.Module):
         h1 = F.tanh(self.tag2hidden(TagProbs_noGrad))
 
 
-        h1_h2 = self.id_dropout(torch.cat((hidden_states_0, hidden_states_1), 2))
-        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(h1_h2)))
+        h1_h2 = torch.cat((hidden_states_0, hidden_states_1), 2)
+        Predicate_identification = self.Idenficiation(self.id_dropout(F.relu(self.MLP_identification(h1_h2))))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
