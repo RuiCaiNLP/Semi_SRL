@@ -52,7 +52,7 @@ class BiLSTMTagger(nn.Module):
         self.hidden_dim = lstm_hidden_dim
         self.word_emb_dim = hps['sent_edim']
         self.specific_dep_size = hps['svdep']
-
+        log(self.specific_dep_size)
         self.word_embeddings_SRL = nn.Embedding(vocab_size, hps['sent_edim'])
         self.word_embeddings_DEP = nn.Embedding(vocab_size, hps['sent_edim'])
         self.pos_embeddings = nn.Embedding(self.pos_size, hps['pos_edim'])
