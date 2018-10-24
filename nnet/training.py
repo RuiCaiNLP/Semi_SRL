@@ -278,9 +278,9 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         predicate_idenfication = np.zeros_like(all_l_ids)
                         for i in range(len(predicate_idenfication)):
                             for j in range(len(predicate_idenfication[0])):
-                                if all_l_ids[i][j] ==1:
+                                if all_l_ids[i][j] == 1:
                                     predicate_idenfication[i][j] = 1
-                                elif all_l_ids[i][j] >1:
+                                elif all_l_ids[i][j] > 1:
                                     predicate_idenfication[i][j] = 2
                         predicate_idenfication_in = torch.from_numpy(predicate_idenfication).to(device)
                         all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
@@ -380,6 +380,9 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 F_label = 2 * P * R / (P + R + 0.0001)
                 log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_label))
 
+                log(right_noNull_predict_spe)
+                log(noNull_predict_spe)
+                log(noNUll_truth_spe)
                 P = right_noNull_predict_spe / (noNull_predict_spe + 0.0001)
                 R = right_noNull_predict_spe / (noNUll_truth_spe + 0.0001)
                 F_link = 2 * P * R / (P + R + 0.0001)
