@@ -119,6 +119,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             Predicate_Labels = model_input[17]
             Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
+            log(Predicate_Labels_in)
 
             #log(dep_tags_in)
             #log(specific_dep_relations)
