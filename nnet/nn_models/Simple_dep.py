@@ -238,7 +238,7 @@ class BiLSTMTagger(nn.Module):
         Word_hidden = F.relu(self.hidden2tag_1(torch.cat((Label_composer_0, Label_composer_1), 2)))
         Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
         FFF = torch.cat((Word_hidden, Predicate_hidden), 2)
-        dep_tag_space = self.MLP_2(F.tanh(self.MLP_1(FFF))).view(
+        dep_tag_space = self.MLP_2(F.relu(self.MLP_1(FFF))).view(
             len(sentence[0]) * self.batch_size, -1)
         TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(sentence[0]), -1)
         # construct SRL input
