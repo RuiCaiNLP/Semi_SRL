@@ -10,7 +10,7 @@ for line in file.readlines():
         break
     idx += 1
 print(idx)
-#random.shuffle(train_lines)
+random.shuffle(train_lines)
 
 for line in train_lines:
     file2.write(line)
