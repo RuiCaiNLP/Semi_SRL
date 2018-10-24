@@ -34,7 +34,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
         tic = time.time()
         dataset = [batch for batch in train_set.batches()]
         init_dataset = [batch for batch in dataset]
-        #random.shuffle(dataset)
+        random.shuffle(dataset)
         dataset_len = len(dataset)
         for batch in dataset:
 
@@ -119,8 +119,6 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             Predicate_Labels = model_input[17]
             Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
-            log(Predicate_Labels_in)
-
             #log(dep_tags_in)
             #log(specific_dep_relations)
             SRLloss, DEPloss, SPEDEPloss, loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \

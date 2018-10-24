@@ -73,7 +73,8 @@ class BiLSTMTagger(nn.Module):
         self.frame_embeddings = nn.Embedding(self.frameset_size, frame_embedding_dim)
 
 
-        self.hidden2tag = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.hidden2tag_1 = nn.Linear(4 * lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.hidden2tag_2 = nn.Linear(4 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP = nn.Linear(4*lstm_hidden_dim, self.specific_dep_size)
         self.tag2hidden = nn.Linear(self.specific_dep_size, self.pos_size)
 
@@ -233,8 +234,8 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        Word_hidden = self.hidden2tag(torch.cat((Label_composer_0, Label_composer_1), 2))
-        Predicate_hidden = self.hidden2tag(torch.cat((concat_embeds_0, concat_embeds_1), 2))
+        Word_hidden = self.hidden2tag_1(torch.cat((Label_composer_0, Label_composer_1), 2))
+        Predicate_hidden = self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2))
 
         dep_tag_space = self.MLP(self.label_dropout_1(F.relu(torch.cat((Word_hidden, Predicate_hidden), 2)))).view(
             len(sentence[0]) * self.batch_size, -1)
