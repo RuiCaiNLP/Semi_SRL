@@ -218,6 +218,14 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
 
         ###########################################
+
+
+        h1_h2 = torch.cat((hidden_states_0, hidden_states_1), 2)
+        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(h1_h2)))
+        Predicate_identification_space = Predicate_identification.view(
+            len(sentence[0]) * self.batch_size, -1)
+
+
         Label_composer_0 = hidden_states_0
 
         predicate_embeds = Label_composer_0[np.arange(0, Label_composer_0.size()[0]), target_idx_in]
@@ -244,12 +252,6 @@ class BiLSTMTagger(nn.Module):
         # construct SRL input
         TagProbs_noGrad = TagProbs_use.detach()
         h1 = F.tanh(self.tag2hidden(TagProbs_noGrad))
-
-
-        h1_h2 = torch.cat((hidden_states_0, hidden_states_1), 2)
-        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(h1_h2)))
-        Predicate_identification_space = Predicate_identification.view(
-            len(sentence[0]) * self.batch_size, -1)
 
         h_layer_0 = hidden_states_0.detach()
         h_layer_1 = hidden_states_1.detach()
