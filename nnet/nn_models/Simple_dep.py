@@ -247,7 +247,7 @@ class BiLSTMTagger(nn.Module):
 
 
         h1_h2 = torch.cat((hidden_states_0, hidden_states_1), 2)
-        Predicate_identification = self.Idenficiation(self.id_dropout(F.relu(self.MLP_identification(h1_h2))))
+        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(h1_h2)))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
