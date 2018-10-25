@@ -104,7 +104,7 @@ class BiLSTMTagger(nn.Module):
         self.label_dropout_2 = nn.Dropout(p=0.3)
         self.label_dropout_3 = nn.Dropout(p=0.3)
         self.label_dropout_4 = nn.Dropout(p=0.3)
-        self.id_dropout = nn.Dropout(p=0.3)
+        self.id_dropout = nn.Dropout(p=0.5)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
