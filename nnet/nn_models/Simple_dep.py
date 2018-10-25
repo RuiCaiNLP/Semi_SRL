@@ -82,7 +82,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.MLP_identification = nn.Linear(2*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
