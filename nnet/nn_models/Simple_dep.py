@@ -82,7 +82,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.MLP_identification = nn.Linear(2*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
@@ -172,7 +172,7 @@ class BiLSTMTagger(nn.Module):
 
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
-                sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, predicate_identification, all_l_ids,
+                sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, P_identification, all_l_ids,
                 Predicate_link, Predicate_Labels_nd, Predicate_Labels, test=False):
 
         """
@@ -220,8 +220,8 @@ class BiLSTMTagger(nn.Module):
         ###########################################
 
 
-        h1_h2 = torch.cat((hidden_states_0, hidden_states_1), 2)
-        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(h1_h2)))
+
+        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(hidden_states_1)))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
@@ -362,7 +362,7 @@ class BiLSTMTagger(nn.Module):
         noNUll_truth_spe = 0.0
 
         dep_labels = np.argmax(Predicate_identification_space.cpu().data.numpy(), axis=1)
-        for predict_l, gold_l in zip(dep_labels,predicate_identification.cpu().view(-1).data.numpy()):
+        for predict_l, gold_l in zip(dep_labels,P_identification.cpu().view(-1).data.numpy()):
             if predict_l > 1:
                 noNull_predict_spe += 1
             if gold_l != 0:
@@ -379,7 +379,7 @@ class BiLSTMTagger(nn.Module):
 
         SRLloss = loss_function(tag_space, targets.view(-1))
         DEPloss = loss_function(dep_tag_space, Predicate_Labels.view(-1))
-        IDloss = loss_function(Predicate_identification_space, predicate_identification.view(-1))
+        IDloss = loss_function(Predicate_identification_space, P_identification.view(-1))
 
         loss = SRLloss + 0.5 *DEPloss + 0.5*IDloss
         return SRLloss, DEPloss, IDloss, loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
