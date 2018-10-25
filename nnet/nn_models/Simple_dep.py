@@ -104,7 +104,7 @@ class BiLSTMTagger(nn.Module):
         self.label_dropout_2 = nn.Dropout(p=0.3)
         self.label_dropout_3 = nn.Dropout(p=0.3)
         self.label_dropout_4 = nn.Dropout(p=0.3)
-        self.id_dropout = nn.Dropout(p=0.8)
+        self.id_dropout = nn.Dropout(p=0.5)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
@@ -220,9 +220,8 @@ class BiLSTMTagger(nn.Module):
         ###########################################
 
 
-        HHH = torch.cat((hidden_states_0, hidden_states_1) ,2)
 
-        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(HHH)))
+        Predicate_identification = self.Idenficiation(self.label_dropout_1(F.relu(self.MLP_identification(hidden_states_1))))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
