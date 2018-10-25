@@ -219,9 +219,7 @@ class BiLSTMTagger(nn.Module):
 
         ###########################################
 
-
-        HHH = torch.cat((hidden_states_0, hidden_states_1), 2)
-        Predicate_identification = self.Idenficiation(self.label_dropout_1(F.relu(self.MLP_identification(HHH))))
+        Predicate_identification = self.Idenficiation(self.label_dropout_1(F.relu(self.MLP_identification(hidden_states_1))))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
