@@ -36,6 +36,7 @@ def make_bio_sample(data, frames):
     frames = json.load(open(frames, 'r'))
     data = json.load(open(data, 'r'))
     data = {int(d): data[d] for d in data}
+    pre_sent_id = -1
     for doc_id, sent_id, frame_name, frame_instance in frame_data(data):
         dbg_header = '%s %s %s' % (doc_id, sent_id, frame_name)
         frame_name = frame_name.split('.')[0]
@@ -170,7 +171,12 @@ def make_bio_sample(data, frames):
                     all_targets.append(str(fr['target']['index'][0][0]))
         all_l = ' '.join(all_lemmas)
         all_t = ' '.join(all_targets)
-        all_l_ids = ' '.join(all_lemma_ids)
+        if sent_id != pre_sent_id:
+            all_l_ids = ' '.join(all_lemma_ids)
+            pre_sent_id = sent_id
+        else:
+            all_lemma_ids = ['0']*len(Predicate_link)
+            all_l_ids = ' '.join(all_lemma_ids)
         print("#%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
             dbg_header, sent, pos_tags, dep_parse, root_dep_parse, frame_name, target, all_l, all_t, roles_voc, labels,
             all_l_ids, Predicate_link_str, Predicate_Labels_nd_str, Predicate_Labels_str,))
