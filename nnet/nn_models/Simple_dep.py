@@ -361,7 +361,7 @@ class BiLSTMTagger(nn.Module):
 
         dep_labels = np.argmax(Predicate_identification_space.cpu().data.numpy(), axis=1)
         for predict_l, gold_l in zip(dep_labels,P_identification.cpu().view(-1).data.numpy()):
-            if predict_l > 1:
+            if predict_l > 1 and gold_l!=0:
                 noNull_predict_spe += 1
             if gold_l != 0:
                 all_l_nums_spe += 1
