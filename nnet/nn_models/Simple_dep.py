@@ -82,7 +82,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        self.MLP_identification = nn.Linear(2*lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
@@ -104,7 +104,7 @@ class BiLSTMTagger(nn.Module):
         self.label_dropout_2 = nn.Dropout(p=0.3)
         self.label_dropout_3 = nn.Dropout(p=0.3)
         self.label_dropout_4 = nn.Dropout(p=0.3)
-        self.id_dropout = nn.Dropout(p=0)
+        self.id_dropout = nn.Dropout(p=0.3)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
@@ -218,8 +218,8 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
 
         ###########################################
-
-        Predicate_identification = self.Idenficiation(self.label_dropout_1(F.relu(self.MLP_identification(hidden_states_1))))
+        Hidden_states_forID = torch.cat((hidden_states_0, hidden_states_1), 2)
+        Predicate_identification = self.Idenficiation(self.label_dropout_1(F.relu(self.MLP_identification(Hidden_states_forID))))
         Predicate_identification_space = Predicate_identification.view(
             len(sentence[0]) * self.batch_size, -1)
 
@@ -340,7 +340,7 @@ class BiLSTMTagger(nn.Module):
         noNUll_truth = 0.0
         dep_labels = np.argmax(dep_tag_space.cpu().data.numpy(), axis=1)
         for predict_l, gold_l in zip(dep_labels, Predicate_Labels.cpu().view(-1).data.numpy()):
-            if predict_l > 1:
+            if predict_l > 1 and gold_l>0:
                 noNull_predict += 1
             if gold_l != 0:
                 all_l_nums += 1
