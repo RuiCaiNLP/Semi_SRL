@@ -1,7 +1,7 @@
 from nnet.run.runner import *
 from nnet.ml.voc import *
 from functools import partial
-from nnet.nn_models.Simple_dep import BiLSTMTagger
+from nnet.nn_models.Semi_SRL import BiLSTMTagger
 
 
 def make_local_voc(labels):
@@ -35,7 +35,7 @@ def bio_reader(record):
 
     # convert labels into indexes in labels_voc
     local_voc = {v: k for k, v in make_local_voc(labels_voc).items()}
-    labels = [local_voc[label] for label in labels]
+    #labels = [local_voc[label] for label in labels]
 
     dep_parsing = dep_parsing.split()
     dep_parsing = [p.split('|') for p in dep_parsing]
@@ -139,6 +139,8 @@ class SRLRunner(Runner):
 
             pos_tags = [self.pos_voc.vocalize(w) for w in pos_tags]
 
+            labels = [self.role_voc.vocalize(w) for w in labels]
+
             freq = [[self.freq_voc[self.word_voc.direct[i]] if
                      self.word_voc.direct[i] != '_UNK' else 0 for i in w] for
                     w
@@ -178,10 +180,6 @@ class SRLRunner(Runner):
 
             dep_head_batch, _ = mask_batch(dep_head)
             labels_voc_batch, labels_voc_mask = mask_batch(labels_voc)
-
-
-
-
 
             for line in labels_voc_mask:
                 line[0] = 0
