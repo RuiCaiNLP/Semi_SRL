@@ -80,6 +80,8 @@ class Runner(object):
                 log('parameters loaded from ' + params_path)
 
         log('loading corpus from %s' % a.train)
+        log('loading corpus from %s' % a.test)
+        log('loading corpus from %s' % a.unlabeled)
 
         train_set = Corpus(
             parser=self.get_parser(),

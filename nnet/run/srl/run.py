@@ -56,8 +56,9 @@ def bio_reader(record):
 
 def unlabeled_reader(record):
     words = []
-    for word in record.split(' '):
+    for word in record.strip().split(' '):
         words.append(word)
+    log(words)
     return words
 
 
