@@ -254,8 +254,8 @@ class BiLSTMTagger(nn.Module):
 
 
         # dependency extractor
-        concat_embeds_0 = self.find_predicate_embeds(hidden_states_0)
-        concat_embeds_1 = self.find_predicate_embeds(hidden_states_1)
+        concat_embeds_0 = self.find_predicate_embeds(hidden_states_0, target_idx_in)
+        concat_embeds_1 = self.find_predicate_embeds(hidden_states_1, target_idx_in)
 
         Word_hidden = F.relu(self.hidden2tag_1(torch.cat((Label_composer_0, Label_composer_1), 2)))
         Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
@@ -304,7 +304,7 @@ class BiLSTMTagger(nn.Module):
         # B * H
         hidden_states_3 = hidden_states
         hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
-        predicate_embeds = self.find_predicate_embeds(hidden_states_3)
+        predicate_embeds = self.find_predicate_embeds(hidden_states_3, target_idx_in)
         hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
