@@ -383,8 +383,8 @@ class BiLSTMTagger(nn.Module):
         Predicate_identification = self.Idenficiation(
             self.label_dropout_1(F.relu(self.MLP_identification(Hidden_states_forID))))
         Predicate_identification_space = Predicate_identification.view(
-            len(sentence[0]) * self.batch_size, -1)
-        Predicate_probs = Predicate_identification_space[:, 2].view(self.batch_size, len(sentence[0]))
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        Predicate_probs = Predicate_identification_space[:, 2].view(self.batch_size, len(unlabeled_sentence[0]))
         Predicate_idx_batch = np.argmax(Predicate_probs.cpu().data.numpy(), axis=1)
         log(Predicate_idx_batch)
 
