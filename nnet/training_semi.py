@@ -308,7 +308,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                                     local_roles_voc_in,
                                     frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
                                     targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in,
-                                    Predicate_Labels_nd_in, Predicate_Labels_in, True)
+                                    Predicate_Labels_nd_in, Predicate_Labels_in, test=True)
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)

@@ -196,7 +196,7 @@ class BiLSTMTagger(nn.Module):
     def shared_BilSTMEncoder_foward(self, sentence, p_sentence, lengths):
         # contruct input for shared BiLSTM Encoder
         embeds_DEP = self.word_embeddings_DEP(sentence)
-        log(sentence)
+        log(sentence.size())
         embeds_DEP = embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         # sharing pretrained word_embeds
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
