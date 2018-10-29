@@ -257,7 +257,7 @@ class BiLSTMTagger(nn.Module):
         concat_embeds_0 = self.find_predicate_embeds(hidden_states_0, target_idx_in)
         concat_embeds_1 = self.find_predicate_embeds(hidden_states_1, target_idx_in)
 
-        Word_hidden = F.relu(self.hidden2tag_1(torch.cat((Label_composer_0, Label_composer_1), 2)))
+        Word_hidden = F.relu(self.hidden2tag_1(torch.cat((hidden_states_0, hidden_states_1), 2)))
         Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
         FFF = torch.cat((Word_hidden, Predicate_hidden), 2)
         dep_tag_space = self.MLP_2(self.label_dropout_2(F.relu(self.MLP_1(FFF)))).view(
