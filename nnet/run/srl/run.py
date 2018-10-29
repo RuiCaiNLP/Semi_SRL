@@ -235,7 +235,7 @@ class SRLRunner(Runner):
         def bio_unlabeled_converter(batch):
             sent_= list(zip(*batch))
             log('+_+_+_+_+')
-            log(sent)
+            log(sent_)
             sent = [self.word_voc.vocalize(w) for w in sent_]
 
             p_sent = [self.p_word_voc.vocalize(w) for w in sent_]
