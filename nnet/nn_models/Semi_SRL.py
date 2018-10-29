@@ -193,7 +193,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-    def shared_BilSTMEncoder_foward(self, sentence, p_sentence):
+    def shared_BilSTMEncoder_foward(self, sentence, p_sentence, lengths):
         # contruct input for shared BiLSTM Encoder
         embeds_DEP = self.word_embeddings_DEP(sentence)
         embeds_DEP = embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
@@ -244,7 +244,7 @@ class BiLSTMTagger(nn.Module):
                 unlabeled_sentence=None, p_unlabeled_sentence=None, test=False):
 
 
-        hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(sentence, p_sentence)
+        hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(sentence, p_sentence, lengths)
 
         # predicate identification
         Hidden_states_forID = torch.cat((hidden_states_0, hidden_states_1), 2)
@@ -368,7 +368,7 @@ class BiLSTMTagger(nn.Module):
 
         ## start unlabeled training:
 
-        hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(unlabeled_sentence, p_unlabeled_sentence)
+        hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(unlabeled_sentence, p_unlabeled_sentence, lengths)
 
         ## perform predicate identification
 
