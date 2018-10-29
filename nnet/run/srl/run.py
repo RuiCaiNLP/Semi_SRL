@@ -242,7 +242,7 @@ class SRLRunner(Runner):
             sent_batch, sent_mask = mask_batch(sent)
             p_sent_batch, _ = mask_batch(p_sent)
 
-            return sent_batch, p_sent_batch
+            return sent_batch, p_sent_batch, sent_mask
         return bio_unlabeled_converter
 
 

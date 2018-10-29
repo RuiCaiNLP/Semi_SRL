@@ -241,7 +241,7 @@ class BiLSTMTagger(nn.Module):
                 local_roles_voc, frames, local_roles_mask,
                 sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, P_identification, all_l_ids,
                 Predicate_link, Predicate_Labels_nd, Predicate_Labels,
-                unlabeled_sentence=None, p_unlabeled_sentence=None, test=False):
+                unlabeled_sentence=None, p_unlabeled_sentence=None, unlabeled_lengths=None, test=False):
 
 
         hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(sentence, p_sentence, lengths)
@@ -366,10 +366,15 @@ class BiLSTMTagger(nn.Module):
 
         loss = SRLloss + 0.5 *DEPloss + 0.5*IDloss
 
+        if test:
+            return SRLloss, DEPloss, IDloss, loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums, \
+                   right_noNull_predict, noNull_predict, noNUll_truth, \
+                   right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe
+
 
         ## start unlabeled training:
 
-        hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(unlabeled_sentence, p_unlabeled_sentence, lengths)
+        hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(unlabeled_sentence, p_unlabeled_sentence, unlabeled_lengths)
 
         ## perform predicate identification
 
