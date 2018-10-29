@@ -58,7 +58,6 @@ def unlabeled_reader(record):
     words = []
     for word in record.strip().split(' '):
         words.append(word)
-    log(words)
     return words
 
 
