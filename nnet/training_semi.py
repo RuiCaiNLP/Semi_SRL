@@ -69,6 +69,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             unlabeled_sentence = unlabeled_model_input[0]
             p_unlabeled_sentence = unlabeled_model_input[1]
+            unlabeled_sen_lengths = unlabeled_model_input[2].sum(axis=1)
 
             unlabeled_sentence_in = torch.from_numpy(unlabeled_sentence).to(device)
             p_unlabeled_sentence_in = torch.from_numpy(p_unlabeled_sentence).to(device)
@@ -139,7 +140,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
                         targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in,
-                        Predicate_Labels_in, unlabeled_sentence_in, p_unlabeled_sentence_in, test=False)
+                        Predicate_Labels_in, unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths, test=False)
 
             idx += 1
             # Final_loss = SRLloss + 0.5/(1 + 0.3 *(e-1)) * (DEPloss + SPEDEPloss)
