@@ -230,7 +230,7 @@ class BiLSTMTagger(nn.Module):
 
     def find_predicate_embeds(self, hidden_states, target_idx_in):
         Label_composer = hidden_states
-        predicate_embeds = Label_composer[np.arange(0, Label_composer_0.size()[0]), target_idx_in]
+        predicate_embeds = Label_composer[np.arange(0, Label_composer.size()[0]), target_idx_in]
         # T * B * H
         added_embeds = torch.zeros(Label_composer.size()[1], Label_composer.size()[0],
                                    Label_composer.size()[2]).to(device)
