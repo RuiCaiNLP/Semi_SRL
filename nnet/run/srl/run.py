@@ -233,6 +233,7 @@ class SRLRunner(Runner):
 
     def get_unlabeled_converter(self):
         def bio_unlabeled_converter(batch):
+            log(batch)
             sent_= list(zip(*batch))
             log('+_+_+_+_+')
             log(sent_)
