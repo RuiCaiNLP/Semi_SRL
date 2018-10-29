@@ -234,7 +234,8 @@ class SRLRunner(Runner):
     def get_unlabeled_converter(self):
         def bio_unlabeled_converter(batch):
             sent_= list(zip(*batch))
-
+            log('+_+_+_+_+')
+            log(sent)
             sent = [self.word_voc.vocalize(w) for w in sent_]
 
             p_sent = [self.p_word_voc.vocalize(w) for w in sent_]
