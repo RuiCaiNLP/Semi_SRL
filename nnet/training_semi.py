@@ -52,6 +52,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_batch = unlabeled_dataset[unlabeled_idx%unlabeled_dataset_len]
             unlabeled_record_ids, unlabeled_batch = zip(*unlabeled_batch)
             unlabeled_model_input = unlabeled_converter(unlabeled_batch)
+            unlabeled_idx += 1
             log(unlabeled_model_input)
 
             model.hidden = model.init_hidden_spe()
