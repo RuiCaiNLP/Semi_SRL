@@ -16,7 +16,7 @@ def make_local_voc(labels):
     return {i: label for i, label in enumerate(labels)}
 
 
-def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate, params_path):
+def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unlabeled_converter, dbg_print_rate, params_path):
     idx = 0
     sample_count = 0.0
     best_F1 = -0.1
@@ -33,12 +33,14 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
     for e in range(epochs):
         tic = time.time()
         dataset = [batch for batch in train_set.batches()]
-        init_dataset = [batch for batch in dataset]
+        unlabeled_dataset = [batch for batch in unlabeled_set.batches()]
+        #init_dataset = [batch for batch in dataset]
         random.shuffle(dataset)
         dataset_len = len(dataset)
+        unlabeled_dataset_len = len(dataset)
+        unlabeled_idx = 0
         for batch in dataset:
 
-            batch_idx = init_dataset.index(batch)
             sample_count += len(batch)
 
             model.zero_grad()
@@ -46,6 +48,11 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             model.train()
             record_ids, batch = zip(*batch)
             model_input = converter(batch)
+
+            unlabeled_batch = unlabeled_dataset[unlabeled_idx%unlabeled_dataset_len]
+            unlabeled_record_ids, unlabeled_batch = zip(*unlabeled_batch)
+            unlabeled_model_input = unlabeled_converter(unlabeled_batch)
+            log(unlabeled_model_input)
 
             model.hidden = model.init_hidden_spe()
             # model.hidden_0 = model.init_hidden_spe()

@@ -54,6 +54,12 @@ def bio_reader(record):
            all_l_ids, Predicate_link, Predicate_Labels_nd, Predicate_Labels
 
 
+def unlabeled_reader(record):
+    words = []
+    for word in record.split(' '):
+        words.append(word)
+    return words
+
 
 
 
@@ -123,6 +129,9 @@ class SRLRunner(Runner):
 
     def get_parser(self):
         return partial(bio_reader)
+
+    def get_unlabeled(self):
+        return partial(unlabeled_reader)
 
     def get_reader(self):
         return simple_reader
@@ -220,6 +229,21 @@ class SRLRunner(Runner):
                    Predicate_Labels_nd,\
                    Predicate_Labels
         return bio_converter
+
+
+    def get_unlabeled_converter(self):
+        def bio_unlabeled_converter(batch):
+            sent_= list(zip(*batch))
+
+            sent = [self.word_voc.vocalize(w) for w in sent_]
+
+            p_sent = [self.p_word_voc.vocalize(w) for w in sent_]
+
+            sent_batch, sent_mask = mask_batch(sent)
+            p_sent_batch, _ = mask_batch(p_sent)
+
+            return sent_batch, p_sent_batch
+        return bio_unlabeled_converter
 
 
     def load_model(self):

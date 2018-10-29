@@ -31,3 +31,16 @@ for line in file.readlines():
 print(idx)
 file.close()
 file2.close()
+
+file = open('1BilionBenchMark', 'r')
+file2 = open('1BilionBenchMark_batch', 'w')
+idx = 1
+
+for line in file.readlines():
+    file2.write(line)
+    if idx == 283200:
+        break
+    idx += 1
+print(idx)
+file.close()
+file2.close()

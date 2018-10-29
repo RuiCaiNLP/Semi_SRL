@@ -16,6 +16,7 @@ class Runner(object):
         parser.add_argument("--test", help="validation set")
         parser.add_argument("--dev", help="vadation set2")
         parser.add_argument("--train", help="training set", required=False)
+        parser.add_argument("--unlabeled", help="unlabeled dataset")
         parser.add_argument("--batch", help="batch size", default=128, type=int)
         parser.add_argument("--epochs", help="n of epochs",
                             default=sys.maxsize, type=int)
@@ -42,6 +43,9 @@ class Runner(object):
             parser.error('specify --test')
 
     def get_reader(self):
+        raise NotImplemented()
+
+    def get_unlabeled(self):
         raise NotImplemented()
 
     def get_tester(self):
@@ -100,16 +104,24 @@ class Runner(object):
             reader=self.get_reader()
         )
 
+        unlabled_set = Corpus(
+            parser=self.get_unlabeled(),
+            batch_size=a.batch,
+            path=a.unlabeled,
+            reader=self.get_reader()
+        )
+
         log('dataset loaded!')
 
         if not a.test_model:
-            train(
+            train_semi(
                 model=model,
                 train_set=train_set,
                 dev_set=test_set,
-                test_set=test_set,
+                unlabeled_set=unlabled_set,
                 epochs=a.epochs,
                 converter=self.get_converter(),
+                unlabeled_converter=self.get_unlabeled_converter(),
                 dbg_print_rate=a.dbg_print_rate,
                 params_path=a.params_path
             )
