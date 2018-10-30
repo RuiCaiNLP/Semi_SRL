@@ -453,10 +453,10 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(unlabeled_sentence[0]),  -1)
 
         ## obtain the teacher probs
-        SRLprobs_teacher = F.softmax(tag_space, dim=1).detach()
+        SRLprobs_teacher = F.softmax(tag_space, dim=2).detach()
 
         ## perform FF SRL
 
@@ -489,19 +489,18 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(unlabeled_sentence[0]), -1)
 
         ## obtain the teacher probs
-        SRLprobs_student_FF = F.softmax(tag_space, dim=1)
+        SRLprobs_student_FF = F.softmax(tag_space, dim=2)
 
         unlabeled_loss_function = nn.KLDivLoss(size_average=False)
-        log(SRLprobs_student_FF[0].sum())
-        log(SRLprobs_teacher[0].sum())
-        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF[0], SRLprobs_teacher[0])
+
+        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
         log(SRL_FF_loss)
 
 
-        return SRLloss, DEPloss, IDloss, loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
+        return SRLloss, DEPloss, IDloss, SRL_FF_loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
                right_noNull_predict, noNull_predict, noNUll_truth,\
                right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe
 
