@@ -421,10 +421,10 @@ class BiLSTMTagger(nn.Module):
         SRL_composer = self.elmo_mlp(SRL_composer)
 
         fixed_embeds = self.word_fixed_embeddings_SRL(p_unlabeled_sentence)
-        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        fixed_embeds = fixed_embeds.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
         # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         embeds_SRL = self.word_embeddings_SRL(unlabeled_sentence)
-        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        embeds_SRL = embeds_SRL.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
         # pos_embeds = self.pos_embeddings(pos_tags)
         SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark,
                                        h1, SRL_composer), 2)
@@ -461,10 +461,10 @@ class BiLSTMTagger(nn.Module):
         ## perform FF SRL
 
         fixed_embeds = self.word_fixed_embeddings_SRL(p_unlabeled_sentence)
-        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        fixed_embeds = fixed_embeds.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
         # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         embeds_SRL = self.word_embeddings_SRL(unlabeled_sentence)
-        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        embeds_SRL = embeds_SRL.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
         # pos_embeds = self.pos_embeddings(pos_tags)
         SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark_embeds, hidden_forward), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
