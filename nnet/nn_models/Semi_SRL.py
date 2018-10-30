@@ -426,7 +426,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = self.word_embeddings_SRL(unlabeled_sentence)
         embeds_SRL = embeds_SRL.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
         # pos_embeds = self.pos_embeddings(pos_tags)
-        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark,
+        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark_embeds,
                                        h1, SRL_composer), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
 
@@ -473,7 +473,7 @@ class BiLSTMTagger(nn.Module):
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, unlabeled_lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
         self.hidden_4 = self.init_hidden_share()
-        hidden_states, self.hidden_4 = self.BiLSTM_SRL(embeds_sort, self.hidden_4)
+        hidden_states, self.hidden_4 = self.BiLSTM_SRL_fwd_fwd(embeds_sort, self.hidden_4)
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states = hidden_states[unsort_idx]
@@ -481,11 +481,11 @@ class BiLSTMTagger(nn.Module):
 
         # B * H
         hidden_states_3 = hidden_states
-        hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_states_3))
         predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
-        hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
+        hidden_states_predicate = F.relu(self.Predicate_Proj_FF(predicate_embeds))
 
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R + self.W_share)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FF + self.W_share_FF)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
