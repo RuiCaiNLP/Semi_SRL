@@ -456,7 +456,7 @@ class BiLSTMTagger(nn.Module):
             len(unlabeled_sentence[0]) * self.batch_size, -1)
 
         ## obtain the teacher probs
-        SRLprobs_teacher = F.softmax(tag_space, dim=1)#.detach()
+        SRLprobs_teacher = F.softmax(tag_space, dim=1).detach()
 
         ## perform FF SRL
 
