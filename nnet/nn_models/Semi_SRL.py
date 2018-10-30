@@ -494,7 +494,7 @@ class BiLSTMTagger(nn.Module):
         ## obtain the teacher probs
         SRLprobs_student_FF = F.softmax(tag_space, dim=1)
 
-        unlabeled_loss_function = nn.KLDivLoss()
+        unlabeled_loss_function = nn.KLDivLoss(size_average=False)
         SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
         log(SRL_FF_loss)
 
