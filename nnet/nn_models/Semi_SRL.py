@@ -386,7 +386,6 @@ class BiLSTMTagger(nn.Module):
             len(unlabeled_sentence[0]) * self.batch_size, -1)
         Predicate_probs = Predicate_identification_space[:, 2].view(self.batch_size, len(unlabeled_sentence[0]))
         Predicate_idx_batch = np.argmax(Predicate_probs.cpu().data.numpy(), axis=1)
-        log(Predicate_idx_batch)
 
         # primary dependency extractor
         concat_embeds_0 = self.find_predicate_embeds(hidden_states_0, target_idx_in)
