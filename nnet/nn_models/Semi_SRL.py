@@ -496,7 +496,7 @@ class BiLSTMTagger(nn.Module):
 
         unlabeled_loss_function = nn.KLDivLoss(size_average=True)
 
-        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
+        SRL_FF_loss = unlabeled_loss_function(torch.log(SRLprobs_student_FF), SRLprobs_teacher)
 
 
         return SRLloss, DEPloss, IDloss, SRL_FF_loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
