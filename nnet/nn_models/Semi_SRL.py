@@ -387,6 +387,9 @@ class BiLSTMTagger(nn.Module):
         Predicate_idx_batch = np.argmax(Predicate_probs.cpu().data.numpy(), axis=1)
         log(Predicate_idx_batch)
 
+
+        hidden_forward , hidden_backward= hidden_states_0.split(self.hidden_dim, 2)
+
         ## perform FF SRL
 
 
