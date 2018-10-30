@@ -388,8 +388,8 @@ class BiLSTMTagger(nn.Module):
         Predicate_idx_batch = np.argmax(Predicate_probs.cpu().data.numpy(), axis=1)
 
         # primary dependency extractor
-        concat_embeds_0 = self.find_predicate_embeds(hidden_states_0, target_idx_in)
-        concat_embeds_1 = self.find_predicate_embeds(hidden_states_1, target_idx_in)
+        concat_embeds_0 = self.find_predicate_embeds(hidden_states_0, Predicate_idx_batch)
+        concat_embeds_1 = self.find_predicate_embeds(hidden_states_1, Predicate_idx_batch)
 
         Word_hidden = F.relu(self.hidden2tag_1(torch.cat((hidden_states_0, hidden_states_1), 2)))
         Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
