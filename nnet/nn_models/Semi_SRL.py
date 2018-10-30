@@ -96,8 +96,8 @@ class BiLSTMTagger(nn.Module):
         self.num_layers = 3
         self.word_embeddings_SRL = nn.Embedding(vocab_size, hps['sent_edim'])
 
-        self.word_fixed_embeddings = nn.Embedding(vocab_size, hps['sent_edim'])
-        self.word_fixed_embeddings.weight.data.copy_(torch.from_numpy(hps['word_embeddings']))
+        self.word_fixed_embeddings_SRL = nn.Embedding(vocab_size, hps['sent_edim'])
+        self.word_fixed_embeddings_SRL.weight.data.copy_(torch.from_numpy(hps['word_embeddings']))
 
         self.dep_embeddings = nn.Embedding(self.dep_size, self.pos_size)
         self.region_embeddings = nn.Embedding(2, 16)
@@ -124,7 +124,7 @@ class BiLSTMTagger(nn.Module):
 
            ## SRL: auxiliary prediction: fwd-fwd
 
-        self.BiLSTM_SRL_fwd_fwd = nn.LSTM(input_size= 2*hps['sent_edim'] + 16,
+        self.BiLSTM_SRL_fwd_fwd = nn.LSTM(input_size= 2*hps['sent_edim'] + 16 + lstm_hidden_dim,
                                   hidden_size=lstm_hidden_dim, batch_first=True,
                                   bidirectional=True, num_layers=self.num_layers)
 
@@ -138,7 +138,7 @@ class BiLSTMTagger(nn.Module):
 
             ## SRL: auxiliary prediction: fwd-fwd
 
-        self.BiLSTM_SRL_bwd_bwd = nn.LSTM(input_size=2 * hps['sent_edim'] + 16,
+        self.BiLSTM_SRL_bwd_bwd = nn.LSTM(input_size=2 * hps['sent_edim'] + 16 + lstm_hidden_dim,
                                           hidden_size=lstm_hidden_dim, batch_first=True,
                                           bidirectional=True, num_layers=self.num_layers)
 
@@ -208,6 +208,7 @@ class BiLSTMTagger(nn.Module):
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
+        self.hidden = self.init_hidden_spe()
         hidden_states, self.hidden = self.BiLSTM_0(embeds_sort, self.hidden)
         # it seems that hidden states is already batch first, we don't need swap the dims
         # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
@@ -278,7 +279,7 @@ class BiLSTMTagger(nn.Module):
         SRL_composer = self.elmo_mlp(SRL_composer)
 
 
-        fixed_embeds = self.word_fixed_embeddings(p_sentence)
+        fixed_embeds = self.word_fixed_embeddings_SRL(p_sentence)
         fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         #sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         embeds_SRL = self.word_embeddings_SRL(sentence)
@@ -376,7 +377,7 @@ class BiLSTMTagger(nn.Module):
 
         hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(unlabeled_sentence, p_unlabeled_sentence, unlabeled_lengths)
 
-        ## perform predicate identification
+        ## perform primary predicate identification
 
         Hidden_states_forID = torch.cat((hidden_states_0, hidden_states_1), 2)
         Predicate_identification = self.Idenficiation(
@@ -387,10 +388,114 @@ class BiLSTMTagger(nn.Module):
         Predicate_idx_batch = np.argmax(Predicate_probs.cpu().data.numpy(), axis=1)
         log(Predicate_idx_batch)
 
+        # primary dependency extractor
+        concat_embeds_0 = self.find_predicate_embeds(hidden_states_0, target_idx_in)
+        concat_embeds_1 = self.find_predicate_embeds(hidden_states_1, target_idx_in)
+
+        Word_hidden = F.relu(self.hidden2tag_1(torch.cat((hidden_states_0, hidden_states_1), 2)))
+        Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
+        FFF = torch.cat((Word_hidden, Predicate_hidden), 2)
+        dep_tag_space = self.MLP_2(self.label_dropout_2(F.relu(self.MLP_1(FFF)))).view(
+            len(sentence[0]) * self.batch_size, -1)
+        TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(sentence[0]), -1)
+
+        unlabeled_region_mark = np.zeros(unlabeled_sentence.size(), dtype='int64')
+        for i in range(len(unlabeled_region_mark)):
+            unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
+        unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark)
 
         hidden_forward , hidden_backward= hidden_states_0.split(self.hidden_dim, 2)
 
+
+        ## perform primary SRL
+
+        TagProbs_noGrad = TagProbs_use.detach()
+        h1 = F.tanh(self.tag2hidden(TagProbs_noGrad))
+
+        h_layer_0 = hidden_states_0
+        h_layer_1 = hidden_states_1
+
+        w = F.softmax(self.elmo_w, dim=0)
+        SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
+        SRL_composer = self.elmo_mlp(SRL_composer)
+
+        fixed_embeds = self.word_fixed_embeddings_SRL(p_unlabeled_sentence)
+        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
+        embeds_SRL = self.word_embeddings_SRL(unlabeled_sentence)
+        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        # pos_embeds = self.pos_embeddings(pos_tags)
+        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark,
+                                       h1, SRL_composer), 2)
+        SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
+
+        # SRL layer
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, unlabeled_lengths)
+        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
+        # hidden states [time_steps * batch_size * hidden_units]
+        self.hidden_4 = self.init_hidden_share()
+        hidden_states, self.hidden_4 = self.BiLSTM_SRL(embeds_sort, self.hidden_4)
+        # it seems that hidden states is already batch first, we don't need swap the dims
+        # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
+        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
+        # hidden_states = hidden_states.transpose(0, 1)
+        hidden_states = hidden_states[unsort_idx]
+        hidden_states = self.hidden_state_dropout(hidden_states)
+
+        # B * H
+        hidden_states_3 = hidden_states
+        hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
+        predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
+        left_part = left_part.view(self.batch_size * len(sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            len(sentence[0]) * self.batch_size, -1)
+
+        ## obtain the teacher probs
+        SRLprobs_teacher = F.softmax(tag_space, dim=1).detach()
+
         ## perform FF SRL
+
+        fixed_embeds = self.word_fixed_embeddings_SRL(p_unlabeled_sentence)
+        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
+        embeds_SRL = self.word_embeddings_SRL(unlabeled_sentence)
+        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        # pos_embeds = self.pos_embeddings(pos_tags)
+        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark, hidden_forward), 2)
+        SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
+
+        # SRL layer
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, unlabeled_lengths)
+        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
+        self.hidden_4 = self.init_hidden_share()
+        hidden_states, self.hidden_4 = self.BiLSTM_SRL(embeds_sort, self.hidden_4)
+        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
+        # hidden_states = hidden_states.transpose(0, 1)
+        hidden_states = hidden_states[unsort_idx]
+        hidden_states = self.hidden_state_dropout(hidden_states)
+
+        # B * H
+        hidden_states_3 = hidden_states
+        hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
+        predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
+        left_part = left_part.view(self.batch_size * len(sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            len(sentence[0]) * self.batch_size, -1)
+
+        ## obtain the teacher probs
+        SRLprobs_student_FF = F.softmax(tag_space, dim=1)
+
+        unlabeled_loss_function = nn.KLDivloss()
+        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
+        log(SRL_FF_loss)
 
 
         return SRLloss, DEPloss, IDloss, loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
