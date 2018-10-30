@@ -174,15 +174,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("sum")
                 log(Semi_loss)
 
-                del SRLloss
-                del DEPloss
-                del SPEDEPloss
-                del loss
-                del SRLprobs
-                del model.hidden
-                del model.hidden_2
-                del model.hidden_3
-                del model.hidden_4
 
             if idx % dbg_print_rate == 0:
                 log('[epoch %i, %i * %i] ' %
