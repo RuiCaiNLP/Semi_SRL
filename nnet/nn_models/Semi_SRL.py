@@ -396,7 +396,7 @@ class BiLSTMTagger(nn.Module):
         FFF = torch.cat((Word_hidden, Predicate_hidden), 2)
         dep_tag_space = self.MLP_2(self.label_dropout_2(F.relu(self.MLP_1(FFF)))).view(
             len(unlabeled_sentence[0]) * self.batch_size, -1)
-        TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(sentence[0]), -1)
+        TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(unlabeled_sentence[0]), -1)
 
         unlabeled_region_mark = np.zeros(unlabeled_sentence.size(), dtype='int64')
         for i in range(len(unlabeled_region_mark)):
