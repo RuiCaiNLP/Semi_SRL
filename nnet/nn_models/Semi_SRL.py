@@ -395,7 +395,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
         FFF = torch.cat((Word_hidden, Predicate_hidden), 2)
         dep_tag_space = self.MLP_2(self.label_dropout_2(F.relu(self.MLP_1(FFF)))).view(
-            len(sentence[0]) * self.batch_size, -1)
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
         TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(sentence[0]), -1)
 
         unlabeled_region_mark = np.zeros(unlabeled_sentence.size(), dtype='int64')
@@ -447,11 +447,11 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
 
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
-        left_part = left_part.view(self.batch_size * len(sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(sentence[0]), -1, 1)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R + self.W_share)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(sentence[0]) * self.batch_size, -1)
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
 
         ## obtain the teacher probs
         SRLprobs_teacher = F.softmax(tag_space, dim=1).detach()
@@ -464,7 +464,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = self.word_embeddings_SRL(unlabeled_sentence)
         embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         # pos_embeds = self.pos_embeddings(pos_tags)
-        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark, hidden_forward), 2)
+        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark_embeds, hidden_forward), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
 
         # SRL layer
@@ -483,11 +483,11 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
 
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R + self.W_share)
-        left_part = left_part.view(self.batch_size * len(sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(sentence[0]), -1, 1)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R + self.W_share)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(sentence[0]) * self.batch_size, -1)
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
 
         ## obtain the teacher probs
         SRLprobs_student_FF = F.softmax(tag_space, dim=1)
