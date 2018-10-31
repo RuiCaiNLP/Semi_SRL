@@ -323,32 +323,28 @@ class BiLSTMTagger(nn.Module):
         ## Dependency Extractor FF
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
-        dep_tag_space = self.MLP_FF_2(self.label_dropout_2(F.relu(self.MLP_FF(FFF)))).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        dep_tag_space = self.MLP_FF_2(self.label_dropout_2(F.relu(self.MLP_FF(FFF))))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
         ## Dependency Extractor BB
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         FFF = torch.cat((hidden_backward, concat_embeds), 2)
-        dep_tag_space = self.MLP_BB_2(self.label_dropout_2(F.relu(self.MLP_BB(FFF)))).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        dep_tag_space = self.MLP_BB_2(self.label_dropout_2(F.relu(self.MLP_BB(FFF))))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
         ## Dependency Extractor FB
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
-        dep_tag_space = self.MLP_FB_2(self.label_dropout_2(F.relu(self.MLP_FB(FFF)))).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        dep_tag_space = self.MLP_FB_2(self.label_dropout_2(F.relu(self.MLP_FB(FFF))))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
         ## Dependency Extractor BF
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_backward, concat_embeds), 2)
-        dep_tag_space = self.MLP_BF_2(self.label_dropout_2(F.relu(self.MLP_BF(FFF)))).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        dep_tag_space = self.MLP_BF_2(self.label_dropout_2(F.relu(self.MLP_BF(FFF))))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
