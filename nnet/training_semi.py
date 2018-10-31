@@ -132,7 +132,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
             # log(dep_tags_in)
             # log(specific_dep_relations)
-            SRLloss, DEPloss, SPEDEPloss, Semi_loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
+            SRLloss, DEPloss, SPEDEPloss, CVT_SRL_Loss, CVT_DEP_Loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
             right_noNull_predict, noNull_predict, noNUll_truth, \
             right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe \
                 = model(sentence_in, p_sentence_in,
@@ -149,7 +149,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             # else:
             #    Final_loss = SRLloss
 
-            Final_loss = SRLloss + DEPloss + SPEDEPloss  + Semi_loss
+            Final_loss = SRLloss + DEPloss + CVT_SRL_Loss + CVT_DEP_Loss
 
             Final_loss.backward()
             # clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
