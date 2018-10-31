@@ -519,7 +519,8 @@ class BiLSTMTagger(nn.Module):
             len(unlabeled_sentence[0]) * self.batch_size, -1)
         TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(unlabeled_sentence[0]), -1)
 
-        CVT_DEP_Loss = Semi_DEP_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use)
+        CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use)
+
         unlabeled_region_mark = np.zeros(unlabeled_sentence.size(), dtype='int64')
         for i in range(len(unlabeled_region_mark)):
             unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
