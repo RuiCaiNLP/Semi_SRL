@@ -319,6 +319,7 @@ class BiLSTMTagger(nn.Module):
         return CVT_SRL_Loss
 
     def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use):
+        TagProbs_use =TagProbs_use.detach()
         unlabeled_loss_function = nn.KLDivLoss(size_average=True)
         ## Dependency Extractor FF
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
