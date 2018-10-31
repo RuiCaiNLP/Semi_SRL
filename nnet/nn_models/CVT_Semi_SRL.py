@@ -122,33 +122,30 @@ class BiLSTMTagger(nn.Module):
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
         self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
 
-           ## SRL: auxiliary prediction: fwd-fwd
+        self.cvt_hidden_dim = 200
+        ## SRL: auxiliary prediction: fwd-fwd
+        self.Non_Predicate_Proj_FF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.Predicate_Proj_FF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.W_R_FF = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
+        self.W_share_FF = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
 
-        self.BiLSTM_SRL_fwd_fwd = nn.LSTM(input_size= 2*hps['sent_edim'] + 16 + lstm_hidden_dim,
-                                  hidden_size=lstm_hidden_dim, batch_first=True,
-                                  bidirectional=True, num_layers=self.num_layers)
+        ## SRL: auxiliary prediction: bwd-bwd
+        self.Non_Predicate_Proj_BB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.Predicate_Proj_BB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.W_R_BB = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
+        self.W_share_BB = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
 
-        self.Head_Proj_FF = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
-        self.W_R_FF = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
-        self.W_share_FF = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
-        self.Dep_Proj_FF = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
+        ## SRL: auxiliary prediction: fwd-bwd
+        self.Non_Predicate_Proj_FB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.Predicate_Proj_FB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.W_R_FB = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
+        self.W_share_FB = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
 
-        self.Non_Predicate_Proj_FF = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
-        self.Predicate_Proj_FF = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
-
-            ## SRL: auxiliary prediction: fwd-fwd
-
-        self.BiLSTM_SRL_bwd_bwd = nn.LSTM(input_size=2 * hps['sent_edim'] + 16 + lstm_hidden_dim,
-                                          hidden_size=lstm_hidden_dim, batch_first=True,
-                                          bidirectional=True, num_layers=self.num_layers)
-
-        self.Head_Proj_BB = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
-        self.W_R_BB = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
-        self.W_share_BB = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
-        self.Dep_Proj_BB = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
-
-        self.Non_Predicate_Proj_BB = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
-        self.Predicate_Proj_BB = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
+        ## SRL: auxiliary prediction: bwd-fwd
+        self.Non_Predicate_Proj_BF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.Predicate_Proj_BF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
+        self.W_R_BF = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
+        self.W_share_BF = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.tagset_size * self.cvt_hidden_dim))
 
         # Dependency extractor: primary preidition
         self.hidden2tag_1 = nn.Linear(4 * lstm_hidden_dim, 2 * lstm_hidden_dim)
@@ -406,7 +403,7 @@ class BiLSTMTagger(nn.Module):
         unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
 
         hidden_forward , hidden_backward= hidden_states_0.split(self.hidden_dim, 2)
-
+        unlabeled_loss_function = nn.KLDivLoss(size_average=True)
 
         ## perform primary SRL
 
@@ -459,30 +456,8 @@ class BiLSTMTagger(nn.Module):
         SRLprobs_teacher = F.softmax(tag_space, dim=2).detach()
 
         ## perform FF SRL
-
-        fixed_embeds = self.word_fixed_embeddings_SRL(p_unlabeled_sentence)
-        fixed_embeds = fixed_embeds.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
-        # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
-        embeds_SRL = self.word_embeddings_SRL(unlabeled_sentence)
-        embeds_SRL = embeds_SRL.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
-        # pos_embeds = self.pos_embeddings(pos_tags)
-        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, unlabeled_region_mark_embeds, hidden_forward), 2)
-        SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
-
-        # SRL layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, unlabeled_lengths)
-        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
-        self.hidden_4 = self.init_hidden_share()
-        hidden_states, self.hidden_4 = self.BiLSTM_SRL_fwd_fwd(embeds_sort, self.hidden_4)
-        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
-        # hidden_states = hidden_states.transpose(0, 1)
-        hidden_states = hidden_states[unsort_idx]
-        hidden_states = self.hidden_state_dropout(hidden_states)
-
-        # B * H
-        hidden_states_3 = hidden_states
-        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_states_3))
-        predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_forward))
+        predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_FF(predicate_embeds))
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FF + self.W_share_FF)
@@ -490,16 +465,57 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
-
         ## obtain the teacher probs
         SRLprobs_student_FF = F.log_softmax(tag_space, dim=2)
-
-        unlabeled_loss_function = nn.KLDivLoss(size_average=True)
-
         SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
 
+        ## perform BB SRL
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_backward))
+        predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj_BB(predicate_embeds))
 
-        return SRLloss, DEPloss, IDloss, SRL_FF_loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
+                             self.W_R_BB + self.W_share_BB)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            self.batch_size, len(unlabeled_sentence[0]), -1)
+        ## obtain the teacher probs
+        SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
+        SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher)
+
+        ## perform FB SRL
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_FB(hidden_forward))
+        predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj_FB(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
+                             self.W_R_FB + self.W_share_FB)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            self.batch_size, len(unlabeled_sentence[0]), -1)
+        ## obtain the teacher probs
+        SRLprobs_student_FB = F.log_softmax(tag_space, dim=2)
+        SRL_FB_loss = unlabeled_loss_function(SRLprobs_student_FB, SRLprobs_teacher)
+
+        ## perform BF SRL
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_BF(hidden_backward))
+        predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj_BF(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
+                             self.W_R_BF + self.W_share_BF)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            self.batch_size, len(unlabeled_sentence[0]), -1)
+        ## obtain the teacher probs
+        SRLprobs_student_BF = F.log_softmax(tag_space, dim=2)
+        SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher)
+
+        CVT_SRL_Loss = SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss
+        return SRLloss, DEPloss, IDloss, CVT_SRL_Loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
                right_noNull_predict, noNull_predict, noNUll_truth,\
                right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe
 
