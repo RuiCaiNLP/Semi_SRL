@@ -235,6 +235,71 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = (added_embeds + predicate_embeds).transpose(0, 1)
         return concat_embeds
 
+    def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher):
+        unlabeled_loss_function = nn.KLDivLoss(size_average=True)
+        ## perform FF SRL
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_forward))
+        predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj_FF(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
+                             self.W_R_FF + self.W_share_FF)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            self.batch_size, len(unlabeled_sentence[0]), -1)
+        ## obtain the teacher probs
+        SRLprobs_student_FF = F.log_softmax(tag_space, dim=2)
+        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
+
+        ## perform BB SRL
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_backward))
+        predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj_BB(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
+                             self.W_R_BB + self.W_share_BB)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            self.batch_size, len(unlabeled_sentence[0]), -1)
+        ## obtain the teacher probs
+        SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
+        SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher)
+
+        ## perform FB SRL
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_FB(hidden_forward))
+        predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj_FB(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
+                             self.W_R_FB + self.W_share_FB)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            self.batch_size, len(unlabeled_sentence[0]), -1)
+        ## obtain the teacher probs
+        SRLprobs_student_FB = F.log_softmax(tag_space, dim=2)
+        SRL_FB_loss = unlabeled_loss_function(SRLprobs_student_FB, SRLprobs_teacher)
+
+        ## perform BF SRL
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_BF(hidden_backward))
+        predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
+        hidden_states_predicate = F.relu(self.Predicate_Proj_BF(predicate_embeds))
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
+                             self.W_R_BF + self.W_share_BF)
+        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            self.batch_size, len(unlabeled_sentence[0]), -1)
+        ## obtain the teacher probs
+        SRLprobs_student_BF = F.log_softmax(tag_space, dim=2)
+        SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher)
+        CVT_SRL_Loss = SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss
+        return CVT_SRL_Loss
+
+
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
                 sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, P_identification, all_l_ids,
@@ -403,7 +468,7 @@ class BiLSTMTagger(nn.Module):
         unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
 
         hidden_forward , hidden_backward= hidden_states_0.split(self.hidden_dim, 2)
-        unlabeled_loss_function = nn.KLDivLoss(size_average=True)
+
 
         ## perform primary SRL
 
@@ -454,67 +519,10 @@ class BiLSTMTagger(nn.Module):
 
         ## obtain the teacher probs
         SRLprobs_teacher = F.softmax(tag_space, dim=2).detach()
+        CVT_SRL_Loss = self.Semi_SRL_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher)
 
-        ## perform FF SRL
-        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_forward))
-        predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
-        hidden_states_predicate = F.relu(self.Predicate_Proj_FF(predicate_embeds))
 
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FF + self.W_share_FF)
-        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            self.batch_size, len(unlabeled_sentence[0]), -1)
-        ## obtain the teacher probs
-        SRLprobs_student_FF = F.log_softmax(tag_space, dim=2)
-        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
 
-        ## perform BB SRL
-        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_backward))
-        predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        hidden_states_predicate = F.relu(self.Predicate_Proj_BB(predicate_embeds))
-
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
-                             self.W_R_BB + self.W_share_BB)
-        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            self.batch_size, len(unlabeled_sentence[0]), -1)
-        ## obtain the teacher probs
-        SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
-        SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher)
-
-        ## perform FB SRL
-        hidden_states_word = F.relu(self.Non_Predicate_Proj_FB(hidden_forward))
-        predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        hidden_states_predicate = F.relu(self.Predicate_Proj_FB(predicate_embeds))
-
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
-                             self.W_R_FB + self.W_share_FB)
-        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            self.batch_size, len(unlabeled_sentence[0]), -1)
-        ## obtain the teacher probs
-        SRLprobs_student_FB = F.log_softmax(tag_space, dim=2)
-        SRL_FB_loss = unlabeled_loss_function(SRLprobs_student_FB, SRLprobs_teacher)
-
-        ## perform BF SRL
-        hidden_states_word = F.relu(self.Non_Predicate_Proj_BF(hidden_backward))
-        predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
-        hidden_states_predicate = F.relu(self.Predicate_Proj_BF(predicate_embeds))
-
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
-                             self.W_R_BF + self.W_share_BF)
-        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            self.batch_size, len(unlabeled_sentence[0]), -1)
-        ## obtain the teacher probs
-        SRLprobs_student_BF = F.log_softmax(tag_space, dim=2)
-        SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher)
-
-        CVT_SRL_Loss = SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss
         return SRLloss, DEPloss, IDloss, CVT_SRL_Loss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
                right_noNull_predict, noNull_predict, noNUll_truth,\
                right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe
