@@ -330,7 +330,7 @@ class BiLSTMTagger(nn.Module):
     def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2)
         sample_nums = unlabeled_lengths.sum()
-        unlabeled_loss_function = nn.KLDivLoss(size_average=False)
+        unlabeled_loss_function = nn.KLDivLoss(reduce=False)
         ## Dependency Extractor FF
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
@@ -360,7 +360,7 @@ class BiLSTMTagger(nn.Module):
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         DEP_Semi_loss = self.mask_loss(DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss)
-        DEP_Semi_loss = torch.sum(DEP_Semi_loss)
+        DEP_Semi_loss = torch.sum(DEP_Semi_loss, unlabeled_lengths)
         return DEP_Semi_loss/sample_nums
 
 
