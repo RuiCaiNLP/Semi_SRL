@@ -149,13 +149,15 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             # else:
             #    Final_loss = SRLloss
 
-            Final_loss = SRLloss + DEPloss + SPEDEPloss + CVT_SRL_Loss + CVT_DEP_Loss
+            L_sup = SRLloss + DEPloss + SPEDEPloss
+            L_CVT = CVT_SRL_Loss + CVT_DEP_Loss
 
-            Final_loss.backward()
-            # clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
-            # clip_grad_norm_(parameters=model.hidden2tag_H.parameters(), max_norm=norm)
-            # clip_grad_value_(parameters=model.parameters(), clip_value=3)
-            # DEPloss.backward()
+            L_sup.backward()
+            optimizer.step()
+            model.zero_grad()
+            optimizer.zero_grad()
+            model.train()
+            L_CVT.backward()
             optimizer.step()
 
 
