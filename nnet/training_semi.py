@@ -352,15 +352,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         right_NonNullPredicts += right_NonNullPredict
                         NonNullTruths += NonNullTruth
 
-                        del SRLloss
-                        del DEPloss
-                        del SPEDEPloss
-                        del loss
-                        del SRLprobs
-                        del model.hidden
-                        del model.hidden_2
-                        del model.hidden_3
-                        del model.hidden_4
 
                 for i in range(len(Dep_P)):
                     Dep_P[i] = Dep_Right_NoNull_Predict[i] / (Dep_NoNull_Predict[i] + 0.0001)
