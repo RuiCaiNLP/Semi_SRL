@@ -252,7 +252,15 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = (added_embeds + predicate_embeds).transpose(0, 1)
         return concat_embeds
 
-    def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher):
+    def mask_probs(self, probs, lengths):
+        for i in range(probs.size()[0]):
+            for j in range(probs.size()[1]):
+                if j >= lengths[i]:
+                    probs[i][j].detarch()
+
+        return probs
+
+    def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher , unlabeled_lengths):
         unlabeled_loss_function = nn.KLDivLoss(size_average=True)
         hidden_forward = self.hidden_state_dropout(hidden_forward)
         hidden_backward = self.hidden_state_dropout(hidden_backward)
@@ -282,6 +290,8 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
+        tag_space = self.mask_probs(tag_space, lengths=unlabeled_lengths)
+
         ## obtain the teacher probs
         SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
         SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher)
@@ -318,7 +328,7 @@ class BiLSTMTagger(nn.Module):
         CVT_SRL_Loss = SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss
         return CVT_SRL_Loss
 
-    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use):
+    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
         TagProbs_use =TagProbs_use.detach()
         unlabeled_loss_function = nn.KLDivLoss(size_average=True)
         ## Dependency Extractor FF
@@ -516,7 +526,8 @@ class BiLSTMTagger(nn.Module):
             len(unlabeled_sentence[0]) * self.batch_size, -1)
         TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(unlabeled_sentence[0]), -1)
 
-        CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use)
+        CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence,
+                                          TagProbs_use , unlabeled_lengths)
 
         unlabeled_region_mark = np.zeros(unlabeled_sentence.size(), dtype='int64')
         for i in range(len(unlabeled_region_mark)):
@@ -577,7 +588,8 @@ class BiLSTMTagger(nn.Module):
 
         ## obtain the teacher probs
         SRLprobs_teacher = F.softmax(tag_space, dim=2).detach()
-        CVT_SRL_Loss = self.Semi_SRL_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher)
+        CVT_SRL_Loss = self.Semi_SRL_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence,
+                                          SRLprobs_teacher, unlabeled_lengths)
 
 
 
