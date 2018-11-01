@@ -254,21 +254,17 @@ class BiLSTMTagger(nn.Module):
 
 
     def mask_probs(self, probs, teacher_probs, lengths):
-        teacher_probs =teacher_probs.detach()
+
         for i in range(probs.size()[0]):
             for j in range(probs.size()[1]):
                 if j >= lengths[i]:
-                    probs[i][j] = teacher_probs[i][j]
-                    probs[i][j].detach()
-
+                    probs[i][j] = teacher_probs[i][j].detach()
 
         return probs
 
     def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher , unlabeled_lengths):
-        log(unlabeled_lengths)
         sample_nums = unlabeled_lengths.sum()
-        log(sample_nums)
-        unlabeled_loss_function = nn.KLDivLoss(size_average=True)
+        unlabeled_loss_function = nn.KLDivLoss(size_average=False)
         SRLprobs_teacher_softmax = F.softmax(SRLprobs_teacher, dim=2)
         hidden_forward = self.hidden_state_dropout(hidden_forward)
         hidden_backward = self.hidden_state_dropout(hidden_backward)
@@ -337,11 +333,12 @@ class BiLSTMTagger(nn.Module):
         SRLprobs_student_BF = F.log_softmax(tag_space, dim=2)
         SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher_softmax )
         CVT_SRL_Loss = SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss
-        return CVT_SRL_Loss
+        return CVT_SRL_Loss/sample_nums
 
     def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2)
-        unlabeled_loss_function = nn.KLDivLoss(size_average=True)
+        sample_nums = unlabeled_lengths.sum()
+        unlabeled_loss_function = nn.KLDivLoss(size_average=False)
         ## Dependency Extractor FF
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
@@ -376,7 +373,7 @@ class BiLSTMTagger(nn.Module):
 
         DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss
 
-        return DEP_Semi_loss
+        return DEP_Semi_loss/sample_nums
 
 
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
