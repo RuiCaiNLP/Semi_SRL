@@ -256,7 +256,7 @@ class BiLSTMTagger(nn.Module):
         for i in range(probs.size()[0]):
             for j in range(probs.size()[1]):
                 if j >= lengths[i]:
-                    probs[i][j].detarch()
+                    probs[i][j].detach()
 
         return probs
 
