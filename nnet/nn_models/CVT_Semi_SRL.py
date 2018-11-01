@@ -265,6 +265,9 @@ class BiLSTMTagger(nn.Module):
         return probs
 
     def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher , unlabeled_lengths):
+        log(unlabeled_lengths)
+        sample_nums = unlabeled_lengths.sum()
+        log(sample_nums)
         unlabeled_loss_function = nn.KLDivLoss(size_average=True)
         SRLprobs_teacher_softmax = F.softmax(SRLprobs_teacher, dim=2)
         hidden_forward = self.hidden_state_dropout(hidden_forward)
