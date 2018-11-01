@@ -252,11 +252,14 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = (added_embeds + predicate_embeds).transpose(0, 1)
         return concat_embeds
 
-    def mask_probs(self, probs, lengths):
+
+    def mask_probs(self, probs, teacher_probs, lengths):
         for i in range(probs.size()[0]):
             for j in range(probs.size()[1]):
                 if j >= lengths[i]:
+                    probs[i][j] = teacher_probs[i][j]
                     probs[i][j].detach()
+
 
         return probs
 
@@ -275,6 +278,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
+        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
         ## obtain the teacher probs
         SRLprobs_student_FF = F.log_softmax(tag_space, dim=2)
         SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher)
@@ -290,7 +294,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
-        tag_space = self.mask_probs(tag_space, lengths=unlabeled_lengths)
+        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
 
         ## obtain the teacher probs
         SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
@@ -307,6 +311,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
+        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
         ## obtain the teacher probs
         SRLprobs_student_FB = F.log_softmax(tag_space, dim=2)
         SRL_FB_loss = unlabeled_loss_function(SRLprobs_student_FB, SRLprobs_teacher)
@@ -322,6 +327,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
+        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
         ## obtain the teacher probs
         SRLprobs_student_BF = F.log_softmax(tag_space, dim=2)
         SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher)
@@ -335,6 +341,7 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
         dep_tag_space = self.MLP_FF_2(self.label_dropout_2(F.relu(self.MLP_FF(FFF))))
+        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
@@ -342,6 +349,7 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         FFF = torch.cat((hidden_backward, concat_embeds), 2)
         dep_tag_space = self.MLP_BB_2(self.label_dropout_2(F.relu(self.MLP_BB(FFF))))
+        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
@@ -349,6 +357,7 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
         dep_tag_space = self.MLP_FB_2(self.label_dropout_2(F.relu(self.MLP_FB(FFF))))
+        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
@@ -356,6 +365,7 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_backward, concat_embeds), 2)
         dep_tag_space = self.MLP_BF_2(self.label_dropout_2(F.relu(self.MLP_BF(FFF))))
+        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use)
 
