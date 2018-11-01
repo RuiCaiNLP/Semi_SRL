@@ -186,9 +186,9 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("SPEDEPloss")
                 log(SPEDEPloss)
                 log("semi SRL loss")
-                #log(CVT_SRL_Loss)
+                log(CVT_SRL_Loss)
                 log("semi DEP loss")
-                #log(CVT_DEP_Loss)
+                log(CVT_DEP_Loss)
 
 
             if idx % dbg_print_rate == 0:
