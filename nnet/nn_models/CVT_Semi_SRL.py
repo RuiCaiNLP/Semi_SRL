@@ -253,18 +253,18 @@ class BiLSTMTagger(nn.Module):
         return concat_embeds
 
 
-    def mask_probs(self, probs, teacher_probs, lengths):
+    def mask_loss(self, Semi_loss, lengths):
 
-        for i in range(probs.size()[0]):
-            for j in range(probs.size()[1]):
+        for i in range(Semi_loss.size()[0]):
+            for j in range(Semi_loss.size()[1]):
                 if j >= lengths[i]:
-                    probs[i][j] = teacher_probs[i][j].detach()
+                    Semi_loss[i][j] = 0 * Semi_loss[i][j]
 
-        return probs
+        return Semi_loss
 
     def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher , unlabeled_lengths):
         sample_nums = unlabeled_lengths.sum()
-        unlabeled_loss_function = nn.KLDivLoss(size_average=False)
+        unlabeled_loss_function = nn.KLDivLoss(reduce=False)
         SRLprobs_teacher_softmax = F.softmax(SRLprobs_teacher, dim=2)
         hidden_forward = self.hidden_state_dropout(hidden_forward)
         hidden_backward = self.hidden_state_dropout(hidden_backward)
@@ -279,8 +279,6 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
-        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
-        ## obtain the teacher probs
         SRLprobs_student_FF = F.log_softmax(tag_space, dim=2)
         SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher_softmax )
 
@@ -295,9 +293,6 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
-        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
-
-        ## obtain the teacher probs
         SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
         SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher_softmax )
 
@@ -312,8 +307,6 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
-        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
-        ## obtain the teacher probs
         SRLprobs_student_FB = F.log_softmax(tag_space, dim=2)
         SRL_FB_loss = unlabeled_loss_function(SRLprobs_student_FB, SRLprobs_teacher_softmax )
 
@@ -328,11 +321,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
-        tag_space = self.mask_probs(tag_space, SRLprobs_teacher, lengths=unlabeled_lengths)
-        ## obtain the teacher probs
         SRLprobs_student_BF = F.log_softmax(tag_space, dim=2)
-        SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher_softmax )
-        CVT_SRL_Loss = SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss
+        SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher_softmax)
+        CVT_SRL_Loss = self.mask_loss(SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss, unlabeled_lengths)
+        CVT_SRL_Loss = torch.sum(CVT_SRL_Loss)
         return CVT_SRL_Loss/sample_nums
 
     def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
@@ -343,7 +335,6 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
         dep_tag_space = self.MLP_FF_2(self.label_dropout_2(F.relu(self.MLP_FF(FFF))))
-        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -351,7 +342,6 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         FFF = torch.cat((hidden_backward, concat_embeds), 2)
         dep_tag_space = self.MLP_BB_2(self.label_dropout_2(F.relu(self.MLP_BB(FFF))))
-        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -359,7 +349,6 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         FFF = torch.cat((hidden_forward, concat_embeds), 2)
         dep_tag_space = self.MLP_FB_2(self.label_dropout_2(F.relu(self.MLP_FB(FFF))))
-        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -367,12 +356,11 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         FFF = torch.cat((hidden_backward, concat_embeds), 2)
         dep_tag_space = self.MLP_BF_2(self.label_dropout_2(F.relu(self.MLP_BF(FFF))))
-        dep_tag_space = self.mask_probs(dep_tag_space, TagProbs_use, lengths=unlabeled_lengths)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
-        DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss
-
+        DEP_Semi_loss = self.mask_loss(DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss)
+        DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         return DEP_Semi_loss/sample_nums
 
 
