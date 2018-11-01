@@ -458,7 +458,7 @@ class BiLSTMTagger(nn.Module):
         CVT_SRL_Loss = self.Semi_SRL_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence,
                                           SRLprobs_teacher, unlabeled_lengths)
 
-        return CVT_SRL_Loss + CVT_DEP_Loss
+        return CVT_SRL_Loss , CVT_DEP_Loss
 
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
@@ -467,8 +467,8 @@ class BiLSTMTagger(nn.Module):
                 unlabeled_sentence=None, p_unlabeled_sentence=None, unlabeled_lengths=None, test=False, cvt_train=False):
 
         if cvt_train:
-            Loss_CVT = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_lengths)
-            return Loss_CVT
+            CVT_SRL_Loss, CVT_DEP_Loss = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_lengths)
+            return CVT_SRL_Loss , CVT_DEP_Loss
 
         hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(sentence, p_sentence, lengths)
 

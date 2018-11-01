@@ -157,13 +157,14 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
-            Loss_CVT = model(sentence_in, p_sentence_in,
+            CVT_SRL_Loss, CVT_DEP_Loss= model(sentence_in, p_sentence_in,
                         pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
                         targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in,
                         Predicate_Labels_in, unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths,
                         test=False, cvt_train=True)
+            Loss_CVT = CVT_SRL_Loss + CVT_DEP_Loss
             Loss_CVT.backward()
             optimizer.step()
 
