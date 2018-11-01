@@ -254,6 +254,7 @@ class BiLSTMTagger(nn.Module):
 
 
     def mask_probs(self, probs, teacher_probs, lengths):
+        teacher_probs =teacher_probs.detach()
         for i in range(probs.size()[0]):
             for j in range(probs.size()[1]):
                 if j >= lengths[i]:
