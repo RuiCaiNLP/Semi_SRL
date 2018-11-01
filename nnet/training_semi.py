@@ -153,8 +153,13 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             L_sup = SRLloss + DEPloss + SPEDEPloss
             L_sup.backward()
             optimizer.step()
+            model.hidden = model.init_hidden_spe()
+            # model.hidden_0 = model.init_hidden_spe()
+            model.hidden_2 = model.init_hidden_spe()
+            model.hidden_3 = model.init_hidden_spe()
+            model.hidden_4 = model.init_hidden_share()
 
-            """
+
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
@@ -168,7 +173,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Loss_CVT = CVT_SRL_Loss + CVT_DEP_Loss
             Loss_CVT.backward()
             optimizer.step()
-            """
+
 
 
             if idx % 100 == 0:
