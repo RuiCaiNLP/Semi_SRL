@@ -70,6 +70,9 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_sentence = unlabeled_model_input[0]
             p_unlabeled_sentence = unlabeled_model_input[1]
             unlabeled_sen_lengths = unlabeled_model_input[2].sum(axis=1)
+            log(unlabeled_sentence)
+            log(p_unlabeled_sentence)
+            log(unlabeled_sen_lengths)
 
             unlabeled_sentence_in = torch.from_numpy(unlabeled_sentence).to(device)
             p_unlabeled_sentence_in = torch.from_numpy(p_unlabeled_sentence).to(device)
@@ -153,16 +156,17 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             L_sup = SRLloss + DEPloss + SPEDEPloss
             L_sup.backward()
             optimizer.step()
-            model.hidden = model.init_hidden_spe()
-            # model.hidden_0 = model.init_hidden_spe()
-            model.hidden_2 = model.init_hidden_spe()
-            model.hidden_3 = model.init_hidden_spe()
-            model.hidden_4 = model.init_hidden_share()
+
 
 
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
+            model.hidden = model.init_hidden_spe()
+            # model.hidden_0 = model.init_hidden_spe()
+            model.hidden_2 = model.init_hidden_spe()
+            model.hidden_3 = model.init_hidden_spe()
+            model.hidden_4 = model.init_hidden_share()
             CVT_SRL_Loss, CVT_DEP_Loss= model(sentence_in, p_sentence_in,
                         pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
