@@ -377,9 +377,9 @@ class BiLSTMTagger(nn.Module):
         hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(unlabeled_sentence, p_unlabeled_sentence,
                                                                             unlabeled_lengths)
 
-        hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
         hidden_states_0 = self.DEP_hidden_dropout(hidden_states_0)
         hidden_states_1 = self.DEP_hidden_dropout(hidden_states_1)
+        hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
 
         ## perform primary predicate identification
 
