@@ -432,13 +432,8 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
 
-        W = (self.W_R + self.W_share).transpose(0, 1).contiguous().view(self.hidden_dim, -1)
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
-                             W)
-        left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            self.batch_size, len(unlabeled_sentence[0]), -1)
+        tag_space = self.W_R(hidden_states_word, hidden_states_predicate).view(
+            len(sentence[0]) * self.batch_size, -1)
 
         ## obtain the teacher probs
         SRLprobs_teacher = tag_space.detach()
