@@ -55,12 +55,8 @@ class BiLSTMTagger(nn.Module):
 
         self.SRL_input_dropout = nn.Dropout(p=0.3)
         self.DEP_input_dropout = nn.Dropout(p=0.3)
-        self.hidden_state_dropout = nn.Dropout(p=0.3)
-        self.label_dropout_1 = nn.Dropout(p=0.3)
-        self.label_dropout_2 = nn.Dropout(p=0.3)
-        self.label_dropout_3 = nn.Dropout(p=0.3)
-        self.label_dropout_4 = nn.Dropout(p=0.3)
-        self.id_dropout = nn.Dropout(p=0.3)
+        self.SRL_hidden_dropout = nn.Dropout(p=0.3)
+        self.DEP_hidden_dropout = nn.Dropout(p=0.3)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
@@ -114,10 +110,8 @@ class BiLSTMTagger(nn.Module):
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
-        self.Head_Proj = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
         self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
         self.W_share = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
-        self.Dep_Proj = nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim)
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
         self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
@@ -152,21 +146,29 @@ class BiLSTMTagger(nn.Module):
         self.hidden2tag_2 = nn.Linear(4 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP_1 = nn.Linear(4 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP_2 = nn.Linear(2 * lstm_hidden_dim, self.specific_dep_size)
-        self.tag2hidden = nn.Linear(self.specific_dep_size, self.pos_size)
+        self.tag2hidden = nn.Linear(self.specific_dep_size, self.pos_size, bias=False)
 
         # Dependency extractor: auxiliary FF
+        self.hidden2tag_1_FF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.hidden2tag_2_FF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
         self.MLP_FF = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP_FF_2 = nn.Linear(2 * lstm_hidden_dim, self.specific_dep_size)
 
         # Dependency extractor: auxiliary BB
+        self.hidden2tag_1_BB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.hidden2tag_2_BB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
         self.MLP_BB = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP_BB_2 = nn.Linear(2 * lstm_hidden_dim, self.specific_dep_size)
 
         # Dependency extractor: auxiliary FB
+        self.hidden2tag_1_FB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.hidden2tag_2_FB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
         self.MLP_FB = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP_FB_2 = nn.Linear(2 * lstm_hidden_dim, self.specific_dep_size)
 
         # Dependency extractor: auxiliary BF
+        self.hidden2tag_1_BF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.hidden2tag_2_BF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
         self.MLP_BF = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP_BF_2 = nn.Linear(2 * lstm_hidden_dim, self.specific_dep_size)
 
@@ -266,28 +268,24 @@ class BiLSTMTagger(nn.Module):
     def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, SRLprobs_teacher, unlabeled_lengths):
         sample_nums = unlabeled_lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
-        SRLprobs_teacher_softmax = F.softmax(SRLprobs_teacher, dim=2)
-        hidden_forward = self.hidden_state_dropout(hidden_forward)
-        hidden_backward = self.hidden_state_dropout(hidden_backward)
+        SRLprobs_teacher_softmax = F.softmax(SRLprobs_teacher, dim=2).detach()
+
         ## perform FF SRL
         hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_forward))
         predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_FF(predicate_embeds))
-
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
                              self.W_R_FF + self.W_share_FF)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            self.batch_size, len(unlabeled_sentence[0]), -1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(self.batch_size, len(unlabeled_sentence[0]), -1)
         SRLprobs_student_FF = F.log_softmax(tag_space, dim=2)
-        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher_softmax )
+        SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher_softmax)
 
         ## perform BB SRL
-        hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_backward))
+        hidden_states_word = F.relu(self.Non_Predicate_Proj_BB(hidden_backward))
         predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_BB(predicate_embeds))
-
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
                              self.W_R_BB + self.W_share_BB)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
@@ -295,13 +293,12 @@ class BiLSTMTagger(nn.Module):
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
         SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
-        SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher_softmax )
+        SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher_softmax)
 
         ## perform FB SRL
         hidden_states_word = F.relu(self.Non_Predicate_Proj_FB(hidden_forward))
         predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_FB(predicate_embeds))
-
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
                              self.W_R_FB + self.W_share_FB)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
@@ -309,7 +306,7 @@ class BiLSTMTagger(nn.Module):
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
         SRLprobs_student_FB = F.log_softmax(tag_space, dim=2)
-        SRL_FB_loss = unlabeled_loss_function(SRLprobs_student_FB, SRLprobs_teacher_softmax )
+        SRL_FB_loss = unlabeled_loss_function(SRLprobs_student_FB, SRLprobs_teacher_softmax)
 
         ## perform BF SRL
         hidden_states_word = F.relu(self.Non_Predicate_Proj_BF(hidden_backward))
@@ -324,39 +321,48 @@ class BiLSTMTagger(nn.Module):
             self.batch_size, len(unlabeled_sentence[0]), -1)
         SRLprobs_student_BF = F.log_softmax(tag_space, dim=2)
         SRL_BF_loss = unlabeled_loss_function(SRLprobs_student_BF, SRLprobs_teacher_softmax)
+
         CVT_SRL_Loss = self.mask_loss(SRL_FF_loss + SRL_BB_loss + SRL_FB_loss + SRL_BF_loss, unlabeled_lengths)
         CVT_SRL_Loss = torch.sum(CVT_SRL_Loss)
         return CVT_SRL_Loss/sample_nums
 
     def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
-        TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2)
+        TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
         sample_nums = unlabeled_lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
         ## Dependency Extractor FF
         concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
-        FFF = torch.cat((hidden_forward, concat_embeds), 2)
-        dep_tag_space = self.MLP_FF_2(self.label_dropout_2(F.relu(self.MLP_FF(FFF))))
+        word_hiddens = F.relu(self.hidden2tag_1_FF(hidden_forward))
+        predicate_hiddens = F.relu(self.hidden2tag_2_FF(concat_embeds))
+        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
+        dep_tag_space = self.MLP_FF_2(F.relu(self.MLP_FF(FFF)))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BB
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        FFF = torch.cat((hidden_backward, concat_embeds), 2)
-        dep_tag_space = self.MLP_BB_2(self.label_dropout_2(F.relu(self.MLP_BB(FFF))))
+        word_hiddens = F.relu(self.hidden2tag_1_BB(hidden_backward))
+        predicate_hiddens = F.relu(self.hidden2tag_2_BB(concat_embeds))
+        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
+        dep_tag_space = self.MLP_BB_2(F.relu(self.MLP_BB(FFF)))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor FB
         concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        FFF = torch.cat((hidden_forward, concat_embeds), 2)
-        dep_tag_space = self.MLP_FB_2(self.label_dropout_2(F.relu(self.MLP_FB(FFF))))
+        word_hiddens = F.relu(self.hidden2tag_1_FB(hidden_forward))
+        predicate_hiddens = F.relu(self.hidden2tag_2_FB(concat_embeds))
+        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
+        dep_tag_space = self.MLP_FB_2(F.relu(self.MLP_FB(FFF)))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BF
-        concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
-        FFF = torch.cat((hidden_backward, concat_embeds), 2)
-        dep_tag_space = self.MLP_BF_2(self.label_dropout_2(F.relu(self.MLP_BF(FFF))))
+        concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
+        word_hiddens = F.relu(self.hidden2tag_1_BF(hidden_forward))
+        predicate_hiddens = F.relu(self.hidden2tag_2_BF(concat_embeds))
+        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
+        dep_tag_space = self.MLP_BF_2(F.relu(self.MLP_BF(FFF)))
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -372,14 +378,14 @@ class BiLSTMTagger(nn.Module):
                                                                             unlabeled_lengths)
 
         hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
+        hidden_states_0 = self.DEP_hidden_dropout(hidden_states_0)
+        hidden_states_1 = self.DEP_hidden_dropout(hidden_states_1)
 
         ## perform primary predicate identification
 
         Hidden_states_forID = torch.cat((hidden_states_0, hidden_states_1), 2)
-        Predicate_identification = self.Idenficiation(
-            self.label_dropout_1(F.relu(self.MLP_identification(Hidden_states_forID))))
-        Predicate_identification_space = Predicate_identification.view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(Hidden_states_forID)))
+        Predicate_identification_space = Predicate_identification.view(len(unlabeled_sentence[0]) * self.batch_size, -1)
         Predicate_probs = Predicate_identification_space[:, 2].view(self.batch_size, len(unlabeled_sentence[0]))
         Predicate_idx_batch = np.argmax(Predicate_probs.cpu().data.numpy(), axis=1)
         # for i in range(len(Predicate_idx_batch)):
@@ -392,10 +398,8 @@ class BiLSTMTagger(nn.Module):
         Word_hidden = F.relu(self.hidden2tag_1(torch.cat((hidden_states_0, hidden_states_1), 2)))
         Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
         FFF = torch.cat((Word_hidden, Predicate_hidden), 2)
-        dep_tag_space = self.MLP_2(self.label_dropout_2(F.relu(self.MLP_1(FFF)))).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        dep_tag_space = self.MLP_2(F.relu(self.MLP_1(FFF))).view(len(unlabeled_sentence[0]) * self.batch_size, -1)
         TagProbs_use = dep_tag_space.view(self.batch_size, len(unlabeled_sentence[0]), -1).detach()
-
         CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence,
                                           TagProbs_use, unlabeled_lengths)
 
@@ -416,7 +420,7 @@ class BiLSTMTagger(nn.Module):
 
         w = F.softmax(self.elmo_w, dim=0)
         SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
-        SRL_composer = F.relu(self.elmo_mlp(SRL_composer))
+        SRL_composer = self.elmo_mlp(SRL_composer)
 
         fixed_embeds = self.word_fixed_embeddings_SRL(p_unlabeled_sentence)
         fixed_embeds = fixed_embeds.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
@@ -439,7 +443,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states = hidden_states[unsort_idx]
-        hidden_states = self.hidden_state_dropout(hidden_states)
+        hidden_states = self.SRL_hidden_dropout(hidden_states)
 
         # B * H
         hidden_states_3 = hidden_states
@@ -472,6 +476,8 @@ class BiLSTMTagger(nn.Module):
             return CVT_SRL_Loss , CVT_DEP_Loss
 
         hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(sentence, p_sentence, lengths)
+        hidden_states_0 = self.DEP_hidden_dropout(hidden_states_0)
+        hidden_states_1 = self.DEP_hidden_dropout(hidden_states_1)
 
         # predicate identification
         Hidden_states_forID = torch.cat((hidden_states_0, hidden_states_1), 2)
@@ -487,7 +493,7 @@ class BiLSTMTagger(nn.Module):
         Word_hidden = F.relu(self.hidden2tag_1(torch.cat((hidden_states_0, hidden_states_1), 2)))
         Predicate_hidden = F.relu(self.hidden2tag_2(torch.cat((concat_embeds_0, concat_embeds_1), 2)))
         FFF = torch.cat((Word_hidden, Predicate_hidden), 2)
-        dep_tag_space = self.MLP_2(self.label_dropout_2(F.relu(self.MLP_1(FFF)))).view(
+        dep_tag_space = self.MLP_2(F.relu(self.MLP_1(FFF))).view(
             len(sentence[0]) * self.batch_size, -1)
         TagProbs_use = F.softmax(dep_tag_space, dim=1).view(self.batch_size, len(sentence[0]), -1)
 
@@ -527,7 +533,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states = hidden_states[unsort_idx]
-        hidden_states = self.hidden_state_dropout(hidden_states)
+        hidden_states = self.SRL_hidden_dropout(hidden_states)
 
         # B * H
         hidden_states_3 = hidden_states
