@@ -70,6 +70,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_sentence = unlabeled_model_input[0]
             p_unlabeled_sentence = unlabeled_model_input[1]
             unlabeled_sen_lengths = unlabeled_model_input[2].sum(axis=1)
+            log(sentence_in)
             log(unlabeled_sentence)
             log(p_unlabeled_sentence)
             log(unlabeled_sen_lengths)
