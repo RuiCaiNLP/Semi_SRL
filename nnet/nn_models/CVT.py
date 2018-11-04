@@ -270,8 +270,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_forward))
         predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_FF(predicate_embeds))
-
-        tag_space = self.W_R(hidden_states_word, hidden_states_predicate)
+        tag_space = self.W_R_FF(hidden_states_word, hidden_states_predicate)
         SRLprobs_student_FF = F.log_softmax(tag_space, dim=2)
         SRL_FF_loss = unlabeled_loss_function(SRLprobs_student_FF, SRLprobs_teacher_softmax)
 
@@ -279,8 +278,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_word = F.relu(self.Non_Predicate_Proj_BB(hidden_backward))
         predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_BB(predicate_embeds))
-
-        tag_space = self.W_R_FF(hidden_states_word, hidden_states_predicate).view(
+        tag_space = self.W_R_BB(hidden_states_word, hidden_states_predicate).view(
             self.batch_size, len(unlabeled_sentence[0]), -1)
         SRLprobs_student_BB = F.log_softmax(tag_space, dim=2)
         SRL_BB_loss = unlabeled_loss_function(SRLprobs_student_BB, SRLprobs_teacher_softmax)
