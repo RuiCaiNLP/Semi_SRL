@@ -409,14 +409,14 @@ class BiLSTMTagger(nn.Module):
         ## perform primary SRL
 
         TagProbs_noGrad = TagProbs_use.detach()
-        h1 = F.tanh(self.tag2hidden(TagProbs_noGrad))
+        h1 = self.tag2hidden(TagProbs_noGrad)
 
         h_layer_0 = hidden_states_0
         h_layer_1 = hidden_states_1
 
         w = F.softmax(self.elmo_w, dim=0)
         SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
-        SRL_composer = self.elmo_mlp(SRL_composer)
+        SRL_composer = F.relu(self.elmo_mlp(SRL_composer))
 
         fixed_embeds = self.word_fixed_embeddings_SRL(p_unlabeled_sentence)
         fixed_embeds = fixed_embeds.view(self.batch_size, len(unlabeled_sentence[0]), self.word_emb_dim)
@@ -495,7 +495,7 @@ class BiLSTMTagger(nn.Module):
         # SRL module
         # construct SRL input
         TagProbs_noGrad = TagProbs_use.detach()
-        h1 = F.tanh(self.tag2hidden(TagProbs_noGrad))
+        h1 = self.tag2hidden(TagProbs_noGrad)
 
         h_layer_0 = hidden_states_0
         h_layer_1 = hidden_states_1

@@ -5,7 +5,7 @@ python -mnnet.run.srl.run \
 --test conll2009_batch.dev.dep_l \
 --unlabeled 1BilionBenchMark_batch \
 --data_partition dev \
---batch 30 \
+--batch 3 \
 --freq-voc freq.voc_unk.conll2009 \
 --word-voc words.voc.conll2009 \
 --p-word-voc p.words.voc_sskip.conll2009 \
