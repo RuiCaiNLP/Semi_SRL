@@ -110,8 +110,8 @@ class BiLSTMTagger(nn.Module):
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
-        self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
-        self.W_share = nn.Parameter(torch.rand(lstm_hidden_dim, self.tagset_size * lstm_hidden_dim))
+        self.W_R = nn.Parameter(torch.rand(self.tagset_size, lstm_hidden_dim, lstm_hidden_dim))
+        self.W_share = nn.Parameter(torch.rand(lstm_hidden_dim, lstm_hidden_dim))
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
         self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
@@ -451,8 +451,9 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = self.find_predicate_embeds(hidden_states_3, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
 
+        W = (self.W.R + self.W_share).transpose(0, 1).view(self.hidden_dim, -1)
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1),
-                             self.W_R + self.W_share)
+                             W)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
