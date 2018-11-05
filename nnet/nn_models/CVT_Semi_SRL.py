@@ -501,7 +501,7 @@ class BiLSTMTagger(nn.Module):
         # SRL module
         # construct SRL input
         TagProbs_noGrad = TagProbs_use.detach()
-        h1 = self.tag2hidden(TagProbs_noGrad)
+        h1 = F.tanh(self.tag2hidden(TagProbs_noGrad))
 
         h_layer_0 = hidden_states_0
         h_layer_1 = hidden_states_1
