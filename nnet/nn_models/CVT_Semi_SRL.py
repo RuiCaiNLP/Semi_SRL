@@ -53,10 +53,10 @@ class BiLSTMTagger(nn.Module):
         self.word_emb_dim = hps['sent_edim']
         self.specific_dep_size = hps['svdep']
 
-        self.SRL_input_dropout = nn.Dropout(p=0.3)
-        self.DEP_input_dropout = nn.Dropout(p=0.3)
-        self.SRL_hidden_dropout = nn.Dropout(p=0.3)
-        self.DEP_hidden_dropout = nn.Dropout(p=0.3)
+        self.SRL_input_dropout = nn.Dropout(p=0.5)
+        self.DEP_input_dropout = nn.Dropout(p=0.5)
+        self.SRL_hidden_dropout = nn.Dropout(p=0.5)
+        self.DEP_hidden_dropout = nn.Dropout(p=0.5)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
