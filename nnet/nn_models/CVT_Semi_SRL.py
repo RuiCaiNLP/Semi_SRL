@@ -404,7 +404,7 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
 
-        log(Predicate_idx_batch)
+        #log(Predicate_idx_batch)
 
         # primary dependency extractor
         concat_embeds_0 = self.find_predicate_embeds(hidden_states_0, Predicate_idx_batch)
