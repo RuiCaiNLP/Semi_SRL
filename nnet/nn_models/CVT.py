@@ -365,7 +365,24 @@ class BiLSTMTagger(nn.Module):
         Hidden_states_forID = torch.cat((hidden_states_0, hidden_states_1), 2)
         Predicate_identification = self.Idenficiation(F.relu(self.MLP_identification(Hidden_states_forID)))
         Predicate_identification_space = Predicate_identification.view(len(unlabeled_sentence[0]) * self.batch_size, -1)
-        Predicate_probs = Predicate_identification_space[:, 2].view(self.batch_size, len(unlabeled_sentence[0]))
+        Predicate_identification_space = F.softmax(Predicate_identification_space, dim=1)
+        Predicate_probs = Predicate_identification_space.view(self.batch_size, len(unlabeled_sentence[0]), -1).cpu().data.numpy()
+        Predicate_idx_batch = [0] * self.batch_size
+        for i in range(len(batch_size)):
+            candidate_set = []
+            for j in range(len(unlabeled_sentence[0])):
+                if j >= unlabeled_lengths[i]:
+                    break
+                if Predicate_probs[i][j][2] > Predicate_probs[i][j][1]:
+                    candidate_set.append(j)
+            if len(candidate_set) > 0:
+                index = random.sample(candidate_set, 1)
+                Predicate_idx_batch[i] = index[0]
+
+        log(Predicate_idx_batch)
+
+
+
         Predicate_idx_batch = np.argmax(Predicate_probs.cpu().data.numpy(), axis=1)
         # for i in range(len(Predicate_idx_batch)):
         #    log(unlabeled_sentence[i][Predicate_idx_batch[i]])
