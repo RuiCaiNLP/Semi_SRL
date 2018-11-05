@@ -120,26 +120,22 @@ class BiLSTMTagger(nn.Module):
         ## SRL: auxiliary prediction: fwd-fwd
         self.Non_Predicate_Proj_FF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
         self.Predicate_Proj_FF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
-        self.W_R_FF = nn.Parameter(torch.rand(self.tagset_size , self.cvt_hidden_dim,  self.cvt_hidden_dim))
-        self.W_share_FF = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.cvt_hidden_dim))
+        self.W_R_FF = nn.Parameter(torch.rand(self.cvt_hidden_dim + 1, self.tagset_size * self.cvt_hidden_dim))
 
         ## SRL: auxiliary prediction: bwd-bwd
         self.Non_Predicate_Proj_BB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
         self.Predicate_Proj_BB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
-        self.W_R_BB = nn.Parameter(torch.rand(self.tagset_size , self.cvt_hidden_dim,  self.cvt_hidden_dim))
-        self.W_share_BB = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.cvt_hidden_dim))
+        self.W_R_BB = nn.Parameter(torch.rand(self.cvt_hidden_dim + 1, self.tagset_size * self.cvt_hidden_dim))
 
         ## SRL: auxiliary prediction: fwd-bwd
         self.Non_Predicate_Proj_FB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
         self.Predicate_Proj_FB = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
-        self.W_R_FB = nn.Parameter(torch.rand(self.tagset_size , self.cvt_hidden_dim,  self.cvt_hidden_dim))
-        self.W_share_FB = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.cvt_hidden_dim))
+        self.W_R_FB = nn.Parameter(torch.rand(self.cvt_hidden_dim + 1, self.tagset_size * self.cvt_hidden_dim))
 
         ## SRL: auxiliary prediction: bwd-fwd
         self.Non_Predicate_Proj_BF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
         self.Predicate_Proj_BF = nn.Linear(lstm_hidden_dim, self.cvt_hidden_dim)
-        self.W_R_BF = nn.Parameter(torch.rand(self.tagset_size , self.cvt_hidden_dim,  self.cvt_hidden_dim))
-        self.W_share_BF = nn.Parameter(torch.rand(self.cvt_hidden_dim, self.cvt_hidden_dim))
+        self.W_R_BF = nn.Parameter(torch.rand(self.cvt_hidden_dim + 1, self.tagset_size * self.cvt_hidden_dim))
 
         # Dependency extractor: primary preidition
         self.hidden2tag_1 = nn.Linear(4 * lstm_hidden_dim, 2 * lstm_hidden_dim)
@@ -274,8 +270,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states_word = F.relu(self.Non_Predicate_Proj_FF(hidden_forward))
         predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_FF(predicate_embeds))
-        W = (self.W_R_FF + self.W_share_FF).transpose(0, 1).contiguous().view(self.cvt_hidden_dim, -1)
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), W)
+        bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
+        bias_one = torch.from_numpy(bias_one).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FF)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(self.batch_size, len(unlabeled_sentence[0]), -1)
@@ -286,8 +284,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states_word = F.relu(self.Non_Predicate_Proj_BB(hidden_backward))
         predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_BB(predicate_embeds))
-        W = (self.W_R_BB + self.W_share_BB).transpose(0, 1).contiguous().view(self.cvt_hidden_dim, -1)
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), W)
+        bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
+        bias_one = torch.from_numpy(bias_one).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BB)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
@@ -299,8 +299,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states_word = F.relu(self.Non_Predicate_Proj_FB(hidden_forward))
         predicate_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_FB(predicate_embeds))
-        W = (self.W_R_FB + self.W_share_FB).transpose(0, 1).contiguous().view(self.cvt_hidden_dim, -1)
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), W)
+        bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
+        bias_one = torch.from_numpy(bias_one).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FB)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
@@ -312,8 +314,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states_word = F.relu(self.Non_Predicate_Proj_BF(hidden_backward))
         predicate_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
         hidden_states_predicate = F.relu(self.Predicate_Proj_BF(predicate_embeds))
-        W = (self.W_R_BF + self.W_share_BF).transpose(0, 1).contiguous().view(self.cvt_hidden_dim, -1)
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), W)
+        bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
+        bias_one = torch.from_numpy(bias_one).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BF)
         left_part = left_part.view(self.batch_size * len(unlabeled_sentence[0]), self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(unlabeled_sentence[0]), -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(

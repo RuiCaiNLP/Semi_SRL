@@ -158,8 +158,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             L_sup.backward()
             optimizer.step()
 
-
-            """
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
@@ -178,7 +176,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Loss_CVT = CVT_SRL_Loss + CVT_DEP_Loss
             Loss_CVT.backward()
             optimizer.step()
-            """
+
 
 
             if idx % 100 == 0:
