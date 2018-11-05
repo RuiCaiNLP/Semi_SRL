@@ -393,7 +393,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_probs = Predicate_identification_space.view(self.batch_size, len(unlabeled_sentence[0]),
                                                               -1).cpu().data.numpy()
         Predicate_idx_batch = [0] * self.batch_size
-        for i in range(len(batch_size)):
+        for i in range(len(self.batch_size)):
             candidate_set = []
             for j in range(len(unlabeled_sentence[0])):
                 if j >= unlabeled_lengths[i]:
