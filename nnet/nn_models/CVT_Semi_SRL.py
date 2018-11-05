@@ -53,10 +53,10 @@ class BiLSTMTagger(nn.Module):
         self.word_emb_dim = hps['sent_edim']
         self.specific_dep_size = hps['svdep']
 
-        self.SRL_input_dropout = nn.Dropout(p=0.5)
-        self.DEP_input_dropout = nn.Dropout(p=0.5)
-        self.SRL_hidden_dropout = nn.Dropout(p=0.5)
-        self.DEP_hidden_dropout = nn.Dropout(p=0.5)
+        self.SRL_input_dropout = nn.Dropout(p=0.3)
+        self.DEP_input_dropout = nn.Dropout(p=0.3)
+        self.SRL_hidden_dropout = nn.Dropout(p=0.3)
+        self.DEP_hidden_dropout = nn.Dropout(p=0.3)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
@@ -542,7 +542,7 @@ class BiLSTMTagger(nn.Module):
 
 
         bias_one = np.ones((self.batch_size, len(sentence[0]), 1))
-        bias_one = torch.from_numpy(bias_one).to_device
+        bias_one = torch.from_numpy(bias_one).to_device()
         hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
         left_part = left_part.view(self.batch_size * len(sentence[0]), self.tagset_size, -1)
