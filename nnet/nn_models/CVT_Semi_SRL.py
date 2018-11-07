@@ -56,7 +56,8 @@ class BiLSTMTagger(nn.Module):
         self.SRL_input_dropout = nn.Dropout(p=0.3)
         self.DEP_input_dropout = nn.Dropout(p=0.3)
         self.SRL_hidden_dropout = nn.Dropout(p=0.3)
-        self.DEP_hidden_dropout = nn.Dropout(p=0.3)
+        self.DEP_hidden_dropout_1 = nn.Dropout(p=0.3)
+        self.DEP_hidden_dropout_2 = nn.Dropout(p=0.3)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
@@ -380,8 +381,8 @@ class BiLSTMTagger(nn.Module):
         hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(unlabeled_sentence, p_unlabeled_sentence,
                                                                             unlabeled_lengths)
 
-        hidden_states_0 = self.DEP_hidden_dropout(hidden_states_0)
-        hidden_states_1 = self.DEP_hidden_dropout(hidden_states_1)
+        hidden_states_0 = self.DEP_hidden_dropout_1(hidden_states_0)
+        hidden_states_1 = self.DEP_hidden_dropout_2(hidden_states_1)
         hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
 
         ## perform primary predicate identification
@@ -494,8 +495,8 @@ class BiLSTMTagger(nn.Module):
             return CVT_SRL_Loss , CVT_DEP_Loss
 
         hidden_states_0, hidden_states_1 = self.shared_BilSTMEncoder_foward(sentence, p_sentence, lengths)
-        hidden_states_0 = self.DEP_hidden_dropout(hidden_states_0)
-        hidden_states_1 = self.DEP_hidden_dropout(hidden_states_1)
+        hidden_states_0 = self.DEP_hidden_dropout_1(hidden_states_0)
+        hidden_states_1 = self.DEP_hidden_dropout_2(hidden_states_1)
 
         # predicate identification
         Hidden_states_forID = torch.cat((hidden_states_0, hidden_states_1), 2)
