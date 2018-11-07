@@ -115,6 +115,7 @@ class Runner(object):
 
         log('dataset loaded!')
 
+        """
         if not a.test_model:
             train_semi(
                 model=model,
@@ -124,6 +125,17 @@ class Runner(object):
                 epochs=a.epochs,
                 converter=self.get_converter(),
                 unlabeled_converter=self.get_unlabeled_converter(),
+                dbg_print_rate=a.dbg_print_rate,
+                params_path=a.params_path
+            )
+            """
+        if not a.test_model:
+            train_semi(
+                model=model,
+                train_set=train_set,
+                dev_set=test_set,
+                epochs=a.epochs,
+                converter=self.get_converter(),
                 dbg_print_rate=a.dbg_print_rate,
                 params_path=a.params_path
             )
