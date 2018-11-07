@@ -555,7 +555,7 @@ class BiLSTMTagger(nn.Module):
         # B * H
         hidden_states_3 = hidden_states
         hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
-        predicate_embeds = hidden_states_3[np.arange(0, Label_composer.size()[0]), target_idx_in]
+        predicate_embeds = hidden_states_3[np.arange(0, hidden_states_3.size()[0]), target_idx_in]
         hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
 
         bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
