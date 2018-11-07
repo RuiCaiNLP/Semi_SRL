@@ -130,7 +130,7 @@ class Runner(object):
             )
             """
         if not a.test_model:
-            train_semi(
+            train(
                 model=model,
                 train_set=train_set,
                 dev_set=test_set,
