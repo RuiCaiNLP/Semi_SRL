@@ -146,7 +146,8 @@ class BiLSTMTagger(nn.Module):
         # Dependency extractor: primary preidition
         self.hidden2tag_1 = nn.Linear(4 * lstm_hidden_dim,  lstm_hidden_dim)
         self.hidden2tag_2 = nn.Linear(4 * lstm_hidden_dim,  lstm_hidden_dim)
-        self.W_dep = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size * lstm_hidden_dim))
+        self.W_dep = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
+        self.tag2hidden = nn.Linear(self.dep_size, self.pos_size, bias=False)
 
         # Dependency extractor: auxiliary FF
         self.hidden2tag_1_FF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
@@ -599,7 +600,7 @@ class BiLSTMTagger(nn.Module):
         noNull_predict = 0.0
         noNUll_truth = 0.0
         dep_labels = np.argmax(dep_tag_space.cpu().data.numpy(), axis=1)
-        for predict_l, gold_l in zip(dep_labels, Predicate_Labels.cpu().view(-1).data.numpy()):
+        for predict_l, gold_l in zip(dep_labels, Predicate_Labels_nd.cpu().view(-1).data.numpy()):
             if predict_l > 1 and gold_l>0:
                 noNull_predict += 1
             if gold_l != 0:
@@ -636,7 +637,7 @@ class BiLSTMTagger(nn.Module):
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
 
         SRLloss = loss_function(tag_space, targets.view(-1))
-        DEPloss = loss_function(dep_tag_space, Predicate_Labels.view(-1))
+        DEPloss = loss_function(dep_tag_space, Predicate_Labels_nd.view(-1))
         IDloss = loss_function(Predicate_identification_space, P_identification.view(-1))
 
 
