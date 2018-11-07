@@ -144,8 +144,8 @@ class BiLSTMTagger(nn.Module):
         self.W_R_BF = nn.Parameter(torch.rand(self.cvt_hidden_dim + 1, self.tagset_size * self.cvt_hidden_dim))
 
         # Dependency extractor: primary preidition
-        self.hidden2tag_1 = nn.Linear(4 * lstm_hidden_dim, 2 * lstm_hidden_dim)
-        self.hidden2tag_2 = nn.Linear(4 * lstm_hidden_dim, 2 * lstm_hidden_dim)
+        self.hidden2tag_1 = nn.Linear(4 * lstm_hidden_dim,  lstm_hidden_dim)
+        self.hidden2tag_2 = nn.Linear(4 * lstm_hidden_dim,  lstm_hidden_dim)
         self.W_dep = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size * lstm_hidden_dim))
 
         # Dependency extractor: auxiliary FF
