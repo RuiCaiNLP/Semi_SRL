@@ -104,7 +104,8 @@ class BiLSTMTagger(nn.Module):
         self.dep_embeddings = nn.Embedding(self.dep_size, self.pos_size)
         self.region_embeddings = nn.Embedding(2, 16)
         self.elmo_emb_size = 200
-        self.BiLSTM_SRL = nn.LSTM(input_size= sent_embedding_dim_SRL+ self.elmo_emb_size * 1 + 1 * self.pos_size, hidden_size=lstm_hidden_dim, batch_first=True,
+        #L + self.elmo_emb_size * 1 + 1 * self.pos_size
+        self.BiLSTM_SRL = nn.LSTM(input_size= sent_embedding_dim_SR, hidden_size=lstm_hidden_dim, batch_first=True,
                                     bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_SRL.all_weights[0][0])
@@ -553,8 +554,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         #pos_embeds = self.pos_embeddings(pos_tags)
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
-        SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds, region_marks,
-                                       h1, SRL_composer), 2)
+        SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds, region_marks), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
 
 

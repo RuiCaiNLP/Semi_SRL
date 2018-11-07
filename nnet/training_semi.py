@@ -154,7 +154,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             # else:
             #    Final_loss = SRLloss
 
-            L_sup = SRLloss + DEPloss + SPEDEPloss
+            L_sup = SRLloss #+ DEPloss + SPEDEPloss
             L_sup.backward()
             optimizer.step()
 
