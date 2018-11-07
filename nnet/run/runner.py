@@ -134,6 +134,7 @@ class Runner(object):
                 model=model,
                 train_set=train_set,
                 dev_set=test_set,
+                test_set=test_set,
                 epochs=a.epochs,
                 converter=self.get_converter(),
                 dbg_print_rate=a.dbg_print_rate,
