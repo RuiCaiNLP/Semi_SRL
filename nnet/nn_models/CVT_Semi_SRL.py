@@ -555,15 +555,15 @@ class BiLSTMTagger(nn.Module):
         # B * H
         hidden_states_3 = hidden_states
         hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
-        predicate_embeds = self.find_predicate_embeds(hidden_states_3, target_idx_in)
+        predicate_embeds = hidden_states_3[np.arange(0, Label_composer.size()[0]), target_idx_in]
         hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
 
         bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
         bias_one = torch.from_numpy(bias_one).to(device)
         hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
-        left_part = left_part.view(self.batch_size * len(sentence[0]), self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size * len(sentence[0]), -1, 1)
+        left_part = left_part.view(self.batch_size, len(sentence[0])*self.tagset_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
             len(sentence[0]) * self.batch_size, -1)
 
