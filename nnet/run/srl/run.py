@@ -148,7 +148,7 @@ class SRLRunner(Runner):
 
             pos_tags = [self.pos_voc.vocalize(w) for w in pos_tags]
 
-            labels = [self.role_voc.vocalize(w) for w in labels]
+            #labels = [self.role_voc.vocalize(w) for w in labels]
 
             freq = [[self.freq_voc[self.word_voc.direct[i]] if
                      self.word_voc.direct[i] != '_UNK' else 0 for i in w] for
