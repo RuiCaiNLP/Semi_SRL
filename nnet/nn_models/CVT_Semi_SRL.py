@@ -58,6 +58,8 @@ class BiLSTMTagger(nn.Module):
         self.SRL_hidden_dropout = nn.Dropout(p=0.3)
         self.DEP_hidden_dropout_1 = nn.Dropout(p=0.3)
         self.DEP_hidden_dropout_2 = nn.Dropout(p=0.3)
+        self.SRL_proj_word_dropout = nn.Dropout(p=0.3)
+        self.SRL_proj_predicate_dropout = nn.Dropout(p=0.3)
         #self.use_dropout = nn.Dropout(p=0.2)
 
 
@@ -111,7 +113,7 @@ class BiLSTMTagger(nn.Module):
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
-        self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim+1, self.tagset_size*lstm_hidden_dim))
+        self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim+1, self.tagset_size* (lstm_hidden_dim+1)))
         #self.W_share = nn.Parameter(torch.rand(lstm_hidden_dim, lstm_hidden_dim))
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
@@ -555,13 +557,18 @@ class BiLSTMTagger(nn.Module):
 
         # B * H
         hidden_states_3 = hidden_states
-        hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
+        hidden_states_word = self.SRL_proj_word_dropout(F.relu(self.Non_Predicate_Proj(hidden_states_3)))
         predicate_embeds = hidden_states_3[np.arange(0, hidden_states_3.size()[0]), target_idx_in]
-        hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
+        hidden_states_predicate = self.SRL_proj_predicate_dropout(F.relu(self.Predicate_Proj(predicate_embeds)))
 
         bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
         bias_one = torch.from_numpy(bias_one).to(device)
         hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
+
+        bias_one = np.ones((self.batch_size,  1)).astype(dtype='float32')
+        bias_one = torch.from_numpy(bias_one).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, bias_one), 2)
+
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
         left_part = left_part.view(self.batch_size, len(sentence[0])*self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
