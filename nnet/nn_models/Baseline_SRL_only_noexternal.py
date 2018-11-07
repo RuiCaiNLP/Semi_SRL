@@ -37,7 +37,7 @@ class BiLSTMTagger(nn.Module):
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
         sent_embedding_dim_DEP = 2*hps['sent_edim'] + 1*hps['pos_edim']
-        sent_embedding_dim_SRL = 2 * hps['sent_edim']
+        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 16
         ## for the region mark
         role_embedding_dim = hps['role_edim']
         frame_embedding_dim = role_embedding_dim
@@ -282,7 +282,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = self.word_embeddings_SRL(sentence)
         embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         pos_embeds = self.pos_embeddings(pos_tags)
-        SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds), 2)
+        SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds, region_marks), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
 
 
@@ -355,7 +355,7 @@ class BiLSTMTagger(nn.Module):
         noNull_predict = 0.0
         noNUll_truth = 0.0
         dep_labels = np.argmax(dep_tag_space.cpu().data.numpy(), axis=1)
-        for predict_l, gold_l in zip(dep_labels, Predicate_Labels.cpu().view(-1).data.numpy()):
+        for predict_l, gold_l in zip(dep_labels, Predicate_Labels_nd.cpu().view(-1).data.numpy()):
             if predict_l > 1:
                 noNull_predict += 1
             if gold_l != 0:
@@ -392,7 +392,7 @@ class BiLSTMTagger(nn.Module):
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
 
         SRLloss = loss_function(tag_space, targets.view(-1))
-        DEPloss = loss_function(dep_tag_space, Predicate_Labels.view(-1))
+        DEPloss = loss_function(dep_tag_space, Predicate_Labels_nd.view(-1))
         IDloss = loss_function(Predicate_identification_space, predicate_identification.view(-1))
 
         loss = SRLloss + 0.5 *DEPloss + 0.5*IDloss
