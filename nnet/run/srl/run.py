@@ -35,7 +35,7 @@ def bio_reader(record):
 
     # convert labels into indexes in labels_voc
     local_voc = {v: k for k, v in make_local_voc(labels_voc).items()}
-    #labels = [local_voc[label] for label in labels]
+    labels = [local_voc[label] for label in labels]
 
     dep_parsing = dep_parsing.split()
     dep_parsing = [p.split('|') for p in dep_parsing]
