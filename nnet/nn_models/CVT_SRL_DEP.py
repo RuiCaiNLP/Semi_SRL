@@ -521,7 +521,7 @@ class BiLSTMTagger(nn.Module):
         Word_hidden = torch.cat((Word_hidden, bias_one), 2)
 
         left_part = torch.mm(Word_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_dep)
-        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.tagset_size, -1)
+        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.dep_size, -1)
         Predicate_hidden = Predicate_hidden.view(self.batch_size, -1, 1)
         dep_tag_space = torch.bmm(left_part, Predicate_hidden).view(
             len(sentence[0]) * self.batch_size, -1)
