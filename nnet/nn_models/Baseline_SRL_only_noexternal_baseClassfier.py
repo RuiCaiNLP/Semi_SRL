@@ -176,7 +176,7 @@ class BiLSTMTagger(nn.Module):
                 local_roles_voc, frames, local_roles_mask,
                 sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, predicate_identification, all_l_ids,
                 Predicate_link, Predicate_Labels_nd, Predicate_Labels,
-                unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths,test=False):
+                unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths,test=False, cvt_train=False):
 
         """
         elmo_embedding_0 = self.elmo_embeddings_0(sentence).view(self.batch_size, len(sentence[0]), 1024)
