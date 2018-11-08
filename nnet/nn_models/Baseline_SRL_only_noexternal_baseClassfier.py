@@ -88,6 +88,8 @@ class BiLSTMTagger(nn.Module):
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 200)
         self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 200)
 
+
+        self.MLP_classifier_1 = nn.Linear(400, 400)
         self.MLP_classifier_0 = nn.Linear(400, self.tagset_size)
 
         self.elmo_emb_size = 200
@@ -224,7 +226,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states = torch.cat((hidden_states_word, predicate_embeds), 2)
 
         # b, times, roles
-        tag_space = self.MLP_classifier_0(hidden_states).view(hidden_states_3.size()[1]*hidden_states_3.size()[0], -1)
+        tag_space = self.MLP_classifier_0(F.relu(self.MLP_classifier_1(hidden_states))).view(hidden_states_3.size()[1]*hidden_states_3.size()[0], -1)
 
         SRLprobs = F.softmax(tag_space, dim=1)
 
