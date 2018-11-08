@@ -1,7 +1,7 @@
 from nnet.run.runner import *
 from nnet.ml.voc import *
 from functools import partial
-from nnet.nn_models.Baseline_SRL_only_noexternal_baseClassfier import BiLSTMTagger
+from nnet.nn_models.Baseline_SRL_only_noexternal_Biaffine import BiLSTMTagger
 
 
 def make_local_voc(labels):
