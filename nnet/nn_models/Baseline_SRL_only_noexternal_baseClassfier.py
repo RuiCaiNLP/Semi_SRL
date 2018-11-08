@@ -245,7 +245,7 @@ class BiLSTMTagger(nn.Module):
 
         SRLloss = loss_function(tag_space, targets.view(-1))
 
-        return SRLloss, SRLloss, SRLloss, SRLloss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
+        return SRLloss, SRLloss, SRLloss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
                right_noNull_predict, noNull_predict, noNUll_truth,\
                right_noNull_predict, noNull_predict, noNUll_truth
 
