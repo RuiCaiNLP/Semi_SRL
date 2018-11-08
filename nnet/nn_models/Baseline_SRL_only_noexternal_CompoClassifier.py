@@ -230,11 +230,11 @@ class BiLSTMTagger(nn.Module):
         frame_ids = frames[:, 0]
         frame_embeds = self.frame_embeddings(frame_ids)
         # T * B * H
-        added_embeds = torch.zeros(self.tagset_size, hidden_states_3.size()[0], self.region_embeddings).to(
+        added_embeds = torch.zeros(self.tagset_size, hidden_states_3.size()[0], self.role_dim).to(
             device)
         frame_embeds = added_embeds + frame_embeds
 
-        added_embeds = torch.zeros(hidden_states_3.size()[0], self.tagset_size, self.region_embeddings).to(
+        added_embeds = torch.zeros(hidden_states_3.size()[0], self.tagset_size, self.role_dim).to(
             device)
         role_embeds = added_embeds + self.W_R
 
