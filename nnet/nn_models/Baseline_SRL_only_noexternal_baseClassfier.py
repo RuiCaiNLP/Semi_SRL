@@ -232,42 +232,13 @@ class BiLSTMTagger(nn.Module):
         wrong_l_nums = 0.0
         all_l_nums = 0.0
 
-        right_noNull_predict = 0.0
-        noNull_predict = 0.0
-        noNUll_truth = 0.0
-        dep_labels = np.argmax(dep_tag_space.cpu().data.numpy(), axis=1)
-        for predict_l, gold_l in zip(dep_labels, Predicate_Labels_nd.cpu().view(-1).data.numpy()):
-            if predict_l > 1:
-                noNull_predict += 1
-            if gold_l != 0:
-                all_l_nums += 1
-                if gold_l != 1:
-                    noNUll_truth += 1
-                    if gold_l == predict_l:
-                        right_noNull_predict += 1
-            if predict_l != gold_l and gold_l != 0:
-                wrong_l_nums += 1
+        right_noNull_predict = 10.0
+        noNull_predict = 10.0
+        noNUll_truth = 10.0
 
-        # +++++++++++++++++++++++
-        wrong_l_nums_spe = 0.0
-        all_l_nums_spe = 0.0
 
-        right_noNull_predict_spe = 0.0
-        noNull_predict_spe = 0.0
-        noNUll_truth_spe = 0.0
 
-        dep_labels = np.argmax(Predicate_identification_space.cpu().data.numpy(), axis=1)
-        for predict_l, gold_l in zip(dep_labels,predicate_identification.cpu().view(-1).data.numpy()):
-            if predict_l > 1:
-                noNull_predict_spe += 1
-            if gold_l != 0:
-                all_l_nums_spe += 1
-                if gold_l != 1:
-                    noNUll_truth_spe += 1
-                    if gold_l == predict_l:
-                        right_noNull_predict_spe += 1
-            if predict_l != gold_l and gold_l != 0:
-                wrong_l_nums_spe += 1
+
 
 
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
@@ -276,7 +247,7 @@ class BiLSTMTagger(nn.Module):
 
         return SRLloss, SRLloss, SRLloss, SRLloss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
                right_noNull_predict, noNull_predict, noNUll_truth,\
-               right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe
+               right_noNull_predict, noNull_predict, noNUll_truth
 
     @staticmethod
     def sort_batch(x, l):
