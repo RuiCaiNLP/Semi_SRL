@@ -244,7 +244,7 @@ class BiLSTMTagger(nn.Module):
         mapped_roles = torch.transpose(mapped_roles, 1, 2)
 
         # b, times, roles
-        tag_space = torch.matmul(hidden_states, mapped_roles)
+        tag_space = torch.matmul(hidden_states, mapped_roles).view(len(sentence[0])*self.batch_size, -1)
 
         SRLprobs = F.softmax(tag_space, dim=1)
 
