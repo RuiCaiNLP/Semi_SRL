@@ -225,6 +225,7 @@ class BiLSTMTagger(nn.Module):
 
         hidden_states = torch.cat((hidden_states_word, predicate_embeds), 2)
 
+
         # b, times, roles
         tag_space = self.MLP_classifier_0(F.relu(self.MLP_classifier_1(hidden_states))).view(hidden_states_3.size()[1]*hidden_states_3.size()[0], -1)
 
