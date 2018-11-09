@@ -104,8 +104,8 @@ class BiLSTMTagger(nn.Module):
         self.SRL_input_dropout = nn.Dropout(p=0.3)
         self.DEP_input_dropout = nn.Dropout(p=0.3)
         self.hidden_state_dropout = nn.Dropout(p=0.3)
-        self.label_dropout_1 = nn.Dropout(p=0.3)
-        self.label_dropout_2 = nn.Dropout(p=0.3)
+        self.dropout_1 = nn.Dropout(p=0.3)
+        self.dropout_2 = nn.Dropout(p=0.3)
         self.label_dropout_3 = nn.Dropout(p=0.3)
         self.label_dropout_4 = nn.Dropout(p=0.3)
         self.id_dropout = nn.Dropout(p=0.3)
@@ -212,9 +212,9 @@ class BiLSTMTagger(nn.Module):
 
         # B * H
         hidden_states_3 = hidden_states
-        hidden_states_word = F.relu(self.Non_Predicate_Proj(hidden_states_3))
+        hidden_states_word = self.dropout_1(F.relu(self.Non_Predicate_Proj(hidden_states_3)))
         predicate_embeds = hidden_states_3[np.arange(0, hidden_states_3.size()[0]), target_idx_in]
-        hidden_states_predicate = F.relu(self.Predicate_Proj(predicate_embeds))
+        hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
 
         bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
         bias_one = torch.from_numpy(bias_one).to(device)
