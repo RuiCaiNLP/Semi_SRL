@@ -85,8 +85,8 @@ class BiLSTMTagger(nn.Module):
         self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
-        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 400)
-        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 400)
+        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
+        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
 
 
         self.MLP_classifier_1 = nn.Linear(400, 400)
@@ -216,12 +216,10 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = hidden_states_3[np.arange(0, hidden_states_3.size()[0]), target_idx_in]
         hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
 
-        bias_one = np.ones((self.batch_size, len(sentence[0]), 1)).astype(dtype='float32')
-        bias_one = torch.from_numpy(bias_one).to(device)
+        bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
 
-        bias_one = np.ones((self.batch_size, 1)).astype(dtype='float32')
-        bias_one = torch.from_numpy(bias_one).to(device)
+        bias_one = torch.ones((self.batch_size, 1)).to(device)
         hidden_states_predicate = torch.cat((hidden_states_predicate, bias_one), 1)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
