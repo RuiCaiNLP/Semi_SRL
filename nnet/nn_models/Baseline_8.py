@@ -85,8 +85,8 @@ class BiLSTMTagger(nn.Module):
         self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
-        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2*lstm_hidden_dim)
-        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, 2*lstm_hidden_dim)
+        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
+        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
 
 
         self.MLP_classifier_1 = nn.Linear(400, 400)
@@ -143,7 +143,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][0])
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][1])
 
-        self.W_R = nn.Parameter(torch.rand(2*lstm_hidden_dim + 1, self.tagset_size * (2*lstm_hidden_dim + 1)))
+        self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size * (lstm_hidden_dim + 1)))
 
         # Init hidden state
         self.hidden = self.init_hidden_spe()
