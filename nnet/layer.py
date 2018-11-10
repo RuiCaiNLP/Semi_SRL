@@ -194,12 +194,12 @@ class Biaffine(nn.Module):
     def reset_parameters(self):
         # According to https://github.com/tdozat/Parser-v1/blob/Definitely-working/lib/linalg.py# L97
         # The parameters are init with orthogonal
-        nn.init.orthogonal(self.weight)
+        nn.init.orthogonal_(self.weight)
         if self.bias is not None:
             # TODO: need to verify the initialization method
             # stdv = 1. / math.sqrt(self.bias.size(0))
             # self.bias.data.uniform_(-stdv, stdv)
-            nn.init.constant(self.bias, 0)
+            nn.init.constant_(self.bias, 0)
 
     def forward(self, input1, input2):
         # TODO: Might set dropout for the inputs, refer to
