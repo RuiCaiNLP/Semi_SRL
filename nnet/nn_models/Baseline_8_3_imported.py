@@ -5,7 +5,7 @@ import string
 import re
 import random
 from nnet.util import *
-from nnet.layer import *
+import nnet.layer
 
 import numpy as np
 import torch
