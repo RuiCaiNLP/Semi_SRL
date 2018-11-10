@@ -219,7 +219,7 @@ class BiLSTMTagger(nn.Module):
         predicate_embeds = added_embeds + predicate_embeds
         # B * T * H
         predicate_embeds = predicate_embeds.transpose(0, 1)
-        hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds))).view(-1, hidden_dim)
+        hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds))).view(-1, self.hidden_dim)
 
 
 
