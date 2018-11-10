@@ -5,7 +5,7 @@ import string
 import re
 import random
 from nnet.util import *
-import nnet.layer
+from  nnet.layer import *
 
 import numpy as np
 import torch
@@ -145,7 +145,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][1])
 
         self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size * (lstm_hidden_dim + 1)))
-        self.rel_biaffine = layer.Biaffine(lstm_hidden_dim, lstm_hidden_dim, self.tagset_size,
+        self.rel_biaffine = Biaffine(lstm_hidden_dim, lstm_hidden_dim, self.tagset_size,
                                            bias=(True, True, True))
 
         # Init hidden state
@@ -225,7 +225,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
 
 
-        tag_space = layer.Biaffine(hidden_states_word, hidden_states_predicate).view(self.batch_size*len(sentence[0]), self.tagset_size)
+        tag_space = self.rel_biaffine(hidden_states_word, hidden_states_predicate).view(self.batch_size*len(sentence[0]), self.tagset_size)
         SRLprobs = F.softmax(tag_space, dim=1)
 
         # +++++++++++++++++++++++
