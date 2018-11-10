@@ -143,7 +143,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][0])
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][1])
 
-        self.W_R = nn.Parameter(torch.rand(400 + 1, self.tagset_size * (400 + 1)))
+        self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size * (lstm_hidden_dim + 1)))
 
         # Init hidden state
         self.hidden = self.init_hidden_spe()
