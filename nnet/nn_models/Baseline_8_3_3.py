@@ -228,9 +228,11 @@ class BiLSTMTagger(nn.Module):
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
         left_part = left_part.view(self.batch_size*len(sentence[0]),  self.tagset_size, -1)
         hidden_states_predicate_T = hidden_states_predicate.view(self.batch_size*len(sentence[0]), -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate_T).view(
-            len(sentence[0]) * self.batch_size, -1) \
-                    + self.U_R(torch.cat((hidden_states_word, hidden_states_predicate), 2)).view(
+        #tag_space = torch.bmm(left_part, hidden_states_predicate_T).view(
+        #    len(sentence[0]) * self.batch_size, -1) \
+        #            + self.U_R(torch.cat((hidden_states_word, hidden_states_predicate), 2)).view(
+        #    len(sentence[0]) * self.batch_size, -1)
+        tag_space = self.U_R(torch.cat((hidden_states_word, hidden_states_predicate), 2)).view(
             len(sentence[0]) * self.batch_size, -1)
         SRLprobs = F.softmax(tag_space, dim=1)
 
