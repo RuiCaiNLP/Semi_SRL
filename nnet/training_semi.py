@@ -342,7 +342,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         for i, sent_labels in enumerate(labels):
                             for j in range(len(labels[i])):
                                 best = labels[i][j]
-                                true = tags[i][j]
+                                #true = tags[i][j]
+                                true = Predicate_Labels_nd
 
                                 if true != 0:
                                     Dep_count_num[dep_tags_in[i][j]] += 1
