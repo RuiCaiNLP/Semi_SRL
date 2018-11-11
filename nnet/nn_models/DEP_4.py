@@ -195,7 +195,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         pos_embeds = self.pos_embeddings(pos_tags)
         dep_embeds = self.dep_embeddings(Predicate_Labels_nd)
-        link_embeds = self.dep_embeddings(Predicate_link)
+        link_embeds = self.link_embeddings(Predicate_link)
         SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds, region_marks, dep_embeds, link_embeds), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
 
