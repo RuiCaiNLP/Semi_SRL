@@ -232,7 +232,7 @@ class BiLSTMTagger(nn.Module):
         #    len(sentence[0]) * self.batch_size, -1) \
         #            + self.U_R(torch.cat((hidden_states_word, hidden_states_predicate), 2)).view(
         #    len(sentence[0]) * self.batch_size, -1)
-        tag_space = self.U_R(torch.cat((hidden_states_word, hidden_states_predicate), 2)).view(
+        tag_space = torch.bmm(left_part, hidden_states_predicate_T).view(
             len(sentence[0]) * self.batch_size, -1)
         SRLprobs = F.softmax(tag_space, dim=1)
 
