@@ -217,10 +217,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
-        hidden_states_word = torch.cat((hidden_states_word, bias_one), 2)
+        hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
 
         bias_one = torch.ones((self.batch_size, 1)).to(device)
-        hidden_states_predicate = torch.cat((hidden_states_predicate, bias_one), 1)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 1)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
         left_part = left_part.view(self.batch_size, len(sentence[0]) * self.tagset_size, -1)
