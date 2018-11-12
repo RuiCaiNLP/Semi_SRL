@@ -224,7 +224,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
 
         hidden_states_0 = self.hidden_state_dropout_0(hidden_states_0)
-        hidden_states_1 = self.hidden_state_dropout_0(hidden_states_1)
+        hidden_states_1 = self.hidden_state_dropout_1(hidden_states_1)
 
         hidden_states = hidden_states_1
 
