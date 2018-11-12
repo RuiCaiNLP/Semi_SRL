@@ -422,7 +422,7 @@ class BiLSTMTagger(nn.Module):
         ## obtain the teacher probs
         SRLprobs_teacher = tag_space.detach()
         hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
-        CVT_SRL_Loss = self.Semi_SRL_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, sentence,
+        CVT_SRL_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, sentence,
                                           SRLprobs_teacher, lengths)
 
         return CVT_SRL_Loss
