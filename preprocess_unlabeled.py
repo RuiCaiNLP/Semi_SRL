@@ -26,7 +26,7 @@ def normalize(token):
 
 
 file_in = open('news.en-00001-of-00100', 'r')
-file_in_2 = open('news.en-00002-of-00200', 'r')
+file_in_2 = open('news.en-00002-of-00100', 'r')
 file_out = open('1BilionBenchMark', 'w')
 
 for line in file_in.readlines():
