@@ -90,8 +90,7 @@ class BiLSTMTagger(nn.Module):
         self.MLP_identification = nn.Linear(4*lstm_hidden_dim, 2*lstm_hidden_dim)
         self.Idenficiation = nn.Linear(2*lstm_hidden_dim, 3)
 
-        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
-        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
+
 
 
         self.MLP_classifier_1 = nn.Linear(400, 400)
@@ -113,6 +112,19 @@ class BiLSTMTagger(nn.Module):
         self.hidden_state_dropout_1 = nn.Dropout(p=0.3)
         self.dropout_1 = nn.Dropout(p=0.3)
         self.dropout_2 = nn.Dropout(p=0.3)
+
+        self.dropout_1_FF = nn.Dropout(p=0.3)
+        self.dropout_2_FF = nn.Dropout(p=0.3)
+
+        self.dropout_1_BB = nn.Dropout(p=0.3)
+        self.dropout_2_BB = nn.Dropout(p=0.3)
+
+        self.dropout_1_FB = nn.Dropout(p=0.3)
+        self.dropout_2_FB = nn.Dropout(p=0.3)
+
+        self.dropout_1_BF = nn.Dropout(p=0.3)
+        self.dropout_2_BF = nn.Dropout(p=0.3)
+
         self.label_dropout_3 = nn.Dropout(p=0.3)
         self.label_dropout_4 = nn.Dropout(p=0.3)
         self.id_dropout = nn.Dropout(p=0.3)
@@ -162,7 +174,29 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][0])
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][1])
 
+        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
+        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
         self.W_R = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
+
+        # Dependency extractor: auxiliary FF
+        self.Non_Predicate_Proj_FF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.Predicate_Proj_FF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.W_R_FF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
+
+        # Dependency extractor: auxiliary BB
+        self.Non_Predicate_Proj_BB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.Predicate_Proj_BB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.W_R_BB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
+
+        # Dependency extractor: auxiliary BF
+        self.Non_Predicate_Proj_BF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.Predicate_Proj_BF = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.W_R_BF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
+
+        # Dependency extractor: auxiliary FB
+        self.Non_Predicate_Proj_FB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.Predicate_Proj_FB = nn.Linear(lstm_hidden_dim, lstm_hidden_dim)
+        self.W_R_FB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
 
         # Init hidden state
         self.hidden = self.init_hidden_spe()
@@ -191,6 +225,88 @@ class BiLSTMTagger(nn.Module):
         return (torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
                 torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
+
+    def mask_loss(self, Semi_loss, lengths):
+
+        for i in range(Semi_loss.size()[0]):
+            for j in range(Semi_loss.size()[1]):
+                if j >= lengths[i]:
+                    Semi_loss[i][j] = 0 * Semi_loss[i][j]
+
+        return Semi_loss
+
+
+    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
+        TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
+        sample_nums = unlabeled_lengths.sum()
+        unlabeled_loss_function = nn.KLDivLoss(reduce=False)
+        ## Dependency Extractor FF
+        hidden_states_word = self.dropout_1_FF(F.relu(self.Non_Predicate_Proj_FF(hidden_forward)))
+        predicate_embeds = hidden_forward[np.arange(0, hidden_forward.size()[0]), Predicate_idx_batch]
+        hidden_states_predicate = self.dropout_2_FF(F.relu(self.Predicate_Proj_FF(predicate_embeds)))
+
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FF)
+        left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        DEPprobs_student = F.log_softmax(tag_space, dim=2)
+        DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+
+        ## Dependency Extractor BB
+        hidden_states_word = self.dropout_1_BB(F.relu(self.Non_Predicate_Proj_BB(hidden_backward)))
+        predicate_embeds = hidden_backward[np.arange(0, hidden_forward.size()[0]), Predicate_idx_batch]
+        hidden_states_predicate = self.dropout_2_BB(F.relu(self.Predicate_Proj_BB(predicate_embeds)))
+
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BB)
+        left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        DEPprobs_student = F.log_softmax(tag_space, dim=2)
+        DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+
+        ## Dependency Extractor FB
+        hidden_states_word = self.dropout_1_FB(F.relu(self.Non_Predicate_Proj_FB(hidden_forward)))
+        predicate_embeds = hidden_backward[np.arange(0, hidden_forward.size()[0]), Predicate_idx_batch]
+        hidden_states_predicate = self.dropout_2_FB(F.relu(self.Predicate_Proj_FB(predicate_embeds)))
+
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FB)
+        left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        DEPprobs_student = F.log_softmax(tag_space, dim=2)
+        DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+
+        ## Dependency Extractor BF
+        hidden_states_word = self.dropout_1_BF(F.relu(self.Non_Predicate_Proj_BF(hidden_backward)))
+        predicate_embeds = hidden_forward[np.arange(0, hidden_forward.size()[0]), Predicate_idx_batch]
+        hidden_states_predicate = self.dropout_2_BF(F.relu(self.Predicate_Proj_BF(predicate_embeds)))
+
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BF)
+        left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            len(unlabeled_sentence[0]) * self.batch_size, -1)
+        DEPprobs_student = F.log_softmax(tag_space, dim=2)
+        DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+
+        DEP_Semi_loss = self.mask_loss(DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss, unlabeled_lengths)
+        DEP_Semi_loss = torch.sum(DEP_Semi_loss)
+        return DEP_Semi_loss/sample_nums
 
     def Predicate_Id(self, sentence, p_sentence, lengths):
         # contruct input for shared BiLSTM Encoder
@@ -223,16 +339,111 @@ class BiLSTMTagger(nn.Module):
         return Predicate_identification_space
 
 
+    def CVT_train(self, sentence, p_sentence, lengths):
+        ## start unlabeled training:
+
+        Predicate_Identification_Space = self.Predicate_Id(sentence, p_sentence, lengths)
+
+        Predicate_probs = Predicate_Identification_Space.view(self.batch_size, len(sentence[0]),
+                                                              -1).cpu().data.numpy()
+        Predicate_idx_batch = [0] * self.batch_size
+        for i in range(self.batch_size):
+            candidate_set = []
+            for j in range(len(sentence[0])):
+                if j >= lengths[i]:
+                    break
+                if Predicate_probs[i][j][2] > Predicate_probs[i][j][1] and Predicate_probs[i][j][2] > Predicate_probs[i][j][0]:
+                    candidate_set.append(j)
+            if len(candidate_set) > 0:
+                index = random.sample(candidate_set, 1)
+                Predicate_idx_batch[i] = index[0]
+
+        # +++++++++++++++++++++++
+
+        """
+        construct DEP_input
+        """
+        unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
+        for i in range(len(unlabeled_region_mark)):
+            unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
+
+        unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
+        region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in).view(self.batch_size, len(sentence[0]), 16)
+        fixed_embeds = self.word_fixed_embeddings(p_sentence)
+        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+
+        embeds_SRL = self.word_embeddings_SRL(sentence)
+        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+
+        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, region_mark_embeds), 2)
+        SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
+
+        # SRL layer
+        # first layer
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, lengths)
+        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
+        # hidden states [time_steps * batch_size * hidden_units]
+        self.hidden = self.init_hidden_spe()
+        hidden_states, self.hidden = self.BiLSTM_0(embeds_sort, self.hidden)
+        # it seems that hidden states is already batch first, we don't need swap the dims
+        # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
+        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
+        # hidden_states = hidden_states.transpose(0, 1)
+        hidden_states_0 = hidden_states[unsort_idx]
+
+        # second_layer
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths)
+        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
+        # hidden states [time_steps * batch_size * hidden_units]
+        self.hidden_1 = self.init_hidden_spe()
+        hidden_states, self.hidden_1 = self.BiLSTM_1(embeds_sort, self.hidden_1)
+        # it seems that hidden states is already batch first, we don't need swap the dims
+        # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
+        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
+        # hidden_states = hidden_states.transpose(0, 1)
+        hidden_states_1 = hidden_states[unsort_idx]
+        hidden_states_1 = self.hidden_state_dropout_1(hidden_states_1)
+        hidden_states = hidden_states_1
+
+        # B * H
+        hidden_states_word = self.dropout_1(F.relu(self.Non_Predicate_Proj(hidden_states)))
+        predicate_embeds = hidden_states[np.arange(0, hidden_states.size()[0]), Predicate_idx_batch]
+        hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
+
+        bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
+        hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
+        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.dep_size, -1)
+        hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
+        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
+            len(sentence[0]) * self.batch_size, -1)
+
+        ## obtain the teacher probs
+        SRLprobs_teacher = tag_space.detach()
+        hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
+        CVT_SRL_Loss = self.Semi_SRL_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, sentence,
+                                          SRLprobs_teacher, lengths)
+
+        return CVT_SRL_Loss
+
+
+
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
                 sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, P_identification, all_l_ids,
                 Predicate_link, Predicate_Labels_nd, Predicate_Labels,
-                unlabeled_sentence_in=False, p_unlabeled_sentence_in=False, unlabeled_sen_lengths = False,test=False, cvt_train=False):
+                unlabeled_sentence=None, p_unlabeled_sentence=None, unlabeled_lengths=None,test=False, cvt_train=False):
 
+
+        if cvt_train:
+            CVT_SRL_Loss = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_lengths)
+            return CVT_SRL_Loss
         """
         perform predicate Identificaiton first
         """
         Predicate_Identification_Space = self.Predicate_Id(sentence, p_sentence, lengths)
+
         # +++++++++++++++++++++++
         wrong_l_nums = 0.0
         all_l_nums = 0.0
