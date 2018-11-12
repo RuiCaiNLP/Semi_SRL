@@ -186,7 +186,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log('SRLloss')
                 log(SRLloss)
                 log("DEPloss")
-                log(DEPloss)
+                log(PIloss)
                 log("SPEDEPloss")
                 log(SPEDEPloss)
                 log("semi SRL loss")
