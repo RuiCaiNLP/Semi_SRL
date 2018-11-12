@@ -252,7 +252,7 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(unlabeled_sentence[0]), -1)
         DEPprobs_student = F.log_softmax(tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -268,7 +268,7 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(unlabeled_sentence[0]), -1)
         DEPprobs_student = F.log_softmax(tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -284,7 +284,7 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(unlabeled_sentence[0]), -1)
         DEPprobs_student = F.log_softmax(tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -300,7 +300,7 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(unlabeled_sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(unlabeled_sentence[0]), -1)
         DEPprobs_student = F.log_softmax(tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
