@@ -215,9 +215,15 @@ class BiLSTMTagger(nn.Module):
         hidden_states_3 = hidden_states
         hidden_states_word = self.dropout_1(F.relu(self.Non_Predicate_Proj(hidden_states_3)))
         predicate_embeds = hidden_states_3[np.arange(0, hidden_states_3.size()[0]), target_idx_in]
+        added_embeds = torch.zeros(hidden_states_3.size()[1], hidden_states_3.size()[0], hidden_states_3.size()[2]).to(
+            device)
+        predicate_embeds = added_embeds + predicate_embeds
+        # B * T * H
+        predicate_embeds = predicate_embeds.transpose(0, 1)
         hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
 
-        MLP_hidden = F.relu(self.More_1(torch.cat((hidden_states_word, hidden_states_predicate), 2)))
+        h_W_P = torch.cat((hidden_states_word, hidden_states_predicate), 2)
+        MLP_hidden = F.relu(self.More_1(h_W_P))
         tag_space = self.W_R(MLP_hidden).view(self.batch_size* len(sentence[0]), -1)
         SRLprobs = F.softmax(tag_space, dim=1)
 
