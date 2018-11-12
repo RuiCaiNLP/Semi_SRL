@@ -218,7 +218,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
 
 
-        tag_space = nn.Linear(torch.cat((hidden_states_word, hidden_states_predicate), 2)).view(self.batch_size* len(sentence[0]), -1)
+        tag_space = self.W_R(torch.cat((hidden_states_word, hidden_states_predicate), 2)).view(self.batch_size* len(sentence[0]), -1)
         SRLprobs = F.softmax(tag_space, dim=1)
 
         # +++++++++++++++++++++++
