@@ -417,7 +417,7 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, len(sentence[0]) * self.dep_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(sentence[0]), -1)
 
         ## obtain the teacher probs
         SRLprobs_teacher = tag_space.detach()
