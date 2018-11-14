@@ -233,7 +233,7 @@ class BiLSTMTagger(nn.Module):
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
 
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
+        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R_DEP)
         left_part = left_part.view(self.batch_size, len(sentence[0]) * self.dep_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space_DEP = torch.bmm(left_part, hidden_states_predicate).view(

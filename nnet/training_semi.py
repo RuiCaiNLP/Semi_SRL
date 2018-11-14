@@ -136,7 +136,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
             # log(dep_tags_in)
             # log(specific_dep_relations)
-            SRLloss, PIloss, SPEDEPloss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
+            SRLloss, DEPloss, SPEDEPloss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
             right_noNull_predict, noNull_predict, noNUll_truth, \
             right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe \
                 = model(sentence_in, p_sentence_in,
@@ -154,11 +154,11 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             # else:
             #    Final_loss = SRLloss
 
-            L_sup = SRLloss + PIloss #+ DEPloss + SPEDEPloss
+            L_sup = SRLloss + DEPloss #+ DEPloss + SPEDEPloss
             L_sup.backward()
             optimizer.step()
 
-
+            """
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
@@ -177,6 +177,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Loss_CVT = CVT_SRL_Loss
             Loss_CVT.backward()
             optimizer.step()
+                        """
 
 
 
@@ -186,11 +187,11 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log('SRLloss')
                 log(SRLloss)
                 log("DEPloss")
-                log(PIloss)
+                log(DEPloss)
                 log("SPEDEPloss")
                 log(SPEDEPloss)
                 log("semi SRL loss")
-                log(CVT_SRL_Loss)
+                #log(CVT_SRL_Loss)
                 log("semi DEP loss")
                 #log(CVT_DEP_Loss)
 
@@ -342,8 +343,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         for i, sent_labels in enumerate(labels):
                             for j in range(len(labels[i])):
                                 best = labels[i][j]
-                                #true = tags[i][j]
-                                true = Predicate_Labels_nd[i][j]
+                                true = tags[i][j]
+                                #true = Predicate_Labels_nd[i][j]
 
                                 if true != 0:
                                     Dep_count_num[dep_tags_in[i][j]] += 1
