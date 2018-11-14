@@ -37,7 +37,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
         #init_dataset = [batch for batch in dataset]
         random.shuffle(dataset)
         dataset_len = len(dataset)
-        unlabeled_dataset_len = len(dataset)
+        unlabeled_dataset_len = len(unlabeled_dataset)
         unlabeled_idx = 0
         for batch in dataset:
 
