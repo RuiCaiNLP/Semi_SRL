@@ -38,7 +38,7 @@ idx = 1
 
 for line in file.readlines():
     file2.write(line)
-    if idx == 540000:
+    if idx == 30000:
         break
     idx += 1
 print(idx)
