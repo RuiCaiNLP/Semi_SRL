@@ -297,7 +297,7 @@ class BiLSTMTagger(nn.Module):
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
 
         SRLloss = loss_function(tag_space, targets.view(-1))
-        DEPloss = loss_function(tag_space_DEP, dep_tags.view(-1))
+        DEPloss = loss_function(tag_space_DEP, Predicate_Labels_nd.view(-1))
 
         return SRLloss, DEPloss, SRLloss, SRLprobs, wrong_l_nums, all_l_nums, wrong_l_nums, all_l_nums,  \
                right_noNull_predict, noNull_predict, noNUll_truth,\
