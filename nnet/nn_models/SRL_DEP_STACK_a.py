@@ -150,7 +150,7 @@ class BiLSTMTagger(nn.Module):
         self.Predicate_Proj_DEP = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
         self.W_R_DEP = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
 
-        self.num_layers = 1
+        self.num_layers = 2
         self.BiLSTM_SRL = nn.LSTM(input_size=2 * lstm_hidden_dim, hidden_size=lstm_hidden_dim, batch_first=True,
                                     bidirectional=True, num_layers=self.num_layers)
 
@@ -166,7 +166,9 @@ class BiLSTMTagger(nn.Module):
         self.hidden = self.init_hidden_spe()
         self.hidden_2 = self.init_hidden_spe()
         self.hidden_3 = self.init_hidden_spe()
+
         self.hidden_4 = self.init_hidden_share()
+        self.hidden_5 = self.init_hidden_share()
 
     def init_hidden_share(self):
         # Before we've done anything, we dont have any hidden state.
@@ -244,7 +246,8 @@ class BiLSTMTagger(nn.Module):
         # SRL layer
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
-        hidden_states, self.hidden_3 = self.BiLSTM_SRL(embeds_sort, self.hidden_3)
+        self.hidden_5 = self.init_hidden_share()
+        hidden_states, self.hidden_5 = self.BiLSTM_SRL(embeds_sort, self.hidden_5)
         # it seems that hidden states is already batch first, we don't need swap the dims
         # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
