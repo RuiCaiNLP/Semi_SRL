@@ -110,6 +110,8 @@ class BiLSTMTagger(nn.Module):
         self.PI_input_dropout = nn.Dropout(p=0.3)
         self.hidden_state_dropout_0 = nn.Dropout(p=0.3)
         self.hidden_state_dropout_1 = nn.Dropout(p=0.3)
+        self.hidden_state_dropout_DEP = nn.Dropout(p=0.3)
+        self.hidden_state_dropout_SRL = nn.Dropout(p=0.3)
         self.dropout_1_DEP = nn.Dropout(p=0.3)
         self.dropout_2_DEP = nn.Dropout(p=0.3)
 
@@ -579,7 +581,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
 
         ###########################################
-        hidden_states_3 = self.hidden_state_dropout(hidden_states_1)
+        hidden_states_3 = self.hidden_state_dropout_DEP(hidden_states_1)
         hidden_states_word = self.dropout_1_DEP(F.relu(self.Non_Predicate_Proj_DEP(hidden_states_3)))
         predicate_embeds = hidden_states_3[np.arange(0, hidden_states_3.size()[0]), target_idx_in]
         hidden_states_predicate = self.dropout_2_DEP(F.relu(self.Predicate_Proj_DEP(predicate_embeds)))
