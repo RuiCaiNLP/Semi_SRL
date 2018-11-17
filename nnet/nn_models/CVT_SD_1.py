@@ -406,9 +406,17 @@ class BiLSTMTagger(nn.Module):
         construct DEP_input
         """
         # contruct input for DEP
+        unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
+        for i in range(len(unlabeled_region_mark)):
+            unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
+
+        unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
+        region_marks = self.region_embeddings(unlabeled_region_mark_in).view(self.batch_size, len(sentence[0]),
+                                                                                   16)
+
         embeds_DEP = self.word_embeddings_DEP(sentence)
         embeds_DEP = embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        region_marks = self.region_embeddings(Predicate_idx_batch).view(self.batch_size, len(sentence[0]), 16)
+
         # sharing pretrained word_embeds
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
