@@ -280,8 +280,8 @@ class BiLSTMTagger(nn.Module):
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
 
-        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
-        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
+        bias_one = torch.ones((self.batch_size, 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 1)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FF)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
@@ -299,8 +299,8 @@ class BiLSTMTagger(nn.Module):
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
 
-        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
-        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
+        bias_one = torch.ones((self.batch_size, 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 1)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BB)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
@@ -317,8 +317,8 @@ class BiLSTMTagger(nn.Module):
 
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
-        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
-        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
+        bias_one = torch.ones((self.batch_size, 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 1)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FB)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
@@ -335,8 +335,8 @@ class BiLSTMTagger(nn.Module):
 
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
-        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
-        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
+        bias_one = torch.ones((self.batch_size, 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 1)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BF)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
@@ -596,6 +596,8 @@ class BiLSTMTagger(nn.Module):
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+
+
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R_DEP)
         left_part = left_part.view(self.batch_size, len(sentence[0]) * self.dep_size, -1)
