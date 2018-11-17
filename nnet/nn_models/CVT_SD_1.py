@@ -185,7 +185,7 @@ class BiLSTMTagger(nn.Module):
                                     bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_PI.all_weights[0][0])
-        init.orthogonal_(self.BiLSTM_PIL.all_weights[0][1])
+        init.orthogonal_(self.BiLSTM_PI.all_weights[0][1])
         init.orthogonal_(self.BiLSTM_PI.all_weights[1][0])
         init.orthogonal_(self.BiLSTM_PI.all_weights[1][1])
 
