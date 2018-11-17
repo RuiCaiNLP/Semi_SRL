@@ -37,13 +37,7 @@ for line in file_in.readlines():
     file_out.write(sent)
     file_out.write('\n')
 
-for line in file_in_2.readlines():
-    sents = line.strip().split()
-    if len(sents) > 100 or len(sents) < 10:
-        continue
-    sent = ' '.join([normalize(w) for w in sents])
-    file_out.write(sent)
-    file_out.write('\n')
+
 
 
 file_in.close()
