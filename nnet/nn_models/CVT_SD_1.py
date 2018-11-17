@@ -151,7 +151,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_0.all_weights[1][1])
 
         self.num_layers = 1
-        self.BiLSTM_1 = nn.LSTM(input_size=lstm_hidden_dim * 2, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_1 = nn.LSTM(input_size=sent_embedding_dim_SRL + self.elmo_emb_size, hidden_size=lstm_hidden_dim, batch_first=True,
                                 bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_1.all_weights[0][0])
@@ -160,7 +160,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_1.all_weights[1][1])
 
         self.num_layers = 2
-        self.BiLSTM_SRL = nn.LSTM(input_size=sent_embedding_dim_SRL + self.elmo_emb_size, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_SRL = nn.LSTM(input_size=4*lstm_hidden_dim, hidden_size=lstm_hidden_dim, batch_first=True,
                                   bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_SRL.all_weights[0][0])
@@ -169,7 +169,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SRL.all_weights[1][1])
 
         self.num_layers = 1
-        self.BiLSTM_DEP = nn.LSTM(input_size=sent_embedding_dim_DEP, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_DEP = nn.LSTM(input_size=4 * lstm_hidden_dim, hidden_size=lstm_hidden_dim, batch_first=True,
                                   bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_DEP.all_weights[0][0])
