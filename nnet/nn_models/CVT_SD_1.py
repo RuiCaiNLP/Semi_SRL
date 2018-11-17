@@ -191,7 +191,7 @@ class BiLSTMTagger(nn.Module):
 
         self.Non_Predicate_Proj_DEP = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
         self.Predicate_Proj_DEP = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
-        self.W_R_DEP = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size * lstm_hidden_dim))
+        self.W_R_DEP = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size * lstm_hidden_dim))
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
         self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
