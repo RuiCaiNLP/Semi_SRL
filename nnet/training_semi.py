@@ -54,12 +54,14 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_model_input = unlabeled_converter(unlabeled_batch)
             unlabeled_idx += 1
 
-
             model.hidden = model.init_hidden_spe()
-            # model.hidden_0 = model.init_hidden_spe()
             model.hidden_2 = model.init_hidden_spe()
             model.hidden_3 = model.init_hidden_spe()
-            model.hidden_4 = model.init_hidden_share()
+            model.hidden_DEP_base = model.init_hidden_spe()
+            model.hidden_DEP = model.init_hidden_spe()
+            model.hidden_SRL_base = model.init_hidden_spe()
+            model.hidden_SRL = model.init_hidden_SRL()
+            model.hidden_PI = model.init_hidden_share()
 
             sentence = model_input[0]
             p_sentence = model_input[1]
@@ -136,7 +138,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
             # log(dep_tags_in)
             # log(specific_dep_relations)
-            SRLloss, DEPloss, SPEDEPloss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
+            SRLloss, DEPloss, PIloss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
             right_noNull_predict, noNull_predict, noNUll_truth, \
             right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe \
                 = model(sentence_in, p_sentence_in,
@@ -154,19 +156,23 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             # else:
             #    Final_loss = SRLloss
 
-            L_sup = SRLloss + DEPloss #+ DEPloss + SPEDEPloss
+            L_sup = SRLloss + DEPloss + PIloss #+ DEPloss + SPEDEPloss
             L_sup.backward()
             optimizer.step()
 
-            """
+
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
+            # Init hidden state
             model.hidden = model.init_hidden_spe()
-            # model.hidden_0 = model.init_hidden_spe()
             model.hidden_2 = model.init_hidden_spe()
             model.hidden_3 = model.init_hidden_spe()
-            model.hidden_4 = model.init_hidden_share()
+            model.hidden_DEP_base = model.init_hidden_spe()
+            model.hidden_DEP = model.init_hidden_spe()
+            model.hidden_SRL_base = model.init_hidden_spe()
+            model.hidden_SRL = model.init_hidden_SRL()
+            model.hidden_PI = model.init_hidden_share()
             CVT_SRL_Loss= model(sentence_in, p_sentence_in,
                         pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
@@ -177,7 +183,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Loss_CVT = CVT_SRL_Loss
             Loss_CVT.backward()
             optimizer.step()
-                        """
+
 
 
 
@@ -189,11 +195,11 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("DEPloss")
                 log(DEPloss)
                 log("SPEDEPloss")
-                log(SPEDEPloss)
+                log(PIloss)
                 log("semi SRL loss")
-                #log(CVT_SRL_Loss)
+                log(CVT_SRL_Loss)
                 log("semi DEP loss")
-                #log(CVT_DEP_Loss)
+                log(CVT_SRL_Loss)
 
 
             if idx % dbg_print_rate == 0:

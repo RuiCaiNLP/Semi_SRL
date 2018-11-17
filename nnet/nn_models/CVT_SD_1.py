@@ -266,7 +266,7 @@ class BiLSTMTagger(nn.Module):
         return Semi_loss
 
 
-    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
+    def Semi_SRL_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch, unlabeled_sentence, TagProbs_use, unlabeled_lengths):
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
         sample_nums = unlabeled_lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
@@ -277,6 +277,9 @@ class BiLSTMTagger(nn.Module):
 
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FF)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
@@ -294,6 +297,9 @@ class BiLSTMTagger(nn.Module):
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
 
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
+
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BB)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
@@ -309,6 +315,8 @@ class BiLSTMTagger(nn.Module):
 
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_FB)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
@@ -325,6 +333,8 @@ class BiLSTMTagger(nn.Module):
 
         bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
+        bias_one = torch.ones((self.batch_size, len(unlabeled_sentence[0]), 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 2)
 
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(unlabeled_sentence[0]), -1), self.W_R_BF)
         left_part = left_part.view(self.batch_size, len(unlabeled_sentence[0]) * self.dep_size, -1)
@@ -393,28 +403,22 @@ class BiLSTMTagger(nn.Module):
         """
         construct DEP_input
         """
-        unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
-        for i in range(len(unlabeled_region_mark)):
-            unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
+        # contruct input for DEP
+        embeds_DEP = self.word_embeddings_DEP(sentence)
+        embeds_DEP = embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        region_marks = self.region_embeddings(Predicate_idx_batch).view(self.batch_size, len(sentence[0]), 16)
+        # sharing pretrained word_embeds
+        fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
+        fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
 
-        unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
-        region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in).view(self.batch_size, len(sentence[0]), 16)
-        fixed_embeds = self.word_fixed_embeddings(p_sentence)
-        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, region_marks), 2)
+        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
 
-        embeds_SRL = self.word_embeddings_SRL(sentence)
-        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-
-        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, region_mark_embeds), 2)
-        SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
-
-        # SRL layer
         # first layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, lengths)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
-        self.hidden = self.init_hidden_spe()
-        hidden_states, self.hidden = self.BiLSTM_0(embeds_sort, self.hidden)
+        hidden_states, self.hidden_DEP_base = self.BiLSTM_0(embeds_sort, self.hidden_DEP_base)
         # it seems that hidden states is already batch first, we don't need swap the dims
         # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
@@ -425,34 +429,77 @@ class BiLSTMTagger(nn.Module):
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
-        self.hidden_1 = self.init_hidden_spe()
-        hidden_states, self.hidden_1 = self.BiLSTM_1(embeds_sort, self.hidden_1)
+        hidden_states, self.hidden_DEP = self.BiLSTM_DEP(embeds_sort, self.hidden_DEP)
         # it seems that hidden states is already batch first, we don't need swap the dims
         # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_1(hidden_states_1)
-        hidden_states = hidden_states_1
+
+        ###########################################
+
+
+        # +++++++++++++++++++++++
+        h_layer_0 = hidden_states_0  # .detach()
+        h_layer_1 = hidden_states_1  # .detach()
+
+        w = F.softmax(self.elmo_w, dim=0)
+        SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
+        SRL_composer = self.elmo_mlp(SRL_composer)
+
+        fixed_embeds = self.word_fixed_embeddings(p_sentence)
+        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        embeds_SRL = self.word_embeddings_SRL(sentence)
+        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+
+        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds,
+                                       region_marks, SRL_composer), 2)
+        SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
+
+        # SRL layer
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, lengths)
+        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
+        # hidden states [time_steps * batch_size * hidden_units]
+        hidden_states, self.hidden_SRL_base = self.BiLSTM_1(embeds_sort, self.hidden_SRL_base)
+        # it seems that hidden states is already batch first, we don't need swap the dims
+        # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
+        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
+        # hidden_states = hidden_states.transpose(0, 1)
+        hidden_states_0 = hidden_states[unsort_idx]
+
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths)
+        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
+        # hidden states [time_steps * batch_size * hidden_units]
+        hidden_states, self.hidden_SRL_base = self.BiLSTM_SRL(embeds_sort, self.hidden_SRL_base)
+        # it seems that hidden states is already batch first, we don't need swap the dims
+        # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
+        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
+        # hidden_states = hidden_states.transpose(0, 1)
+        hidden_states = hidden_states[unsort_idx]
+        hidden_states = self.hidden_state_dropout_SRL(hidden_states)
 
         # B * H
-        hidden_states_word = self.dropout_1(F.relu(self.Non_Predicate_Proj(hidden_states)))
-        predicate_embeds = hidden_states[np.arange(0, hidden_states.size()[0]), Predicate_idx_batch]
+        hidden_states_3 = hidden_states
+        hidden_states_word = self.dropout_1(F.relu(self.Non_Predicate_Proj(hidden_states_3)))
+        predicate_embeds = hidden_states_3[np.arange(0, hidden_states_3.size()[0]), Predicate_idx_batch]
         hidden_states_predicate = self.dropout_2(F.relu(self.Predicate_Proj(predicate_embeds)))
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         hidden_states_word = torch.cat((hidden_states_word, Variable(bias_one)), 2)
 
+        bias_one = torch.ones((self.batch_size, 1)).to(device)
+        hidden_states_predicate = torch.cat((hidden_states_predicate, Variable(bias_one)), 1)
+
         left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
-        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.dep_size, -1)
+        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.tagset_size, -1)
         hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            self.batch_size, len(sentence[0]), -1)
+            len(sentence[0]) * self.batch_size, -1)
 
         ## obtain the teacher probs
         SRLprobs_teacher = tag_space.detach()
         hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
-        CVT_SRL_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, sentence,
+        CVT_SRL_Loss = self.Semi_SRL_Loss(hidden_forward, hidden_backward, Predicate_idx_batch, sentence,
                                           SRLprobs_teacher, lengths)
 
         return CVT_SRL_Loss
