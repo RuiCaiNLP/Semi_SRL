@@ -248,11 +248,18 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                         record_ids, batch = zip(*batch)
                         model_input = converter(batch)
+                        model.zero_grad()
+                        optimizer.zero_grad()
+                        model.train()
+                        # Init hidden state
                         model.hidden = model.init_hidden_spe()
-                        # model.hidden_0 = model.init_hidden_spe()
                         model.hidden_2 = model.init_hidden_spe()
                         model.hidden_3 = model.init_hidden_spe()
-                        model.hidden_4 = model.init_hidden_share()
+                        model.hidden_DEP_base = model.init_hidden_spe()
+                        model.hidden_DEP = model.init_hidden_spe()
+                        model.hidden_SRL_base = model.init_hidden_spe()
+                        model.hidden_SRL = model.init_hidden_SRL()
+                        model.hidden_PI = model.init_hidden_share()
 
                         sentence = model_input[0]
                         p_sentence = model_input[1]
