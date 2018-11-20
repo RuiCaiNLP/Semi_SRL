@@ -284,8 +284,8 @@ class BiLSTMTagger(nn.Module):
         h_layer_0 = hidden_states_0  # .detach()
         h_layer_1 = hidden_states_1  # .detach()
 
-
-        SRL_composer = torch.cat((h_layer_0, h_layer_1), 2)
+        w = F.softmax(self.elmo_w, dim=0)
+        SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
         SRL_composer = self.elmo_mlp(SRL_composer)
 
 
