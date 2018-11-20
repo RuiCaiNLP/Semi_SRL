@@ -268,7 +268,7 @@ class SRLRunner(Runner):
             sent_padded_forchar = [["pad"] * max_len] * len(batch)
             for i in range(len(sent)):
                 for j in range(len(sent[i])):
-                    sent_padded_forchar[i, j] = sent[i][j]
+                    sent_padded_forchar[i][j] = sent[i][j]
 
             max_char_len = 0
             for w in sent_:
