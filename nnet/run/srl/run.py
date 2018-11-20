@@ -253,7 +253,7 @@ class SRLRunner(Runner):
                    sent_pred_lemmas_idx, \
                    dep_tag_batch, dep_head_batch, labels_batch, all_l_ids_batch, Predicate_link_batch,\
                    Predicate_Labels_nd,\
-                   Predicate_Labels, char_batch
+                   Predicate_Labels, char_padded
         return bio_converter
 
 
