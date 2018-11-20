@@ -260,7 +260,7 @@ class SRLRunner(Runner):
     def get_unlabeled_converter(self):
         def bio_unlabeled_converter(batch):
 
-            sent = [self.word_voc.vocalize(w) for w in batch]
+
 
             p_sent = [self.p_word_voc.vocalize(w) for w in batch]
 
@@ -284,7 +284,7 @@ class SRLRunner(Runner):
                     for k in range(len(char[i][j])):
                         char_padded[i, j, k] = char[i][j][k]
 
-
+            sent = [self.word_voc.vocalize(w) for w in batch]
             sent_batch, sent_mask = mask_batch(sent)
             p_sent_batch, _ = mask_batch(p_sent)
 
