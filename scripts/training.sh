@@ -8,6 +8,7 @@ python -mnnet.run.srl.run \
 --batch 30 \
 --freq-voc freq.voc_unk.conll2009 \
 --word-voc words.voc.conll2009 \
+--char-voc char.voc.conll2009 \
 --p-word-voc p.words.voc_sskip.conll2009 \
 --role-voc labels.voc.conll2009 \
 --frame-voc frames.voc.conll2009 \

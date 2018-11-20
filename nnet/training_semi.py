@@ -136,6 +136,10 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             Predicate_Labels = model_input[17]
             Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
+
+            Chars = model_input[18]
+            Chars_in = torch.from_numpy(Chars).to(device)
+
             # log(dep_tags_in)
             # log(specific_dep_relations)
             SRLloss, DEPloss, PIloss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
@@ -146,7 +150,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
                         targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in,
-                        Predicate_Labels_in, unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths,
+                        Predicate_Labels_in, Chars_in, unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths,
                         test=False, cvt_train=False)
 
             idx += 1
@@ -329,6 +333,9 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         Predicate_Labels = model_input[17]
                         Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
 
+                        Chars = model_input[18]
+                        Chars_in = torch.from_numpy(Chars).to(device)
+
                         SRLloss, DEPloss, SPEDEPloss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
                         right_noNull_predict_b, noNull_predict_b, noNUll_truth_b, \
                         right_noNull_predict_spe_b, noNull_predict_spe_b, noNUll_truth_spe_b \
@@ -336,7 +343,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                                     local_roles_voc_in,
                                     frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
                                     targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in,
-                                    Predicate_Labels_nd_in, Predicate_Labels_in, test=True, cvt_train=False)
+                                    Predicate_Labels_nd_in, Predicate_Labels_in, Chars_in, test=True, cvt_train=False)
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)

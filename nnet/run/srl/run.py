@@ -1,7 +1,7 @@
 from nnet.run.runner import *
 from nnet.ml.voc import *
 from functools import partial
-from nnet.nn_models.CVT_SD_5 import BiLSTMTagger
+from nnet.nn_models.SRL_DEP_character import BiLSTMTagger
 
 
 def make_local_voc(labels):
@@ -69,6 +69,8 @@ class SRLRunner(Runner):
 
         self.word_voc = create_voc('file', self.a.word_voc)
         self.word_voc.add_unks()
+        self.char_voc = create_voc('file', self.a.char_voc)
+        self.char_voc.add_unks()
         self.freq_voc = frequency_voc(self.a.freq_voc)
         self.p_word_voc = create_voc('file', self.a.p_word_voc)
         self.p_word_voc.add_unks()
@@ -86,6 +88,8 @@ class SRLRunner(Runner):
     def add_special_args(self, parser):
         parser.add_argument(
             "--word-voc", required=True)
+        parser.add_argument(
+            "--char-voc", required=True)
         parser.add_argument(
             "--p-word-voc", required=True)
         parser.add_argument(
@@ -142,6 +146,27 @@ class SRLRunner(Runner):
             targets, f_lemmas, f_targets, labels_voc, labels, all_l_ids, \
             Predicate_link, Predicate_Labels_nd, Predicate_Labels = list(zip(*batch))
 
+            max_len = len(max(sent_, key=len))
+            sent_padded_forchar = [["pad"]* max_len]*len(batch)
+            for i in range(len(sent_)):
+                for j in range(len(sent_[i])):
+                    sent_padded_forchar[i, j] = sent_[i][j]
+
+            max_char_len = 0
+            for w in sent_:
+                for c in w:
+                    if len(list(c)) > max_char_len:
+                        max_char_len = len(list(c))
+
+            char = [[0 if c == "<pad>" else self.char_voc.vocalize(c.strip()) for c in w] for w in sent_padded_forchar]
+
+            char_padded = np.zeros((len(batch), max_len, max_char_len))
+            for i in range(len(sent_)):
+                for j in range(max_len):
+                    for k in range(len(char[i][j])):
+                        char_padded[i, j, k] = char[i][j][k]
+
+
             sent = [self.word_voc.vocalize(w) for w in sent_]
 
             p_sent = [self.p_word_voc.vocalize(w) for w in sent_]
@@ -173,6 +198,8 @@ class SRLRunner(Runner):
             labels_voc = [self.role_voc.vocalize(r) for r in labels_voc]
             lemmas_idx = [self.frame_voc.vocalize(f) for f in f_lemmas]
 
+
+            char_batch, _ = mask_batch(char)
             sent_batch, sent_mask = mask_batch(sent)
             p_sent_batch, _ = mask_batch(p_sent)
             freq_batch, _ = mask_batch(freq)
@@ -227,7 +254,7 @@ class SRLRunner(Runner):
                    sent_pred_lemmas_idx, \
                    dep_tag_batch, dep_head_batch, labels_batch, all_l_ids_batch, Predicate_link_batch,\
                    Predicate_Labels_nd,\
-                   Predicate_Labels
+                   Predicate_Labels, char_batch
         return bio_converter
 
 
@@ -238,10 +265,31 @@ class SRLRunner(Runner):
 
             p_sent = [self.p_word_voc.vocalize(w) for w in batch]
 
+            max_len = len(max(sent_, key=len))
+            sent_padded_forchar = [["pad"] * max_len] * len(batch)
+            for i in range(len(sent_)):
+                for j in range(len(sent_[i])):
+                    sent_padded_forchar[i, j] = sent_[i][j]
+
+            max_char_len = 0
+            for w in sent_:
+                for c in w:
+                    if len(list(c)) > max_char_len:
+                        max_char_len = len(list(c))
+
+            char = [[0 if c == "<pad>" else self.char_voc.vocalize(c.strip()) for c in w] for w in sent_padded_forchar]
+
+            char_padded = np.zeros((len(batch), max_len, max_char_len))
+            for i in range(len(sent_)):
+                for j in range(max_len):
+                    for k in range(len(char[i][j])):
+                        char_padded[i, j, k] = char[i][j][k]
+
+
             sent_batch, sent_mask = mask_batch(sent)
             p_sent_batch, _ = mask_batch(p_sent)
 
-            return sent_batch, p_sent_batch, sent_mask
+            return sent_batch, p_sent_batch, sent_mask, char_padded
         return bio_unlabeled_converter
 
 
@@ -251,6 +299,7 @@ class SRLRunner(Runner):
 
         hps['vframe'] = self.frame_voc.size()
         hps['vword'] = self.word_voc.size()
+        hps['vchar'] = self.char_voc.size()
         hps['vbio'] = self.role_voc.size()
         hps['vpos'] = self.pos_voc.size()
         hps['vdep'] = self.dep_voc.size()
