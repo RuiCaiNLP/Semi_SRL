@@ -140,7 +140,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Chars = model_input[18]
             Chars_in = torch.from_numpy(Chars).to(device)
 
-            # log(dep_tags_in)
+            log(Chars_in)
             # log(specific_dep_relations)
             SRLloss, DEPloss, PIloss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
             right_noNull_predict, noNull_predict, noNUll_truth, \
