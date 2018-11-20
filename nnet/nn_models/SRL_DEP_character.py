@@ -105,7 +105,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        self.elmo_mlp = nn.Sequential(nn.Linear(4 * lstm_hidden_dim, self.elmo_emb_size), nn.ReLU())
+        self.elmo_mlp = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, self.elmo_emb_size), nn.ReLU())
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
