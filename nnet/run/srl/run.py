@@ -166,7 +166,7 @@ class SRLRunner(Runner):
                     for k in range(len(char[i][j])):
                         char_padded[i, j, k] = char[i][j][k]
 
-
+            char_padded = char_padded.astype('int64')
             sent = [self.word_voc.vocalize(w) for w in sent_]
 
             p_sent = [self.p_word_voc.vocalize(w) for w in sent_]
