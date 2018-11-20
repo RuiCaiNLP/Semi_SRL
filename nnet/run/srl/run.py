@@ -199,7 +199,6 @@ class SRLRunner(Runner):
             lemmas_idx = [self.frame_voc.vocalize(f) for f in f_lemmas]
 
 
-            char_batch, _ = mask_batch(char)
             sent_batch, sent_mask = mask_batch(sent)
             p_sent_batch, _ = mask_batch(p_sent)
             freq_batch, _ = mask_batch(freq)
