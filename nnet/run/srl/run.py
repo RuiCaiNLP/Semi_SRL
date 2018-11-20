@@ -271,7 +271,7 @@ class SRLRunner(Runner):
                     sent_padded_forchar[i][j] = sent[i][j]
 
             max_char_len = 0
-            for w in sent_:
+            for w in sent:
                 for c in w:
                     if len(list(c)) > max_char_len:
                         max_char_len = len(list(c))
