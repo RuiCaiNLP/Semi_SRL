@@ -279,7 +279,7 @@ class SRLRunner(Runner):
             char = [[0 if c == "<pad>" else self.char_voc.vocalize(c.strip()) for c in w] for w in sent_padded_forchar]
 
             char_padded = np.zeros((len(batch), max_len, max_char_len))
-            for i in range(len(sent_)):
+            for i in range(len(batch)):
                 for j in range(max_len):
                     for k in range(len(char[i][j])):
                         char_padded[i, j, k] = char[i][j][k]
