@@ -170,6 +170,26 @@ class BiLSTMTagger(nn.Module):
         self.hidden_3 = self.init_hidden_spe()
         self.hidden_4 = self.init_hidden_share()
 
+        # Init hidden state
+        self.hidden = self.init_hidden_spe()
+        self.hidden_2 = self.init_hidden_spe()
+        self.hidden_3 = self.init_hidden_spe()
+        self.hidden_DEP_base = self.init_hidden_spe()
+        self.hidden_DEP = self.init_hidden_spe()
+        self.hidden_SRL_base = self.init_hidden_spe()
+        self.hidden_SRL = self.init_hidden_SRL()
+        self.hidden_PI = self.init_hidden_share()
+
+    def init_hidden_SRL(self):
+        # Before we've done anything, we dont have any hidden state.
+        # Refer to the Pytorch documentation to see exactly
+        # why they have this dimensionality.
+        # The axes semantics are (num_layers, minibatch_size, hidden_dim)
+        #return (Variable(torch.zeros(1, self.batch_size, self.hidden_dim)),
+        #        Variable(torch.zeros(1, self.batch_size, self.hidden_dim)))
+        return (torch.zeros(2 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
+                torch.zeros(2 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
+
     def init_hidden_share(self):
         # Before we've done anything, we dont have any hidden state.
         # Refer to the Pytorch documentation to see exactly
@@ -284,7 +304,7 @@ class BiLSTMTagger(nn.Module):
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
-        hidden_states, self.hidden_4 = self.BiLSTM_SRL(embeds_sort, self.hidden_4)
+        hidden_states, self.hidden_PI = self.BiLSTM_SRL(embeds_sort, self.hidden_PI)
         # it seems that hidden states is already batch first, we don't need swap the dims
         # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
