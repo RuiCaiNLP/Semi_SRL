@@ -264,14 +264,14 @@ class SRLRunner(Runner):
 
             p_sent = [self.p_word_voc.vocalize(w) for w in batch]
 
-            max_len = len(max(sent, key=len))
+            max_len = len(max(p_sent, key=len))
             sent_padded_forchar = [["pad"] * max_len] * len(batch)
-            for i in range(len(sent)):
-                for j in range(len(sent[i])):
-                    sent_padded_forchar[i][j] = sent[i][j]
+            for i in range(len(batch)):
+                for j in range(len(batch[i])):
+                    sent_padded_forchar[i][j] = batch[i][j]
 
             max_char_len = 0
-            for w in sent:
+            for w in batch:
                 for c in w:
                     if len(list(c)) > max_char_len:
                         max_char_len = len(list(c))
