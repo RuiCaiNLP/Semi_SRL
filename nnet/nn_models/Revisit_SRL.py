@@ -264,7 +264,7 @@ class BiLSTMTagger(nn.Module):
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
                 sent_pred_lemmas_idx,  dep_tags,  dep_heads, targets, P_identification, all_l_ids,
-                Predicate_link, Predicate_Labels_nd, Predicate_Labels,
+                Predicate_link, Predicate_Labels_nd, Predicate_Labels, Chars_in,
                 unlabeled_sentence=None, p_unlabeled_sentence=None, unlabeled_lengths=None,test=False, cvt_train=False):
 
 
