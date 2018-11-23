@@ -333,6 +333,7 @@ class BiLSTMTagger(nn.Module):
         fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         embeds_SRL = self.word_embeddings_SRL(sentence)
         embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
 
         SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds,
                                        region_marks), 2)
