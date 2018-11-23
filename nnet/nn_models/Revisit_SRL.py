@@ -259,7 +259,35 @@ class BiLSTMTagger(nn.Module):
 
 
 
+    def Predicate_Id(self, sentence, p_sentence, lengths):
+        # contruct input for shared BiLSTM Encoder
+        embeds_PI = self.word_embeddings_DEP(sentence)
+        embeds_PI = embeds_PI.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        # sharing pretrained word_embeds
+        fixed_embeds_PI = self.word_fixed_embeddings_PI(p_sentence)
+        fixed_embeds_PI = fixed_embeds_PI.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
 
+        embeds_forPI = torch.cat((embeds_PI, fixed_embeds_PI), 2)
+        embeds_forPI = self.PI_input_dropout(embeds_forPI)
+
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forPI, lengths)
+        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
+        # hidden states [time_steps * batch_size * hidden_units]
+        self.hidden_PI = self.init_hidden_share()
+        hidden_states, self.hidden_PI = self.BiLSTM_PI(embeds_sort, self.hidden_PI)
+        # it seems that hidden states is already batch first, we don't need swap the dims
+        # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
+        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
+        # hidden_states = hidden_states.transpose(0, 1)
+        hidden_states = hidden_states[unsort_idx]
+        hidden_states = self.id_dropout(hidden_states)
+
+        Predicate_identification = self.Idenficiation(
+            self.id_dropout_h(F.relu(self.MLP_identification(hidden_states))))
+        Predicate_identification_space = Predicate_identification.view(
+            len(sentence[0]) * self.batch_size, -1)
+
+        return Predicate_identification_space
 
     def forward(self, sentence, p_sentence,  pos_tags, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
