@@ -267,8 +267,7 @@ class BiLSTMTagger(nn.Module):
         fixed_embeds_PI = self.word_fixed_embeddings_PI(p_sentence)
         fixed_embeds_PI = fixed_embeds_PI.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
 
-        embeds_forPI = torch.cat((embeds_PI, fixed_embeds_PI), 2)
-        embeds_forPI = self.PI_input_dropout(embeds_forPI)
+        embeds_forPI = self.PI_input_dropout(embeds_PI)
 
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forPI, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
