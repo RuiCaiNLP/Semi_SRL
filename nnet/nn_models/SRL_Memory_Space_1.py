@@ -334,7 +334,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
 
-        embeds_Memory = torch.matmul(embeds_SRL, self.Memory_space)
+        embeds_Memory = F.tanh(torch.matmul(embeds_SRL, self.Memory_space))
 
         SRL_hidden_states = torch.cat((embeds_Memory, region_marks), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
