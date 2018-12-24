@@ -1,7 +1,7 @@
 from nnet.run.runner import *
 from nnet.ml.voc import *
 from functools import partial
-from nnet.nn_models.SRL_Memory_Space_1 import BiLSTMTagger
+from nnet.nn_models.SRL import BiLSTMTagger
 
 
 def make_local_voc(labels):
@@ -192,7 +192,9 @@ class SRLRunner(Runner):
 
             dep_head = []
             for w in dep_parsing:
-                dep_head.append([int(p[2]) for p in w])
+                heads = [int(p[2]) for p in w]
+                heads.insert(0, -1)
+                dep_head.append(heads)
 
             frames = [self.frame_voc.vocalize(f) for f in frames]
             labels_voc = [self.role_voc.vocalize(r) for r in labels_voc]

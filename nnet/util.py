@@ -9,14 +9,20 @@ def log(*args, **kwargs):
     print(file=sys.stderr, *args, **kwargs)
 
 
-def mask_batch(batch):
+def mask_batch(batch, for_Head=False):
+
     max_len = len(max(batch, key=len))
     mask = np.zeros((len(batch), max_len))
-    padded = np.zeros((len(batch), max_len))
+    if not for_Head:
+        padded = np.zeros((len(batch), max_len))
+    else:
+        padded = np.zeros((len(batch), max_len)) - 1
     for i in range(len(batch)):
         mask[i, :len(batch[i])] = 1
         for j in range(len(batch[i])):
             padded[i, j] = batch[i][j]
+
+
 
     #return padded.astype('int32'), mask.astype(T.config.floatX)
     return padded.astype('int64'), mask.astype('int64')
