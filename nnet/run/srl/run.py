@@ -182,7 +182,9 @@ class SRLRunner(Runner):
 
             dep_seq = []
             for w in dep_parsing:
-                dep_seq.append([p[0] for p in w])
+                tags = [p[0] for p in w]
+                tags.insert(0, '<pad>')
+                dep_seq.append(tags)
             dep_tags = [self.dep_voc.vocalize(p) for p in dep_seq]
 
             all_l_ids = [[int(r) for r in s ]for s in all_l_ids]
