@@ -115,7 +115,7 @@ class Runner(object):
 
         log('dataset loaded!')
 
-
+        """
         if not a.test_model:
             train_semi(
                 model=model,
@@ -140,7 +140,7 @@ class Runner(object):
                 dbg_print_rate=a.dbg_print_rate,
                 params_path=a.params_path
             )
-            """
+
         else:
             test(
                 model=model,
