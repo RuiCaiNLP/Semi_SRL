@@ -217,7 +217,7 @@ class SRLRunner(Runner):
             Predicate_Labels, _ = mask_batch(Predicate_Labels)
             Predicate_Labels_nd, _ = mask_batch(Predicate_Labels_nd)
 
-            dep_head_batch, _ = mask_batch(dep_head)
+            dep_head_batch, _ = mask_batch(dep_head, for_Head=True)
             labels_voc_batch, labels_voc_mask = mask_batch(labels_voc)
 
             for line in labels_voc_mask:
