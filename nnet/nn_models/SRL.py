@@ -354,8 +354,8 @@ class BiLSTMTagger(nn.Module):
 
 
         return SRLloss, DEPloss_tag, DEPloss_link,  SRLloss, SRLprobs, wrong_nums, nums, wrong_nums_tag, nums_tag,  \
-               nums - wrong_nums, nums - wrong_nums, nums, \
-               nums_tag - wrong_nums_tag, nums_tag - wrong_nums_tag, nums_tag,
+               nums - wrong_nums, nums, nums, \
+               nums_tag - wrong_nums_tag, nums_tag, nums_tag,
 
     @staticmethod
     def sort_batch(x, l):
