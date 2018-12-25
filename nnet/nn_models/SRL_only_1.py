@@ -37,7 +37,7 @@ class BiLSTMTagger(nn.Module):
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
         sent_embedding_dim_DEP = 2*hps['sent_edim']
-        sent_embedding_dim_SRL = 3 * hps['sent_edim'] + 16 + 16
+        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 16 + 16
         ## for the region mark
         role_embedding_dim = hps['role_edim']
         frame_embedding_dim = role_embedding_dim
@@ -315,7 +315,7 @@ class BiLSTMTagger(nn.Module):
         pos_embeds = self.pos_embeddings(pos_tags)
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
 
-        SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds, pos_embeds, sent_pred_lemmas_embeds, region_marks), 2)
+        SRL_hidden_states = torch.cat((embeds_SRL,  fixed_embeds, pos_embeds, region_marks), 2)
         SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
 
 
