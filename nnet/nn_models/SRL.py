@@ -256,7 +256,7 @@ class BiLSTMTagger(nn.Module):
         nums = 0.0
         wrong_nums = 0.0
         for a, b in zip(heads, dep_heads.flatten()):
-            if b == 0:
+            if b== -1:
                 continue
             nums += 1
             if a != b:
@@ -325,7 +325,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states = hidden_states[unsort_idx]
-        hidden_states = self.hidden_state_dropout_SRL(hidden_states)
+        #hidden_states = self.hidden_state_dropout_SRL(hidden_states)
 
         # B * H
         hidden_states_3 = hidden_states
