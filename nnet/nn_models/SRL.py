@@ -81,7 +81,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-        self.elmo_mlp = nn.Sequential(nn.Linear(4 * lstm_hidden_dim, self.elmo_emb_size), nn.ReLU())
+        self.elmo_mlp = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, self.elmo_emb_size), nn.ReLU())
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
@@ -300,7 +300,9 @@ class BiLSTMTagger(nn.Module):
         #####################################################
         h_layer_0 = hidden_states_0[:, 1:]  # .detach()
         h_layer_1 = hidden_states_1[:, 1:]  # .detach()
-        SRL_composer = torch.cat((h_layer_0, h_layer_1), 2)
+
+        w = F.softmax(self.elmo_w, dim=0)
+        SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
         SRL_composer = self.elmo_mlp(SRL_composer)
 
 
