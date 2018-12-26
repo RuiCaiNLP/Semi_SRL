@@ -13,6 +13,7 @@ def bio_reader(record):
     labels_voc = labels_voc.split(' ')
 
     labels_voc.insert(0, '<pad>')
+    log(labels_voc)
     frame = [frame] * len(labels_voc)
     words = []
     for word in sent.split(' '):
