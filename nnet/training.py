@@ -26,7 +26,19 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
     #log(optimizer.param_groups[0]['lr'])
     #optimizer.param_groups[0]['lr'] = 0.001
 
-
+    """
+    Best_BiLSTM_0_data = []
+    for weight in model.BiLSTM_0.parameters():
+        Best_BiLSTM_0_data.append(weight.data.clone())
+    Best_BiLSTM_1_data = []
+    for weight in model.BiLSTM_1.parameters():
+        Best_BiLSTM_1_data.append(weight.data.clone())
+    best_word_embeddings_DEP = model.word_embeddings_DEP.weight.data.clone()
+    best_pos_embeddings_DEP = model.pos_embeddings_DEP.weight.data.clone()
+    best_word_fixed_embeddings_DEP = model.word_fixed_embeddings_DEP.weight.data.clone()
+    best_hidden2tag = model.hidden2tag.weight.data.clone()
+    best_MLP = model.MLP.weight.data.clone()
+    """
     Best_DEP_score = -0.1
 
     random.seed(1234)
@@ -58,6 +70,10 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             sentence_in = torch.from_numpy(sentence).to(device)
             p_sentence_in = torch.from_numpy(p_sentence).to(device)
+            #log(sentence_in)
+            #log(p_sentence_in)
+            #sentence_in.requires_grad_(False)
+            #p_sentence_in.requires_grad_(False)
 
             pos_tags = model_input[2]
             pos_tags_in = torch.from_numpy(pos_tags).to(device)
@@ -69,6 +85,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             frames = model_input[5]
             frames_in = torch.from_numpy(frames).to(device)
+            #frames_in.requires_grad_(False)
 
             local_roles_voc = model_input[6]
             local_roles_voc_in = torch.from_numpy(local_roles_voc).to(device)
@@ -94,31 +111,20 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
             dep_heads = model_input[12]
 
+
+            #root_dep_tags = model_input[12]
+            #root_dep_tags_in = Variable(torch.from_numpy(root_dep_tags), requires_grad=False)
+
             tags = model_input[13]
             targets = torch.tensor(tags).to(device)
 
+            specific_dep_tags = model_input[14]
+            specific_dep_tags_in = torch.from_numpy(specific_dep_tags).to(device)
+
+            specific_dep_relations = model_input[15]
+            specific_dep_relations_in = torch.from_numpy(specific_dep_relations).to(device)
 
 
-
-            all_l_ids = model_input[14]
-            predicate_idenfication = np.zeros_like(all_l_ids)
-            for i in range(len(predicate_idenfication)):
-                for j in range(len(predicate_idenfication[0])):
-                    if all_l_ids[i][j] == 1:
-                        predicate_idenfication[i][j] = 1
-                    elif all_l_ids[i][j] > 1:
-                        predicate_idenfication[i][j] = 2
-            predicate_idenfication_in = torch.from_numpy(predicate_idenfication).to(device)
-            all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
-
-            Predicate_link = model_input[15]
-            Predicate_link_in = torch.from_numpy(Predicate_link).to(device)
-
-            Predicate_Labels_nd = model_input[16]
-            Predicate_Labels_nd_in = torch.from_numpy(Predicate_Labels_nd).to(device)
-
-            Predicate_Labels = model_input[17]
-            Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
             #log(dep_tags_in)
             #log(specific_dep_relations)
             SRLloss, DEPloss, SPEDEPloss, loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
@@ -127,7 +133,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                        targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in)
+                        targets, specific_dep_tags_in, specific_dep_relations_in)
 
 
 
@@ -135,13 +141,11 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             idx += 1
             #Final_loss = SRLloss + 0.5/(1 + 0.3 *(e-1)) * (DEPloss + SPEDEPloss)
             #if batch_idx < dataset_len * 0.9:
-            #    Final_loss = SRLloss + 0.5 * (DEPloss + SPEDEPloss)
+            Final_loss = SRLloss #+ 0.5 * (DEPloss + SPEDEPloss)
             #else:
             #    Final_loss = SRLloss
 
-
-            Final_loss =  SRLloss
-
+            #Final_loss = SRLloss
             Final_loss.backward()
             #clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
             #clip_grad_norm_(parameters=model.hidden2tag_H.parameters(), max_norm=norm)
@@ -149,17 +153,21 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             #DEPloss.backward()
             optimizer.step()
 
+
+            #if idx % 10000 == 0:
+            #    optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.75
+
             if idx % 100 ==0:
                 log(idx)
                 log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 log('SRLloss')
                 log(SRLloss)
-                log("DEPloss")
-                log(DEPloss)
-                log("SPEDEPloss")
-                log(SPEDEPloss)
-                log("sum")
-                log(loss)
+                #log("DEPloss")
+                #log(DEPloss)
+                #log("SPEDEPloss")
+                #log(SPEDEPloss)
+                #log("sum")
+                #log(loss)
 
                 del SRLloss
                 del DEPloss
@@ -199,6 +207,9 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 Dep_P = [0.0] * 100
                 Dep_R = [0.0] * 100
                 Dep_F = [0.0] * 100
+
+                predicates_num = 0.0
+                right_disambiguate = 0.0
 
                 log('now dev test')
                 index = 0
@@ -274,25 +285,11 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         tags = model_input[13]
                         targets = torch.tensor(tags).to(device)
 
-                        all_l_ids = model_input[14]
-                        predicate_idenfication = np.zeros_like(all_l_ids)
-                        for i in range(len(predicate_idenfication)):
-                            for j in range(len(predicate_idenfication[0])):
-                                if all_l_ids[i][j] == 1:
-                                    predicate_idenfication[i][j] = 1
-                                elif all_l_ids[i][j] > 1:
-                                    predicate_idenfication[i][j] = 2
-                        predicate_idenfication_in = torch.from_numpy(predicate_idenfication).to(device)
-                        all_l_ids_in = torch.from_numpy(all_l_ids).to(device)
+                        specific_dep_tags = model_input[14]
+                        specific_dep_tags_in = torch.from_numpy(specific_dep_tags).to(device)
 
-                        Predicate_link = model_input[15]
-                        Predicate_link_in = torch.from_numpy(Predicate_link).to(device)
-
-                        Predicate_Labels_nd = model_input[16]
-                        Predicate_Labels_nd_in = torch.from_numpy(Predicate_Labels_nd).to(device)
-
-                        Predicate_Labels = model_input[17]
-                        Predicate_Labels_in = torch.from_numpy(Predicate_Labels).to(device)
+                        specific_dep_relations = model_input[15]
+                        specific_dep_relations_in = Variable(torch.from_numpy(specific_dep_relations)).to(device)
 
                         SRLloss, DEPloss, SPEDEPloss, loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
                         right_noNull_predict_b, noNull_predict_b, noNUll_truth_b, \
@@ -300,10 +297,10 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                             = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                                     local_roles_voc_in,
                                     frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                                    targets, predicate_idenfication_in, all_l_ids_in, Predicate_link_in, Predicate_Labels_nd_in, Predicate_Labels_in, True)
+                                    targets, specific_dep_tags_in, specific_dep_relations_in, True)
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
-                        labels = np.reshape(labels, sentence.shape)
+                        labels = np.reshape(labels, (sentence.shape[0], sentence.shape[1]+1))
                         wrong_labels_num += wrong_l_nums
                         total_labels_num += all_l_nums
                         spe_wrong_labels_num += spe_wrong_l_nums
@@ -316,28 +313,33 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         noNull_predict_spe += noNull_predict_spe_b
                         noNUll_truth_spe += noNUll_truth_spe_b
 
+
                         for i, sent_labels in enumerate(labels):
-                            labels_voc = batch[i][-6]
+                            labels_voc = batch[i][-4]
                             local_voc = make_local_voc(labels_voc)
                             for j in range(len(labels[i])):
-                                """
                                 best = local_voc[labels[i][j]]
                                 true = local_voc[tags[i][j]]
-                                
-                                if true != '<pad>':
-                                    Dep_count_num[dep_tags_in[i][j]] += 1
+
+                                if j==0:
+                                    predicates_num += 1
+                                    if best ==  true:
+                                        right_disambiguate += 1
+                                    continue
+
+
                                 if true != '<pad>' and true != 'O':
                                     NonNullTruth += 1
-                                    Dep_NoNull_Truth[dep_tags_in[i][j]] += 1
+                                    #Dep_NoNull_Truth[dep_tags_in[i][j]] += 1
                                 if true != best:
                                     errors += 1
                                 if best != '<pad>' and best != 'O' and true != '<pad>':
                                     NonNullPredict += 1
-                                    Dep_NoNull_Predict[dep_tags_in[i][j]] += 1
+                                    #Dep_NoNull_Predict[dep_tags_in[i][j]] += 1
                                     if true == best:
                                         right_NonNullPredict += 1
-                                        Dep_Right_NoNull_Predict[dep_tags_in[i][j]] += 1
-                                """
+                                        #Dep_Right_NoNull_Predict[dep_tags_in[i][j]] += 1
+                        """
                                 best = labels[i][j]
                                 true = tags[i][j]
                                 # true = Predicate_Labels_nd[i][j]
@@ -355,6 +357,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                                     if true == best:
                                         right_NonNullPredict += 1
                                         Dep_Right_NoNull_Predict[dep_tags_in[i][j]] += 1
+                        """
 
                         NonNullPredicts += NonNullPredict
                         right_NonNullPredicts += right_NonNullPredict
@@ -370,12 +373,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         del model.hidden_3
                         del model.hidden_4
 
-                for i in range(len(Dep_P)):
-                    Dep_P[i] = Dep_Right_NoNull_Predict[i] / (Dep_NoNull_Predict[i] + 0.0001)
-                    Dep_R[i] = Dep_Right_NoNull_Predict[i] / (Dep_NoNull_Truth[i] + 0.0001)
-                    Dep_F[i] = 2 * Dep_P[i] * Dep_R[i] / (Dep_P[i] + Dep_R[i] + 0.0001)
-                    if int(Dep_count_num[i]) > 0:
-                        log(str(int(Dep_count_num[i])) + '\t' + str(Dep_P[i]) + '\t' + str(Dep_R[i]) + '\t' + str(Dep_F[i]))
+
                 Predicat_num = 6300
                 P = (right_NonNullPredicts + Predicat_num) / (NonNullPredicts + Predicat_num)
                 R = (right_NonNullPredicts + Predicat_num) / (NonNullTruths + Predicat_num)
@@ -388,24 +386,18 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 R = (right_NonNullPredicts) / (NonNullTruths)
                 F1 = 2 * P * R / (P + R + 0.0001)
                 log('Precision: ' + str(P), 'recall: ' + str(R), 'F1: ' + str(F1))
+                log(right_disambiguate)
+                log(predicates_num)
+                log('disambiguate accuraccy:', right_disambiguate/predicates_num)
                 log('Best F1: ' + str(best_F1))
                 if F1 > best_F1:
                     best_F1 = F1
                     torch.save(model.state_dict(), params_path)
                     log('New best, model saved')
 
-                P = right_noNull_predict / (noNull_predict + 0.0001)
-                R = right_noNull_predict / (noNUll_truth + 0.0001)
-                F_label = 2 * P * R / (P + R + 0.0001)
-                log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_label))
 
-                log(right_noNull_predict_spe)
-                log(noNull_predict_spe)
-                log(noNUll_truth_spe)
-                P = right_noNull_predict_spe / (noNull_predict_spe + 0.0001)
-                R = right_noNull_predict_spe / (noNUll_truth_spe + 0.0001)
-                F_link = 2 * P * R / (P + R + 0.0001)
-                log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_link))
+
+
 
 
        ##########################################################################################
