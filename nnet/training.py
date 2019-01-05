@@ -300,7 +300,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                                     targets, specific_dep_tags_in, specific_dep_relations_in, True)
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
-                        labels = np.reshape(labels, (sentence.shape[0], sentence.shape[1]+1))
+                        labels = np.reshape(labels, sentence.shape)
                         wrong_labels_num += wrong_l_nums
                         total_labels_num += all_l_nums
                         spe_wrong_labels_num += spe_wrong_l_nums
@@ -320,12 +320,6 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                             for j in range(len(labels[i])):
                                 best = local_voc[labels[i][j]]
                                 true = local_voc[tags[i][j]]
-
-                                if j==0:
-                                    predicates_num += 1
-                                    if best ==  true:
-                                        right_disambiguate += 1
-                                    continue
 
 
                                 if true != '<pad>' and true != 'O':
@@ -386,9 +380,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 R = (right_NonNullPredicts) / (NonNullTruths)
                 F1 = 2 * P * R / (P + R + 0.0001)
                 log('Precision: ' + str(P), 'recall: ' + str(R), 'F1: ' + str(F1))
-                log(right_disambiguate)
-                log(predicates_num)
-                log('disambiguate accuraccy:', right_disambiguate/predicates_num)
+
                 log('Best F1: ' + str(best_F1))
                 if F1 > best_F1:
                     best_F1 = F1
