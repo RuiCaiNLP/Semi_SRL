@@ -4,27 +4,39 @@ from functools import partial
 from nnet.nn_models.SRL_only_1 import BiLSTMTagger
 
 
+all_labels_voc = []
+
 def make_local_voc(labels):
     return {i: label for i, label in enumerate(labels)}
 
 def bio_reader(record):
-    dbg_header, sent,  pos_tags, dep_parsing, root_dep_parsing, frame, target, f_lemmas, f_targets, labels_voc, \
-    labels, all_l_ids, Predicate_link, Predicate_Labels_nd, Predicate_Labels = record.split('\t')
+    dbg_header, sent, pos_tags, dep_parsing, root_dep_parsing, frame, target, f_lemmas, f_targets, labels_voc, \
+    labels, specific_dep_labels, specific_dep_relations = record.split('\t')
     labels_voc = labels_voc.split(' ')
 
-    labels_voc.insert(0, '<pad>')
-    log(labels_voc)
+    sense = dbg_header[-2:]
+
+    # labels_voc = labels_voc.split(' ')
+    # log(all_labels_voc)
+    # log(labels_voc)
+    labels_voc = all_labels_voc
+
+    # labels_voc.insert(0, '<pad>')
+    frame = frame.split('.')[0]
     frame = [frame] * len(labels_voc)
     words = []
     for word in sent.split(' '):
         words.append(word)
 
     pos_tags = pos_tags.split(' ')
+
+    # pos_tags.insert(0, '<pad>')
+    # words.insert(0, '.')
+
     labels = labels.split(' ')
-    all_l_ids = all_l_ids.split(' ')
-    Predicate_link = Predicate_link.split(' ')
-    Predicate_Labels_nd = Predicate_Labels_nd.split(' ')
-    Predicate_Labels = Predicate_Labels.split(' ')
+    labels.insert(0, sense)
+    specific_dep_labels = specific_dep_labels.split(' ')
+    specific_dep_relations = specific_dep_relations.split(' ')
 
     if pos_tags[int(target)].startswith("V"):
         dbg_header = 'V'
