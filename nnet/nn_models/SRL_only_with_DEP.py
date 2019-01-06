@@ -251,8 +251,8 @@ class BiLSTMTagger(nn.Module):
         # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
-        hidden_states_1 = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_DEP(hidden_states_1)
+        hidden_states_1_nodrop = hidden_states[unsort_idx]
+        hidden_states_1 = self.hidden_state_dropout_DEP(hidden_states_1_nodrop)
         ##########################################
 
         Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
@@ -307,7 +307,7 @@ class BiLSTMTagger(nn.Module):
         nums_tag = 0.0
         wrong_nums_tag = 0.0
         for a, b in zip(heads_tag, dep_tags.view(-1).cpu().data.numpy()):
-            if b == -1 or b == 0:
+            if b == 0:
                 continue
             nums_tag += 1
             if a != b:
@@ -316,7 +316,7 @@ class BiLSTMTagger(nn.Module):
         DEPloss_tag = loss_function(tag_space_tag, dep_tags.view(-1))
 
         h_layer_0 = hidden_states_0[:, 1:]  # .detach()
-        h_layer_1 = hidden_states_1[:, 1:]  # .detach()
+        h_layer_1 = hidden_states_1_nodrop[:, 1:]  # .detach()
         w = F.softmax(self.elmo_w, dim=0)
         SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
         SRL_composer = self.elmo_mlp(SRL_composer)
