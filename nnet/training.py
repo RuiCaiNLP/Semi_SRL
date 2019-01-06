@@ -162,10 +162,10 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 log('SRLloss')
                 log(SRLloss)
-                #log("DEPloss")
-                #log(DEPloss)
-                #log("SPEDEPloss")
-                #log(SPEDEPloss)
+                log("DEPloss")
+                log(DEPloss)
+                log("SPEDEPloss")
+                log(SPEDEPloss)
                 #log("sum")
                 #log(loss)
 
@@ -199,14 +199,6 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 noNUll_truth_spe = 0
 
 
-                Dep_count_num = [0.0] * 100
-                Dep_NoNull_Truth = [0.0] * 100
-                Dep_NoNull_Predict = [0.0] * 100
-                Dep_Right_NoNull_Predict = [0.0] * 100
-
-                Dep_P = [0.0] * 100
-                Dep_R = [0.0] * 100
-                Dep_F = [0.0] * 100
 
                 predicates_num = 0.0
                 right_disambiguate = 0.0
@@ -380,6 +372,27 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 R = (right_NonNullPredicts) / (NonNullTruths)
                 F1 = 2 * P * R / (P + R + 0.0001)
                 log('Precision: ' + str(P), 'recall: ' + str(R), 'F1: ' + str(F1))
+
+                log('Best F1: ' + str(best_F1))
+                if F1 > best_F1:
+                    best_F1 = F1
+                    torch.save(model.state_dict(), params_path)
+                    log('New best, model saved')
+
+                P = right_noNull_predict / (noNull_predict + 0.0001)
+                R = right_noNull_predict / (noNUll_truth + 0.0001)
+                F_label = 2 * P * R / (P + R + 0.0001)
+                log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_label))
+
+                log(right_noNull_predict_spe)
+                log(noNull_predict_spe)
+                log(noNUll_truth_spe)
+                P = right_noNull_predict_spe / (noNull_predict_spe + 0.0001)
+                R = right_noNull_predict_spe / (noNUll_truth_spe + 0.0001)
+                F_link = 2 * P * R / (P + R + 0.0001)
+                log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_link))
+
+
 
                 log('Best F1: ' + str(best_F1))
                 if F1 > best_F1:
