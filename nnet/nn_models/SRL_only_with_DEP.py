@@ -173,12 +173,12 @@ class BiLSTMTagger(nn.Module):
         self.map_dim = lstm_hidden_dim
 
         self.ldims = lstm_hidden_dim
-        self.hidLayerFOH = nn.Linear(self.ldims * 2, self.ldims)
-        self.hidLayerFOM = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOH = nn.Linear(self.ldims * 4, self.ldims)
+        self.hidLayerFOM = nn.Linear(self.ldims * 4, self.ldims)
         self.W_R_link = nn.Parameter(torch.rand(lstm_hidden_dim + 1, 1 + lstm_hidden_dim))
 
-        self.hidLayerFOH_tag = nn.Linear(self.ldims * 2, self.ldims)
-        self.hidLayerFOM_tag = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOH_tag = nn.Linear(self.ldims * 4, self.ldims)
+        self.hidLayerFOM_tag = nn.Linear(self.ldims * 4, self.ldims)
         self.W_R_tag = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size*(1 + lstm_hidden_dim)))
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
@@ -252,7 +252,9 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1_nodrop = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_DEP(hidden_states_1_nodrop)
+
+        hidden_states_01 = torch.cat((hidden_states_0, hidden_states_1_nodrop), 2)
+        hidden_states_1 = self.hidden_state_dropout_DEP(hidden_states_01)
         ##########################################
 
         Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
