@@ -177,8 +177,8 @@ class BiLSTMTagger(nn.Module):
         self.hidLayerFOM = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_link = nn.Parameter(torch.rand(lstm_hidden_dim + 1, 1 + lstm_hidden_dim))
 
-        self.hidLayerFOH_tag = nn.Linear(self.ldims * 4, self.ldims)
-        self.hidLayerFOM_tag = nn.Linear(self.ldims * 4, self.ldims)
+        self.hidLayerFOH_tag = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOM_tag = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_tag = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size*(1 + lstm_hidden_dim)))
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
