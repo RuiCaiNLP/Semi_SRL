@@ -173,8 +173,8 @@ class BiLSTMTagger(nn.Module):
         self.map_dim = lstm_hidden_dim
 
         self.ldims = lstm_hidden_dim
-        self.hidLayerFOH = nn.Linear(self.ldims * 4, self.ldims)
-        self.hidLayerFOM = nn.Linear(self.ldims * 4, self.ldims)
+        self.hidLayerFOH = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOM = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_link = nn.Parameter(torch.rand(lstm_hidden_dim + 1, 1 + lstm_hidden_dim))
 
         self.hidLayerFOH_tag = nn.Linear(self.ldims * 4, self.ldims)
@@ -251,10 +251,7 @@ class BiLSTMTagger(nn.Module):
         # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
-        hidden_states_1_nodrop = hidden_states[unsort_idx]
-
-        hidden_states_01 = torch.cat((hidden_states_0, hidden_states_1_nodrop), 2)
-        hidden_states_1 = self.hidden_state_dropout_DEP(hidden_states_01)
+        hidden_states_1 = hidden_states[unsort_idx]
         ##########################################
 
         Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
@@ -318,7 +315,7 @@ class BiLSTMTagger(nn.Module):
         DEPloss_tag = loss_function(tag_space_tag, dep_tags.view(-1))
 
         h_layer_0 = hidden_states_0[:, 1:]  # .detach()
-        h_layer_1 = hidden_states_1_nodrop[:, 1:]  # .detach()
+        h_layer_1 = hidden_states_1[:, 1:]  # .detach()
         w = F.softmax(self.elmo_w, dim=0)
         SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
         SRL_composer = self.elmo_mlp(SRL_composer)
