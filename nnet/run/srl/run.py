@@ -268,13 +268,13 @@ class SRLRunner(Runner):
                             region_mark[r][c] = 1
 
             sent_pred_lemmas_idx = np.zeros(sent_batch.shape, dtype='int64')
-            sent_pred_indicator = np.zeros(sent_batch.shape, dtype='int64')
+            sent_pred_indicator = np.ones(sent_batch.shape, dtype='int64')
             for r, row in enumerate(sent_pred_lemmas_idx):
                 for c, column in enumerate(row):
                     for t, tar in enumerate(f_targets[r]):
                         if tar == c:
                             sent_pred_lemmas_idx[r][c] = lemmas_idx[r][t]
-                            sent_pred_indicator[r][c] = 1
+                            sent_pred_indicator[r][c] = 2
 
             sent_pred_lemmas_idx = np.array(sent_pred_lemmas_idx, dtype='int64')
 

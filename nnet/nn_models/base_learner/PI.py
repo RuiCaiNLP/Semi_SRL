@@ -190,7 +190,7 @@ class BiLSTMTagger(nn.Module):
 
         self.mid_hidden = lstm_hidden_dim
         self.PI_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
-                                     nn.Linear(lstm_hidden_dim, self.pos_size))
+                                     nn.Linear(lstm_hidden_dim, 3))
 
         # Init hidden state
         self.hidden = self.init_hidden_spe()
