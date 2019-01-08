@@ -234,7 +234,6 @@ class SRLRunner(Runner):
             gold_pos_tags_batch, _ = mask_batch(gold_pos_tags)
             dep_tag_batch, _ = mask_batch(dep_tags)
 
-            specific_dep_tag_batch, _ = mask_batch(specific_dep_tags)
             specific_dep_relations_batch, _ = mask_batch(specific_dep_relations)
             dep_head_batch, _ = mask_batch(dep_head, for_Head=True)
             labels_voc_batch, labels_voc_mask = mask_batch(labels_voc)
