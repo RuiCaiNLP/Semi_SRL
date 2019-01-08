@@ -262,7 +262,7 @@ class BiLSTMTagger(nn.Module):
         PI_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
-        PI_loss = loss_function(tag_space, Predicate_indicator)
+        PI_loss = loss_function(tag_space, Predicate_indicator.view(-1))
 
         ##########################################
         ##########################################
