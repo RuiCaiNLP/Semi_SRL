@@ -19,6 +19,9 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
     idx = 0
     sample_count = 0.0
     best_F1 = -0.1
+    Precision_Link_best = 0.
+    Precision_POS_best = 0.
+    Precision_PI_best = 0.
     #optimizer = optim.Adadelta(model.parameters(), rho=0.95, eps=1e-6)
     model.to(device)
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
@@ -186,9 +189,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 POS_right, POS_all, \
                 PI_right, PI_all = 0., 0.1, 0., 0.1, 0., 0.1
 
-                Precision_Link_best = 0.
-                Precision_POS_best = 0.
-                Precision_PI_best = 0.
+
 
                 log('now dev test')
                 index = 0
@@ -350,7 +351,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                     Precision_Link_best = P_Link
                     log('New Link best!: ' + str(Precision_Link_best))
                 else:
-                    log('New Link best!: ' + str(Precision_Link_best))
+                    log('Link best!: ' + str(Precision_Link_best))
 
                 P_POS = POS_right/POS_all
                 log('POS_Precision' + str(P_POS))
@@ -358,7 +359,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                     Precision_POS_best = P_POS
                     log('New POS best!: ' + str(Precision_POS_best))
                 else:
-                    log('New POS best!: ' + str(Precision_POS_best))
+                    log('POS best!: ' + str(Precision_POS_best))
 
                 P_PI = PI_right/PI_all
                 log('PI precision' + str(P_PI))
@@ -366,7 +367,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                     Precision_PI_best = P_PI
                     log('New PI best!: ' + str(Precision_PI_best))
                 else:
-                    log('New PI best!: ' + str(Precision_PI_best))
+                    log('PI best!: ' + str(Precision_PI_best))
 
 
 
