@@ -346,7 +346,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
                 P_Link =  Link_right/Link_all
                 log('Link_Precision' + str(P_Link))
-                if P_link > Precision_Link_best:
+                if P_Link > Precision_Link_best:
                     Precision_Link_best = P_Link
                     log('New Link best!: ' + str(Precision_Link_best))
                 else:
@@ -354,7 +354,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
                 P_POS = POS_right/POS_all
                 log('POS_Precision' + str(P_POS))
-                if P_link > Precision_Link_best:
+                if P_POS > Precision_POS_best:
                     Precision_POS_best = P_POS
                     log('New POS best!: ' + str(Precision_POS_best))
                 else:
@@ -362,7 +362,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
                 P_PI = PI_right/PI_all
                 log('PI precision' + str(P_PI))
-                if P_link > Precision_Link_best:
+                if P_PI > Precision_PI_best:
                     Precision_PI_best = P_PI
                     log('New PI best!: ' + str(Precision_PI_best))
                 else:
