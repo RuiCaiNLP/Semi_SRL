@@ -188,6 +188,10 @@ class BiLSTMTagger(nn.Module):
         self.VR_embedding = nn.Parameter(
             torch.from_numpy(np.ones((1, sent_embedding_dim_DEP), dtype='float32')))
 
+        self.mid_hidden = lstm_hidden_dim
+        self.PI_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+                                     nn.Linear(lstm_hidden_dim, self.pos_size))
+
         # Init hidden state
         self.hidden = self.init_hidden_spe()
         self.hidden_2 = self.init_hidden_spe()
@@ -223,16 +227,13 @@ class BiLSTMTagger(nn.Module):
         DEP_learning
         """
         embeds_DEP = self.word_embeddings_DEP(sentence)
-        pos_embeds = self.pos_embeddings(pos_tags)
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, pos_embeds), 2)
-        add_zero = torch.zeros((self.batch_size, 1, self.sent_embedding_dim_DEP)).to(device)
-        embeds_forDEP_cat = torch.cat((self.VR_embedding + add_zero, embeds_forDEP), 1)
-        embeds_forDEP_cat = self.DEP_input_dropout(embeds_forDEP_cat)
+        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP), 2)
+        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
 
         # first layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP_cat, lengths + 1)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
         hidden_states, self.hidden = self.BiLSTM_0(embeds_sort, self.hidden)
@@ -243,7 +244,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_0 = hidden_states[unsort_idx]
 
         # second_layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths + 1)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
         hidden_states, self.hidden_2 = self.BiLSTM_1(embeds_sort, self.hidden_2)
@@ -252,142 +253,37 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
+
+        hidden_states_1 = self.hidden_state_dropout(hidden_states_1)
+
+        tag_space = self.PI_MLP(hidden_states_1).view(
+            len(sentence[0]) * self.batch_size, len(sentence[0]) + 1)
+
+        PI_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
+
+        loss_function = nn.CrossEntropyLoss(ignore_index=0)
+        PI_loss = loss_function(tag_space, Predicate_indicator)
+
         ##########################################
+        ##########################################
+        Link_right, Link_all, \
+        POS_right, POS_all, PI_right, PI_all = 0., 0., 0., 0., 0., 0.
 
-        Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
-        Dependent_hidden = F.relu(self.hidLayerFOM(hidden_states_1))
-
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 2)
-
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
-
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
-        left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
-        Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
-        tag_space = torch.bmm(left_part, Head_hidden).view(
-            (len(sentence[0]) + 1) * self.batch_size, len(sentence[0]) + 1)
-
-        heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
-
-        nums = 0.0
-        wrong_nums = 0.0
-        for a, b in zip(heads, dep_heads.flatten()):
-            if b == -1:
-                continue
-            nums += 1
-            if a != b:
-                wrong_nums += 1
-
-        loss_function = nn.CrossEntropyLoss(ignore_index=-1)
-        DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads).to(device).view(-1))
-
-        # +++++++++++++++++++++++++++++++++++++++++++++++++++++
-        Head_hidden_tag = F.relu(self.hidLayerFOH_tag(hidden_states_1))
-        Dependent_hidden_tag = F.relu(self.hidLayerFOM_tag(hidden_states_1))
-
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Head_hidden_tag = torch.cat((Head_hidden_tag, Variable(bias_one)), 2)
-
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Dependent_hidden_tag = torch.cat((Dependent_hidden_tag, Variable(bias_one)), 2)
-
-        left_part = torch.mm(Dependent_hidden_tag.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_tag)
-        left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1) * self.dep_size, -1)
-        Head_hidden_tag = Head_hidden_tag.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
-        tag_space_tag = torch.bmm(left_part, Head_hidden_tag).view(
-            (len(sentence[0]) + 1) * self.batch_size, self.dep_size, len(sentence[0]) + 1).transpose(1, 2)
-
-        tag_space_tag = tag_space_tag[np.arange(0, (len(sentence[0]) + 1) * self.batch_size), dep_heads.flatten()]
-        tag_space_tag = tag_space_tag.view((len(sentence[0]) + 1) * self.batch_size, -1)
-        heads_tag = np.argmax(tag_space_tag.cpu().data.numpy(), axis=1)
-
-        nums_tag = 0.0
-        wrong_nums_tag = 0.0
-        for a, b in zip(heads_tag, dep_tags.view(-1).cpu().data.numpy()):
+        for a, b in zip(PI_label, Predicate_indicator.view(-1).cpu().data.numpy()):
             if b == 0:
                 continue
-            nums_tag += 1
-            if a != b:
-                wrong_nums_tag += 1
-        loss_function = nn.CrossEntropyLoss(ignore_index=0)
-        DEPloss_tag = loss_function(tag_space_tag, dep_tags.view(-1))
+            PI_all += 1
+            if a == b:
+                PI_right += 1
 
-        h_layer_0 = hidden_states_0[:, 1:]  # .detach()
-        h_layer_1 = hidden_states_1[:, 1:]  # .detach()
-        w = F.softmax(self.elmo_w, dim=0)
-        SRL_composer = self.elmo_gamma * (w[0] * h_layer_0 + w[1] * h_layer_1)
-        SRL_composer = self.elmo_mlp(SRL_composer)
-
-        fixed_embeds = self.word_fixed_embeddings(p_sentence)
-        fixed_embeds = fixed_embeds.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
-        embeds_SRL = self.word_embeddings_SRL(sentence)
-        embeds_SRL = embeds_SRL.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        #pos_embeds = self.pos_embeddings(pos_tags)
-        region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
-
-        SRL_hidden_states = torch.cat((embeds_SRL, fixed_embeds, sent_pred_lemmas_embeds, pos_embeds, region_marks,
-                                       SRL_composer), 2)
-        SRL_hidden_states = self.SRL_input_dropout(SRL_hidden_states)
+        SRLloss = 0
+        Link_DEPloss = 0
+        Tag_DEPloss = 0
+        POS_loss = 0
 
 
-        # SRL layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(SRL_hidden_states, lengths)
-        embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort.cpu().numpy(), batch_first=True)
-        # hidden states [time_steps * batch_size * hidden_units]
-        hidden_states, self.hidden_4 = self.BiLSTM_SRL(embeds_sort, self.hidden_4)
-        # it seems that hidden states is already batch first, we don't need swap the dims
-        # hidden_states = hidden_states.permute(1, 2, 0).contiguous().view(self.batch_size, -1, )
-        hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
-        # hidden_states = hidden_states.transpose(0, 1)
-        hidden_states = hidden_states[unsort_idx]
-        hidden_states = self.hidden_state_dropout(hidden_states)
-
-        # B * H
-        hidden_states_3 = hidden_states
-        predicate_embeds = F.relu(
-            self.Predicate_Proj(hidden_states_3[np.arange(0, hidden_states_3.size()[0]), target_idx_in]))
-
-        hidden_states = F.relu(self.Non_Predicate_Proj(hidden_states))
-
-        # T * B * H
-        # added_embeds = torch.zeros(hidden_states_3.size()[1], hidden_states_3.size()[0], hidden_states_3.size()[2]).to(device)
-        # predicate_embeds = added_embeds + predicate_embeds
-        # B * T * H
-        # predicate_embeds = predicate_embeds.transpose(0, 1)
-        # print(hidden_states)
-        # non-linear map and rectify the roles' embeddings
-        # roles = Variable(torch.from_numpy(np.arange(0, self.tagset_size)))
-
-        # B * roles
-        # log(local_roles_voc)
-        # log(frames)
-
-        bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
-        hidden_states_word = torch.cat((hidden_states, Variable(bias_one)), 2)
-
-        bias_one = torch.ones((self.batch_size, 1)).to(device)
-        hidden_states_predicate = torch.cat((predicate_embeds, Variable(bias_one)), 1)
-
-        left_part = torch.mm(hidden_states_word.view(self.batch_size * len(sentence[0]), -1), self.W_R)
-        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.tagset_size, -1)
-        hidden_states_predicate = hidden_states_predicate.view(self.batch_size, -1, 1)
-        tag_space = torch.bmm(left_part, hidden_states_predicate).view(
-            len(sentence[0]) * self.batch_size, -1)
-
-        SRLprobs = F.softmax(tag_space, dim=1)
-
-
-        targets = targets.view(-1)
-        loss_function = nn.CrossEntropyLoss(ignore_index=0)
-
-        SRLloss = loss_function(tag_space, targets)
-
-        return SRLloss, DEPloss, DEPloss_tag, 0, SRLprobs, wrong_nums, nums, wrong_nums, nums, \
-               wrong_nums, nums, nums, \
-               wrong_nums_tag, nums_tag, nums_tag
+        return SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, Link_right, Link_all, \
+               POS_right, POS_all, PI_right, PI_all \
 
     @staticmethod
     def sort_batch(x, l):
