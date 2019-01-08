@@ -184,7 +184,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
                 Link_right, Link_all, \
                 POS_right, POS_all, \
-                PI_right, PI_all = 0., 0., 0., 0., 0., 0.
+                PI_right, PI_all = 0., 0.1, 0., 0.1, 0., 0.1
 
                 Precision_Link_best = 0.
                 Precision_POS_best = 0.
