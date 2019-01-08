@@ -60,6 +60,7 @@ def from_2009(block, preserve_sense):
         d_tail = parts[8]
         d_label = parts[10]
         word = parts[1]
+        gold_pos_tag = parts[4]
         pos_tag = parts[5]
         if parts[13] != '_':
             if preserve_sense or True:
@@ -73,7 +74,7 @@ def from_2009(block, preserve_sense):
             frame_set_id = '_'
         record['tokenized_sentence'].append(word)
         record['pos'].append(pos_tag)
-
+        record['gold_pos'].append(gold_pos_tag)
         record['d_parsing'].append([
                 d_label, [int(d_tail), '_'], [int(d_head), word]
              ])

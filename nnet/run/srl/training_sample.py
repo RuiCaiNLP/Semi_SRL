@@ -151,6 +151,7 @@ def make_bio_sample(data, frames):
         labels = ' '.join(labels)
         roles_voc = ' '.join(roles_voc)
         pos_tags = ' '.join(data[doc_id][sent_id]['pos'])
+        gold_pos_tags = ' '.join(data[doc_id][sent_id]['gold_pos'])
         dep_parse = ' '.join(dep_parse)
         root_dep_parse = ' '.join(root_dep_parse)
 
@@ -169,7 +170,7 @@ def make_bio_sample(data, frames):
 
         print("#%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
             dbg_header, sent, pos_tags, dep_parse, root_dep_parse, frame_name, target, all_l, all_t, roles_voc, labels,
-            Predicate_specific_Labels, Predicate_link))
+            gold_pos_tags, Predicate_link))
 
 
 

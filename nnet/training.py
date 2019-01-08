@@ -112,28 +112,32 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             dep_heads = model_input[12]
 
 
-            #root_dep_tags = model_input[12]
-            #root_dep_tags_in = Variable(torch.from_numpy(root_dep_tags), requires_grad=False)
-
             tags = model_input[13]
             targets = torch.tensor(tags).to(device)
 
-            specific_dep_tags = model_input[14]
-            specific_dep_tags_in = torch.from_numpy(specific_dep_tags).to(device)
+            gold_pos_tags = model_input[14]
+            gold_pos_tags_in = torch.from_numpy(gold_pos_tags).to(device)
 
             specific_dep_relations = model_input[15]
             specific_dep_relations_in = torch.from_numpy(specific_dep_relations).to(device)
 
+            Chars = model_input[16]
+            Chars_in = torch.from_numpy(Chars).to(device)
+
+            Predicate_indicator = model_input[17]
+            Predicate_indicator_in = torch.from_numpy(Predicate_indicator).to(device)
+
 
             #log(dep_tags_in)
             #log(specific_dep_relations)
-            SRLloss, DEPloss, SPEDEPloss, loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
-            right_noNull_predict, noNull_predict, noNUll_truth, \
-            right_noNull_predict_spe, noNull_predict_spe, noNUll_truth_spe\
+            SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
+            Link_right, Link_all, \
+            POS_right, POS_all, \
+            PI_right, PI_all \
                 = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                        targets, specific_dep_tags_in, specific_dep_relations_in)
+                        targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in, Predicate_indicator_in)
 
 
 
@@ -185,23 +189,14 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
                 log("start test...")
                 losses, errors, errors_w, NonNullPredicts, right_NonNullPredicts, NonNullTruths = 0., 0, 0., 0., 0., 0.
-                total_labels_num = 0.0
-                wrong_labels_num = 0.0
-                spe_total_labels_num = 0.0
-                spe_wrong_labels_num = 0.0
 
-                right_noNull_predict =0.0
-                noNull_predict = 0
-                noNUll_truth = 0.0
+                Link_right, Link_all, \
+                POS_right, POS_all, \
+                PI_right, PI_all = 0., 0., 0., 0., 0., 0.
 
-                right_noNull_predict_spe = 0
-                noNull_predict_spe = 0
-                noNUll_truth_spe = 0
-
-
-
-                predicates_num = 0.0
-                right_disambiguate = 0.0
+                Precision_Link_best = 0.
+                Precision_POS_best = 0.
+                Precision_PI_best = 0.
 
                 log('now dev test')
                 index = 0
@@ -277,34 +272,40 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         tags = model_input[13]
                         targets = torch.tensor(tags).to(device)
 
-                        specific_dep_tags = model_input[14]
-                        specific_dep_tags_in = torch.from_numpy(specific_dep_tags).to(device)
+                        gold_pos_tags = model_input[14]
+                        gold_pos_tags_in = torch.from_numpy(gold_pos_tags).to(device)
 
                         specific_dep_relations = model_input[15]
-                        specific_dep_relations_in = Variable(torch.from_numpy(specific_dep_relations)).to(device)
+                        specific_dep_relations_in = torch.from_numpy(specific_dep_relations).to(device)
 
-                        SRLloss, DEPloss, SPEDEPloss, loss, SRLprobs, wrong_l_nums, all_l_nums, spe_wrong_l_nums, spe_all_l_nums, \
-                        right_noNull_predict_b, noNull_predict_b, noNUll_truth_b, \
-                        right_noNull_predict_spe_b, noNull_predict_spe_b, noNUll_truth_spe_b\
+                        Chars = model_input[16]
+                        Chars_in = torch.from_numpy(Chars).to(device)
+
+                        Predicate_indicator = model_input[17]
+                        Predicate_indicator_in = torch.from_numpy(Predicate_indicator).to(device)
+
+                        # log(dep_tags_in)
+                        # log(specific_dep_relations)
+                        SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
+                        Link_right_b, Link_all_b, \
+                        POS_right_b, POS_all_b, \
+                        PI_right_b, PI_all_b \
                             = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
                                     local_roles_voc_in,
                                     frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                                    targets, specific_dep_tags_in, specific_dep_relations_in, True)
+                                    targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in,
+                                    Predicate_indicator_in)
+
+
+                        Link_right += Link_right_b
+                        Link_all += Link_all_b
+                        POS_right += POS_right_b
+                        POS_all += POS_all_b
+                        PI_right += PI_right_b
+                        PI_all += PI_all_b
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)
-                        wrong_labels_num += wrong_l_nums
-                        total_labels_num += all_l_nums
-                        spe_wrong_labels_num += spe_wrong_l_nums
-                        spe_total_labels_num += spe_all_l_nums
-
-                        right_noNull_predict += right_noNull_predict_b
-                        noNull_predict += noNull_predict_b
-                        noNUll_truth += noNUll_truth_b
-                        right_noNull_predict_spe += right_noNull_predict_spe_b
-                        noNull_predict_spe += noNull_predict_spe_b
-                        noNUll_truth_spe += noNUll_truth_spe_b
-
 
                         for i, sent_labels in enumerate(labels):
                             labels_voc = batch[i][-4]
@@ -313,37 +314,15 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                                 best = local_voc[labels[i][j]]
                                 true = local_voc[tags[i][j]]
 
-
                                 if true != '<pad>' and true != 'O':
                                     NonNullTruth += 1
-                                    #Dep_NoNull_Truth[dep_tags_in[i][j]] += 1
                                 if true != best:
                                     errors += 1
                                 if best != '<pad>' and best != 'O' and true != '<pad>':
                                     NonNullPredict += 1
-                                    #Dep_NoNull_Predict[dep_tags_in[i][j]] += 1
                                     if true == best:
                                         right_NonNullPredict += 1
-                                        #Dep_Right_NoNull_Predict[dep_tags_in[i][j]] += 1
-                        """
-                                best = labels[i][j]
-                                true = tags[i][j]
-                                # true = Predicate_Labels_nd[i][j]
 
-                                if true != 0:
-                                    Dep_count_num[dep_tags_in[i][j]] += 1
-                                if true != 0 and true != 1:
-                                    NonNullTruth += 1
-                                    Dep_NoNull_Truth[dep_tags_in[i][j]] += 1
-                                if true != best:
-                                    errors += 1
-                                if best != 0 and best != 1 and true != 0:
-                                    NonNullPredict += 1
-                                    Dep_NoNull_Predict[dep_tags_in[i][j]] += 1
-                                    if true == best:
-                                        right_NonNullPredict += 1
-                                        Dep_Right_NoNull_Predict[dep_tags_in[i][j]] += 1
-                        """
 
                         NonNullPredicts += NonNullPredict
                         right_NonNullPredicts += right_NonNullPredict
@@ -379,18 +358,31 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                     torch.save(model.state_dict(), params_path)
                     log('New best, model saved')
 
-                P = right_noNull_predict / (noNull_predict + 0.0001)
-                R = right_noNull_predict / (noNUll_truth + 0.0001)
-                F_label = 2 * P * R / (P + R + 0.0001)
-                log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_label))
 
-                log(right_noNull_predict_spe)
-                log(noNull_predict_spe)
-                log(noNUll_truth_spe)
-                P = right_noNull_predict_spe / (noNull_predict_spe + 0.0001)
-                R = right_noNull_predict_spe / (noNUll_truth_spe + 0.0001)
-                F_link = 2 * P * R / (P + R + 0.0001)
-                log('Label Precision: P, R, F:' + str(P) + ' ' + str(R) + ' ' + str(F_link))
+                P_Link =  Link_right/Link_all
+                log('Link_Precision' + str(P_Link))
+                if P_link > Precision_Link_best:
+                    Precision_Link_best = P_Link
+                    log('New Link best!: ' + str(Precision_Link_best))
+                else:
+                    log('New Link best!: ' + str(Precision_Link_best))
+
+                P_POS = POS_right/POS_all
+                log('POS_Precision' + str(P_POS))
+                if P_link > Precision_Link_best:
+                    Precision_POS_best = P_POS
+                    log('New POS best!: ' + str(Precision_POS_best))
+                else:
+                    log('New POS best!: ' + str(Precision_POS_best))
+
+                P_PI = PI_right/PI_all
+                log('PI precision' + str(P_PI))
+                if P_link > Precision_Link_best:
+                    Precision_PI_best = P_PI
+                    log('New PI best!: ' + str(Precision_PI_best))
+                else:
+                    log('New PI best!: ' + str(Precision_PI_best))
+
 
 
 

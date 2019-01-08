@@ -11,7 +11,7 @@ def make_local_voc(labels):
 
 def bio_reader(record):
     dbg_header, sent, pos_tags, dep_parsing, root_dep_parsing, frame, target, f_lemmas, f_targets, labels_voc, \
-    labels, specific_dep_labels, specific_dep_relations = record.split('\t')
+    labels, gold_pos_tags, specific_dep_relations = record.split('\t')
 
     sense = dbg_header[-2:]
 
@@ -28,13 +28,13 @@ def bio_reader(record):
         words.append(word)
 
     pos_tags = pos_tags.split(' ')
+    gold_pos_tags = gold_pos_tags.split(' ')
 
     # pos_tags.insert(0, '<pad>')
     # words.insert(0, '.')
 
     labels = labels.split(' ')
     #labels.insert(0, sense)
-    specific_dep_labels = specific_dep_labels.split(' ')
     specific_dep_relations = specific_dep_relations.split(' ')
 
     if pos_tags[int(target)].startswith("V"):
@@ -63,7 +63,7 @@ def bio_reader(record):
     f_targets = f_targets.split(' ')
 
     return dbg_header, words, pos_tags, dep_parsing, root_dep_parsing, frame, \
-           np.int64(target), f_lemmas, np.int64(f_targets), labels_voc, labels, specific_dep_labels, specific_dep_relations
+           np.int64(target), f_lemmas, np.int64(f_targets), labels_voc, labels, gold_pos_tags, specific_dep_relations
 
 
 def unlabeled_reader(record):
@@ -163,7 +163,7 @@ class SRLRunner(Runner):
     def get_converter(self):
         def bio_converter(batch):
             header, sent_, pos_tags, dep_parsing, root_dep_parsing, frames, \
-            targets, f_lemmas, f_targets, labels_voc, labels, specific_dep_labels, specific_dep_relations = list(
+            targets, f_lemmas, f_targets, labels_voc, labels, gold_pos_tags, specific_dep_relations = list(
                 zip(*batch))
 
             max_len = len(max(sent_, key=len))
@@ -194,6 +194,8 @@ class SRLRunner(Runner):
 
             pos_tags = [self.pos_voc.vocalize(w) for w in pos_tags]
 
+            gold_pos_tags = [self.pos_voc.vocalize(w) for w in gold_pos_tags]
+
 
 
             freq = [[self.freq_voc[self.word_voc.direct[i]] if
@@ -208,7 +210,6 @@ class SRLRunner(Runner):
                 dep_seq.append(tags)
             dep_tags = [self.dep_voc.vocalize(p) for p in dep_seq]
 
-            specific_dep_tags = [self.dep_voc.vocalize(p) for p in specific_dep_labels]
             specific_dep_relations = [[int(r) for r in s] for s in specific_dep_relations]
 
 
@@ -230,6 +231,7 @@ class SRLRunner(Runner):
             freq_batch = freq_batch.astype(dtype='float32')
 
             pos_batch, _ = mask_batch(pos_tags)
+            gold_pos_tags_batch, _ = mask_batch(gold_pos_tags)
             dep_tag_batch, _ = mask_batch(dep_tags)
 
             specific_dep_tag_batch, _ = mask_batch(specific_dep_tags)
@@ -267,11 +269,13 @@ class SRLRunner(Runner):
                             region_mark[r][c] = 1
 
             sent_pred_lemmas_idx = np.zeros(sent_batch.shape, dtype='int64')
+            sent_pred_indicator = np.zeros(sent_batch.shape, dtype='int64')
             for r, row in enumerate(sent_pred_lemmas_idx):
                 for c, column in enumerate(row):
                     for t, tar in enumerate(f_targets[r]):
                         if tar == c:
                             sent_pred_lemmas_idx[r][c] = lemmas_idx[r][t]
+                            sent_pred_indicator[r][c] = 1
 
             sent_pred_lemmas_idx = np.array(sent_pred_lemmas_idx, dtype='int64')
 
@@ -284,14 +288,13 @@ class SRLRunner(Runner):
                    labels_voc_mask, freq_batch, \
                    region_mark, \
                    sent_pred_lemmas_idx, \
-                   dep_tag_batch, dep_head_batch, labels_batch, specific_dep_tag_batch, specific_dep_relations_batch,char_padded
+                   dep_tag_batch, dep_head_batch, labels_batch, \
+                   gold_pos_tags_batch, specific_dep_relations_batch, char_padded, sent_pred_indicator
         return bio_converter
 
 
     def get_unlabeled_converter(self):
         def bio_unlabeled_converter(batch):
-
-
 
             p_sent = [self.p_word_voc.vocalize(w) for w in batch]
 
