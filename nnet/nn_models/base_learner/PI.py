@@ -257,7 +257,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = self.hidden_state_dropout(hidden_states_1)
 
         tag_space = self.PI_MLP(hidden_states_1).view(
-            len(sentence[0]) * self.batch_size, len(sentence[0]))
+            len(sentence[0]) * self.batch_size, -1)
 
         PI_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
