@@ -143,13 +143,9 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
 
 
             idx += 1
-            #Final_loss = SRLloss + 0.5/(1 + 0.3 *(e-1)) * (DEPloss + SPEDEPloss)
-            #if batch_idx < dataset_len * 0.9:
-            Final_loss = SRLloss + 0.5 * (DEPloss + SPEDEPloss)
-            #else:
-            #    Final_loss = SRLloss
 
-            #Final_loss = SRLloss
+            Final_loss = SRLloss + Link_DEPloss + Tag_DEPloss + POS_loss + PI_loss
+
             Final_loss.backward()
             #clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
             #clip_grad_norm_(parameters=model.hidden2tag_H.parameters(), max_norm=norm)
@@ -304,6 +300,8 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         PI_right += PI_right_b
                         PI_all += PI_all_b
 
+                        if SRLprobs == 0:
+                            continue
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)
 
@@ -348,7 +346,7 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                 log(NonNullTruths)
                 log('Precision: ' + str(P), 'recall: ' + str(R), 'F1: ' + str(F1))
                 P = (right_NonNullPredicts) / (NonNullPredicts + 1)
-                R = (right_NonNullPredicts) / (NonNullTruths)
+                R = (right_NonNullPredicts) / (NonNullTruths+1)
                 F1 = 2 * P * R / (P + R + 0.0001)
                 log('Precision: ' + str(P), 'recall: ' + str(R), 'F1: ' + str(F1))
 
