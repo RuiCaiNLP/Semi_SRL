@@ -189,7 +189,7 @@ class BiLSTMTagger(nn.Module):
             torch.from_numpy(np.ones((1, sent_embedding_dim_DEP), dtype='float32')))
 
         self.mid_hidden = lstm_hidden_dim
-        self.POS_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+        self.POS_MLP = nn.Sequential(nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
 
         # Init hidden state
@@ -254,6 +254,7 @@ class BiLSTMTagger(nn.Module):
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
 
+        hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
         hidden_states_1 = self.hidden_state_dropout(hidden_states_1)
 
         tag_space = self.POS_MLP(hidden_states_1).view(
