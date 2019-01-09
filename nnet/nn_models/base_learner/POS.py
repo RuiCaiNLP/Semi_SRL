@@ -130,7 +130,8 @@ class BiLSTMTagger(nn.Module):
         self.SRL_input_dropout = nn.Dropout(p=0.3)
         self.DEP_input_dropout = nn.Dropout(p=0.3)
         self.hidden_state_dropout_DEP = nn.Dropout(p=0.3)
-        self.hidden_state_dropout = nn.Dropout(p=0.3)
+        self.hidden_state_dropout_1 = nn.Dropout(p=0.3)
+        self.hidden_state_dropout_2 = nn.Dropout(p=0.3)
         self.word_dropout = nn.Dropout(p=0.0)
         self.predicate_dropout = nn.Dropout(p=0.0)
         self.label_dropout = nn.Dropout(p=0.5)
@@ -242,6 +243,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_0 = hidden_states[unsort_idx]
+        hidden_states_0 = self.hidden_state_dropout_1(hidden_states_0)
 
         # second_layer
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths)
@@ -253,9 +255,9 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
+        hidden_states_1 = self.hidden_state_dropout(hidden_states_1)
 
         hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
-        hidden_states_1 = self.hidden_state_dropout(hidden_states_1)
 
         tag_space = self.POS_MLP(hidden_states_1).view(
             len(sentence[0]) * self.batch_size, -1)
