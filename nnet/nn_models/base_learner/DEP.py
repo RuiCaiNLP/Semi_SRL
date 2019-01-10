@@ -308,7 +308,7 @@ class BiLSTMTagger(nn.Module):
         Link_right, Link_all, \
         POS_right, POS_all, PI_right, PI_all = 0., 0., 0., 0., 0., 0.
 
-        for a, b in zip(heads, dep_heads.view(-1).cpu().data.numpy()):
+        for a, b in zip(heads, dep_heads.flatten()):
             if b == -1:
                 continue
             Link_all += 1
