@@ -259,7 +259,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
         hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
-        hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
+        #hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
 
         Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
         Dependent_hidden = F.relu(self.hidLayerFOM(hidden_states_1))
