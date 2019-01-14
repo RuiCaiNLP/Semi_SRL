@@ -105,14 +105,14 @@ class Runner(object):
             path=a.test,
             reader=self.get_reader()
         )
-
+        """
         unlabled_set = Corpus(
             parser=self.get_unlabeled(),
             batch_size=a.batch,
             path=a.unlabeled,
             reader=self.get_reader()
         )
-
+        """
         log('dataset loaded!')
 
         """
