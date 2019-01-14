@@ -299,7 +299,7 @@ class BiLSTMTagger(nn.Module):
 
         tag_space_tag = tag_space_tag[np.arange(0, (len(sentence[0]) + 1) * self.batch_size), dep_heads.flatten()]
         tag_space_tag = tag_space_tag.view((len(sentence[0]) + 1) * self.batch_size, -1)
-        heads_tag = np.argmax(tag_space_tag.cpu().data.numpy(), axis=1)
+        ##heads_tag = np.argmax(tag_space_tag.cpu().data.numpy(), axis=1)
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
         Tag_DEPloss = loss_function(tag_space_tag, dep_tags.view(-1))
 
