@@ -156,6 +156,11 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
             #DEPloss.backward()
             optimizer.step()
 
+            del model.hidden
+            del model.hidden_2
+            del model.hidden_3
+            del model.hidden_4
+
 
             #if idx % 10000 == 0:
             #    optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.75
@@ -322,6 +327,11 @@ def train(model, train_set, dev_set, test_set, epochs, converter, dbg_print_rate
                         NonNullPredicts += NonNullPredict
                         right_NonNullPredicts += right_NonNullPredict
                         NonNullTruths += NonNullTruth
+
+                        del model.hidden
+                        del model.hidden_2
+                        del model.hidden_3
+                        del model.hidden_4
 
 
 
