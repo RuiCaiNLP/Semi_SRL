@@ -174,12 +174,12 @@ class BiLSTMTagger(nn.Module):
         self.map_dim = lstm_hidden_dim
 
         self.ldims = lstm_hidden_dim
-        self.hidLayerFOH = nn.Linear(self.ldims * 2, self.ldims)
-        self.hidLayerFOM = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOH = nn.Linear(self.ldims * 4, self.ldims)
+        self.hidLayerFOM = nn.Linear(self.ldims * 4, self.ldims)
         self.W_R_link = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
 
-        self.hidLayerFOH_tag = nn.Linear(self.ldims * 2, self.ldims)
-        self.hidLayerFOM_tag = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOH_tag = nn.Linear(self.ldims * 4, self.ldims)
+        self.hidLayerFOM_tag = nn.Linear(self.ldims * 4, self.ldims)
         self.W_R_tag = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size*(1 + lstm_hidden_dim)))
 
         self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
@@ -259,6 +259,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
         hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
+        hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
         Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
         Dependent_hidden = F.relu(self.hidLayerFOM(hidden_states_1))
 
