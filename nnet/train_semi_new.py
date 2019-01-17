@@ -15,7 +15,7 @@ def make_local_voc(labels):
     return {i: label for i, label in enumerate(labels)}
 
 
-def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, dbg_print_rate, params_path):
+def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unlabeled_converter, dbg_print_rate, params_path):
     idx = 0
     sample_count = 0.0
     best_F1 = -0.1
