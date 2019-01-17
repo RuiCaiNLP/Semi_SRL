@@ -243,7 +243,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, TagProbs_use, unlabeled_lengths):
+    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, TagProbs_use, sentence,  unlabeled_lengths):
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
         sample_nums = unlabeled_lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
@@ -372,7 +372,7 @@ class BiLSTMTagger(nn.Module):
         tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
 
         TagProbs_use = tag_space.view(self.batch_size, len(sentence[0]), -1).detach()
-        CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, TagProbs_use, lengths)
+        CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, TagProbs_use, sentence, lengths)
 
         return CVT_DEP_Loss
 
