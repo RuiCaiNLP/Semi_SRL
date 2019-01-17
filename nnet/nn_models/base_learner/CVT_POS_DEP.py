@@ -258,7 +258,7 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
         tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
+        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -273,7 +273,7 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
         tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
+        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -288,7 +288,7 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
         tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
+        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -303,7 +303,7 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
         tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
+        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
