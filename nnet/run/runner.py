@@ -1,7 +1,7 @@
 import argparse
 import sys
 from nnet.util import *
-from nnet.training_semi_new import *
+from nnet.train_semi_new import *
 from nnet.testing import *
 from nnet.corpus import *
 
