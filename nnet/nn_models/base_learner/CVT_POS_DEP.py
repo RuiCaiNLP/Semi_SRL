@@ -178,6 +178,20 @@ class BiLSTMTagger(nn.Module):
         self.hidLayerFOM = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_link = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
 
+        self.hidLayerFOH_FF = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_FF = nn.Linear(self.ldims, self.ldims)
+        self.W_R_link_FF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
+        self.hidLayerFOH_BB = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_BB = nn.Linear(self.ldims, self.ldims)
+        self.W_R_link_BB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
+        self.hidLayerFOH_BF = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_BF = nn.Linear(self.ldims, self.ldims)
+        self.W_R_link_BF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
+        self.hidLayerFOH_FB = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_FB = nn.Linear(self.ldims, self.ldims)
+        self.W_R_link_FB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
+
+
         self.hidLayerFOH_tag = nn.Linear(self.ldims * 2, self.ldims)
         self.hidLayerFOM_tag = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_tag = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size*(1 + lstm_hidden_dim)))
@@ -234,38 +248,62 @@ class BiLSTMTagger(nn.Module):
         sample_nums = unlabeled_lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
         ## Dependency Extractor FF
-        concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_FF(hidden_forward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_FF(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_FF_2(F.relu(self.MLP_FF(FFF)))
+        Head_hidden = F.relu(self.hidLayerFOH_FF(hidden_forward))
+        Dependent_hidden = F.relu(self.hidLayerFOM_FF(hidden_forward))
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_FF)
+        left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
+        Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:]
+        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BB
-        concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_BB(hidden_backward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_BB(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_BB_2(F.relu(self.MLP_BB(FFF)))
+        Head_hidden = F.relu(self.hidLayerFOH_BB(hidden_backward))
+        Dependent_hidden = F.relu(self.hidLayerFOM_BB(hidden_backward))
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_BB)
+        left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
+        Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:]
+        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor FB
-        concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_FB(hidden_forward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_FB(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_FB_2(F.relu(self.MLP_FB(FFF)))
+        Head_hidden = F.relu(self.hidLayerFOH_FB(hidden_forward))
+        Dependent_hidden = F.relu(self.hidLayerFOM_FB(hidden_backward))
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_FB)
+        left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
+        Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:]
+        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BF
-        concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_BF(hidden_forward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_BF(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_BF_2(F.relu(self.MLP_BF(FFF)))
+        Head_hidden = F.relu(self.hidLayerFOH_BF(hidden_backward))
+        Dependent_hidden = F.relu(self.hidLayerFOM_BF(hidden_forward))
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_BF)
+        left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
+        Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:]
+        dep_tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
@@ -282,49 +320,7 @@ class BiLSTMTagger(nn.Module):
         concat_embeds = (added_embeds + predicate_embeds).transpose(0, 1)
         return concat_embeds
 
-    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, Predicate_idx_batch,  TagProbs_use, unlabeled_lengths):
-        TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
-        sample_nums = unlabeled_lengths.sum()
-        unlabeled_loss_function = nn.KLDivLoss(reduce=False)
-        ## Dependency Extractor FF
-        concat_embeds = self.find_predicate_embeds(hidden_forward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_FF(hidden_forward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_FF(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_FF_2(F.relu(self.MLP_FF(FFF)))
-        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
-        DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
-        ## Dependency Extractor BB
-        concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_BB(hidden_backward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_BB(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_BB_2(F.relu(self.MLP_BB(FFF)))
-        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
-        DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
-
-        ## Dependency Extractor FB
-        concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_FB(hidden_forward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_FB(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_FB_2(F.relu(self.MLP_FB(FFF)))
-        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
-        DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
-
-        ## Dependency Extractor BF
-        concat_embeds = self.find_predicate_embeds(hidden_backward, Predicate_idx_batch)
-        word_hiddens = F.relu(self.hidden2tag_1_BF(hidden_forward))
-        predicate_hiddens = F.relu(self.hidden2tag_2_BF(concat_embeds))
-        FFF = torch.cat((word_hiddens, predicate_hiddens), 2)
-        dep_tag_space = self.MLP_BF_2(F.relu(self.MLP_BF(FFF)))
-        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
-        DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
-
-        DEP_Semi_loss = self.mask_loss(DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss, unlabeled_lengths)
-        DEP_Semi_loss = torch.sum(DEP_Semi_loss)
-        return DEP_Semi_loss/sample_nums
 
     def CVT_train(self, sentence, p_sentence, lengths):
         ## start unlabeled training:
@@ -363,23 +359,19 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
         hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
-        # hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
         Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
         Dependent_hidden = F.relu(self.hidLayerFOM(hidden_states_1))
-
-        # bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        # Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 2)
-
         bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
 
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
-        dep_tag_space = torch.bmm(left_part, Head_hidden).view(
-            (len(sentence[0]) + 1) * self.batch_size, len(sentence[0]) + 1)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:]
+        tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
 
-        TagProbs_use = dep_tag_space.view(self.batch_size, len(sentence[0]), -1).detach()
+        TagProbs_use = tag_space.view(self.batch_size, len(sentence[0]), -1).detach()
         CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, TagProbs_use, lengths)
 
         return CVT_DEP_Loss
@@ -445,15 +437,18 @@ class BiLSTMTagger(nn.Module):
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
-        tag_space = torch.bmm(left_part, Head_hidden).view(
-            (len(sentence[0]) + 1) * self.batch_size, len(sentence[0]) + 1)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:]
+        tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
 
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
-        Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads).to(device).view(-1))
+        dep_heads_noVR = dep_heads[:, 1:]
+        Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads_noVR).to(device).view(-1))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+
         Head_hidden_tag = F.relu(self.hidLayerFOH_tag(hidden_states_1))
         Dependent_hidden_tag = F.relu(self.hidLayerFOM_tag(hidden_states_1))
 
@@ -470,7 +465,9 @@ class BiLSTMTagger(nn.Module):
             (len(sentence[0]) + 1) * self.batch_size, self.dep_size, len(sentence[0]) + 1).transpose(1, 2)
 
         tag_space_tag = tag_space_tag[np.arange(0, (len(sentence[0]) + 1) * self.batch_size), dep_heads.flatten()]
-        tag_space_tag = tag_space_tag.view((len(sentence[0]) + 1) * self.batch_size, -1)
+        tag_space_tag = tag_space_tag.view(self.batch_size, len(sentence[0]) + 1, -1)
+        tag_space_tag = tag_space_tag[:, 1:].contiguous()
+        tag_space_tag = tag_space_tag.view(self.batch_size * len(sentence[0]), -1)
         ##heads_tag = np.argmax(tag_space_tag.cpu().data.numpy(), axis=1)
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
         Tag_DEPloss = loss_function(tag_space_tag, dep_tags.view(-1))
@@ -488,7 +485,7 @@ class BiLSTMTagger(nn.Module):
         Link_right, Link_all, \
         POS_right, POS_all, PI_right, PI_all = 0., 0., 0., 0., 0., 0.
 
-        for a, b in zip(heads, dep_heads.flatten()):
+        for a, b in zip(heads, dep_heads_noVR.flatten()):
             if b == -1:
                 continue
             Link_all += 1
@@ -505,7 +502,6 @@ class BiLSTMTagger(nn.Module):
         SRLloss = 0
         PI_loss = 0
         SRLprobs = 0
-
 
         return SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, Link_right, Link_all, \
                POS_right, POS_all, PI_right, PI_all \
