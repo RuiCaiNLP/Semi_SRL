@@ -166,15 +166,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             del model.hidden_3
             del model.hidden_4
 
-            SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
-            Link_right, Link_all, \
-            POS_right, POS_all, \
-            PI_right, PI_all \
-                = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
-                        local_roles_voc_in,
-                        frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                        targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in, Predicate_indicator_in, False,
-                        unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths, False)
 
 
             model.zero_grad()
