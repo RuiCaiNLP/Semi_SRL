@@ -273,15 +273,18 @@ class BiLSTMTagger(nn.Module):
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
-        tag_space = torch.bmm(left_part, Head_hidden).view(
-            (len(sentence[0]) + 1) * self.batch_size, len(sentence[0]) + 1)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:]
+        tag_space = tag_space.view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
 
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
-        Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads).to(device).view(-1))
+        dep_heads_noVR = dep_heads[:, 1:]
+        Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads_noVR).to(device).view(-1))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+
         Head_hidden_tag = F.relu(self.hidLayerFOH_tag(hidden_states_1))
         Dependent_hidden_tag = F.relu(self.hidLayerFOM_tag(hidden_states_1))
 
@@ -298,7 +301,9 @@ class BiLSTMTagger(nn.Module):
             (len(sentence[0]) + 1) * self.batch_size, self.dep_size, len(sentence[0]) + 1).transpose(1, 2)
 
         tag_space_tag = tag_space_tag[np.arange(0, (len(sentence[0]) + 1) * self.batch_size), dep_heads.flatten()]
-        tag_space_tag = tag_space_tag.view((len(sentence[0]) + 1) * self.batch_size, -1)
+        tag_space_tag = tag_space_tag.view(self.batch_size, len(sentence[0]) + 1, -1)
+        tag_space_tag = tag_space_tag[:, 1:]
+        tag_space_tag = tag_space_tag.view(self.batch_size * len(sentence[0]), -1)
         ##heads_tag = np.argmax(tag_space_tag.cpu().data.numpy(), axis=1)
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
         Tag_DEPloss = loss_function(tag_space_tag, dep_tags.view(-1))
@@ -316,7 +321,7 @@ class BiLSTMTagger(nn.Module):
         Link_right, Link_all, \
         POS_right, POS_all, PI_right, PI_all = 0., 0., 0., 0., 0., 0.
 
-        for a, b in zip(heads, dep_heads.flatten()):
+        for a, b in zip(heads, dep_heads_noVR.flatten()):
             if b == -1:
                 continue
             Link_all += 1
