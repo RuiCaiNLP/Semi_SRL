@@ -70,9 +70,13 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             sentence_in = torch.from_numpy(sentence).to(device)
             p_sentence_in = torch.from_numpy(p_sentence).to(device)
 
+            unlabeled_sentence = unlabeled_model_input[0]
+            p_unlabeled_sentence = unlabeled_model_input[1]
             unlabeled_sentence_in = torch.from_numpy(unlabeled_sentence).to(device)
             p_unlabeled_sentence_in = torch.from_numpy(p_unlabeled_sentence).to(device)
             unlabeled_sen_lengths = unlabeled_model_input[2].sum(axis=1)
+
+
             #log(sentence_in)
             #log(p_sentence_in)
             #sentence_in.requires_grad_(False)
