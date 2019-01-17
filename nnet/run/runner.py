@@ -1,7 +1,7 @@
 import argparse
 import sys
 from nnet.util import *
-from nnet.training import *
+from nnet.training_semi_new import *
 from nnet.testing import *
 from nnet.corpus import *
 
@@ -105,17 +105,17 @@ class Runner(object):
             path=a.test,
             reader=self.get_reader()
         )
-        """
+
         unlabled_set = Corpus(
             parser=self.get_unlabeled(),
             batch_size=a.batch,
             path=a.unlabeled,
             reader=self.get_reader()
         )
-        """
+
         log('dataset loaded!')
 
-        """
+
         if not a.test_model:
             train_semi(
                 model=model,
@@ -140,7 +140,7 @@ class Runner(object):
                 dbg_print_rate=a.dbg_print_rate,
                 params_path=a.params_path
             )
-
+         """
         else:
             test(
                 model=model,
