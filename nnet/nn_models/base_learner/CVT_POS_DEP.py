@@ -446,7 +446,7 @@ class BiLSTMTagger(nn.Module):
                     if k > lengths[i] or k == 0:
                         tag_space[i][j][k] = 0*tag_space[i][j][k]
 
-        tag_space = tag_space.view(self.batch_size * (len(sentence[0])+1), len(sentence[0]) + 1)
+        tag_space = tag_space.contiguous().view(self.batch_size * (len(sentence[0])+1), len(sentence[0]) + 1)
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
