@@ -438,21 +438,18 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
-        tag_space = tag_space[:, 1:].contiguous()
 
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
                 for k in range(len(sentence[0])+1):
-                    if k > lengths[i]:
+                    if k > lengths[i] or k == 0:
                         tag_space[i, j, k] -= _BIG_NUMBER
 
-        tag_space = tag_space.view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
+        tag_space = tag_space.view(self.batch_size * (len(sentence[0])+1), len(sentence[0]) + 1)
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
-        dep_heads_noVR = dep_heads[:, 1:]
-
-        Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads_noVR).to(device).view(-1))
+        Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads).to(device).view(-1))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -492,7 +489,7 @@ class BiLSTMTagger(nn.Module):
         Link_right, Link_all, \
         POS_right, POS_all, PI_right, PI_all = 0., 0., 0., 0., 0., 0.
 
-        for a, b in zip(heads, dep_heads_noVR.flatten()):
+        for a, b in zip(heads, dep_heads.flatten()):
             if b == -1:
                 continue
             Link_all += 1
