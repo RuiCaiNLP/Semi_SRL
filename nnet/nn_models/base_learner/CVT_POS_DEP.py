@@ -440,7 +440,7 @@ class BiLSTMTagger(nn.Module):
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
 
 
-        tag_mask = np.zeros(tag_space.size())
+        tag_mask = np.zeros(tag_space.size(), dtype='float32')
         for i in range(self.batch_size):
             for j in range(len(sentence[0])+1):
                 if j > lengths[i]:
@@ -448,7 +448,7 @@ class BiLSTMTagger(nn.Module):
 
                 for k in range(len(sentence[0])+1):
                     if k>0 and k<= lengths[i]:
-                        tag_mask[i,j,k] = 1.
+                        tag_mask[i,j,k] += 1.
         tag_mask = torch.from_numpy(tag_mask).to(device)
 
         tag_space = tag_space * tag_mask
