@@ -445,7 +445,9 @@ class BiLSTMTagger(nn.Module):
             for j in range(len(sentence[0])):
                 for k in range(len(sentence[0])+1):
                     if k > lengths[i]:
+                        log(tag_space[i, j, k])
                         tag_space[i, j, k] -= _BIG_NUMBER
+                        log(tag_space[i, j, k])
 
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
