@@ -443,12 +443,13 @@ class BiLSTMTagger(nn.Module):
         tag_mask = np.zeros(tag_space.size(), dtype='float32')
         for i in range(self.batch_size):
             for j in range(len(sentence[0])+1):
-                if j > lengths[i]:
+                if j ==0 or j>lengths[i]:
+                    tag_mask[i][j] -= _BIG_NUMBER
                     continue
-
                 for k in range(len(sentence[0])+1):
-                    if k==0 or k > lengths[i]:
+                    if k > lengths[i]:
                         tag_mask[i,j,k] -= _BIG_NUMBER
+
         tag_mask = torch.from_numpy(tag_mask).to(device)
 
         tag_space = tag_space + tag_mask
