@@ -447,11 +447,11 @@ class BiLSTMTagger(nn.Module):
                     continue
 
                 for k in range(len(sentence[0])+1):
-                    if k>0 and k<= lengths[i]:
-                        tag_mask[i,j,k] += 1.
+                    if k==0 or k > lengths[i]:
+                        tag_mask[i,j,k] -= _BIG_NUMBER
         tag_mask = torch.from_numpy(tag_mask).to(device)
 
-        tag_space = tag_space * tag_mask
+        tag_space = tag_space + tag_mask
 
         tag_space = tag_space.contiguous().view(self.batch_size * (len(sentence[0])+1), len(sentence[0]) + 1)
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
