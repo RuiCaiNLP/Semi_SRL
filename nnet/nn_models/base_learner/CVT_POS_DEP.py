@@ -441,9 +441,11 @@ class BiLSTMTagger(nn.Module):
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
         tag_space = tag_space[:, 1:].contiguous()
 
-        sub = torch.add(sent_mask, -1.0) * _BIG_NUMBER
-        sub = torch.FloatTensor(sub.cpu().numpy()).to(device)
-        tag_space += sub
+        for i in range(self.batch_size):
+            for j in range(len(sentence[0])):
+                for k in range(len(sentence[0])+1):
+                    if k > lengths[i]:
+                        tag_space[i, j, k] -= _BIG_NUMBER
 
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
