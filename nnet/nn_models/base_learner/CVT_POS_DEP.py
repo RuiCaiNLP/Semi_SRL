@@ -261,7 +261,6 @@ class BiLSTMTagger(nn.Module):
         dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
-        log(DEP_FF_loss.size())
 
         ## Dependency Extractor BB
         Head_hidden = F.relu(self.hidLayerFOH_BB(hidden_backward))
@@ -445,15 +444,14 @@ class BiLSTMTagger(nn.Module):
             for j in range(len(sentence[0])):
                 for k in range(len(sentence[0])+1):
                     if k > lengths[i]:
-                        log(tag_space[i, j, k])
                         tag_space[i, j, k] -= _BIG_NUMBER
-                        log(tag_space[i, j, k])
 
+        tag_space = tag_space.view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         dep_heads_noVR = dep_heads[:, 1:]
-        tag_space = tag_space.view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
+
         Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads_noVR).to(device).view(-1))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++
