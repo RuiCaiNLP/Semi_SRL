@@ -323,7 +323,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-    def CVT_train(self, sentence, p_sentence, lengths):
+    def CVT_train(self, sentence, p_sentence, sent_mask, lengths):
         ## start unlabeled training:
 
         embeds_DEP = self.word_embeddings_DEP(sentence)
@@ -379,14 +379,14 @@ class BiLSTMTagger(nn.Module):
 
 
 
-    def forward(self, sentence, p_sentence, pos_tags, lengths, target_idx_in, region_marks,
+    def forward(self, sentence, p_sentence, pos_tags, sent_mask, lengths, target_idx_in, region_marks,
                 local_roles_voc, frames, local_roles_mask,
                 sent_pred_lemmas_idx, dep_tags, dep_heads, targets, gold_pos_tag, specific_dep_relations,
                 Chars=None, Predicate_indicator = None, test=False,
-                unlabeled_sentence=None, p_unlabeled_sentence=None, unlabeled_lengths=None, cvt_train=False):
+                unlabeled_sentence=None, p_unlabeled_sentence=None, unlabeled_sent_mask=None, unlabeled_lengths=None, cvt_train=False):
 
         if cvt_train:
-            CVT_SRL_Loss = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_lengths)
+            CVT_SRL_Loss = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_sent_mask, unlabeled_lengths)
             return 0 #CVT_SRL_Loss
 
         """
@@ -439,13 +439,17 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
-        tag_space = tag_space[:, 1:]
-        tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
+        tag_space = tag_space[:, 1:].contiguous()
+
+        sub = torch.add(sent_mask, -1.0) * _BIG_NUMBER
+        sub = torch.FloatTensor(sub.cpu().numpy()).to(device)
+        tag_space += sub
 
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         dep_heads_noVR = dep_heads[:, 1:]
+        tag_space = tag_space.view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
         Link_DEPloss = loss_function(tag_space, torch.from_numpy(dep_heads_noVR).to(device).view(-1))
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++

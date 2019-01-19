@@ -75,6 +75,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_sentence_in = torch.from_numpy(unlabeled_sentence).to(device)
             p_unlabeled_sentence_in = torch.from_numpy(p_unlabeled_sentence).to(device)
             unlabeled_sen_lengths = unlabeled_model_input[2].sum(axis=1)
+            unlabeled_sent_mask = torch.from_numpy(model_input[2]).to(device)
 
 
             #log(sentence_in)
@@ -87,6 +88,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             #pos_tags_in.requires_grad_(False)
 
             sen_lengths = model_input[3].sum(axis=1)
+
+            sent_mask = torch.from_numpy(model_input[3]).to(device)
 
             target_idx_in = model_input[4]
 
@@ -141,11 +144,11 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Link_right, Link_all, \
             POS_right, POS_all, \
             PI_right, PI_all \
-                = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
+                = model(sentence_in, p_sentence_in, pos_tags_in, sent_mask, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
                         targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in, Predicate_indicator_in, False,
-                        unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths, False)
+                        unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sent_mask, unlabeled_sen_lengths, False)
 
 
 
@@ -176,11 +179,11 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             model.hidden_2 = model.init_hidden_spe()
             model.hidden_3 = model.init_hidden_spe()
             model.hidden_4 = model.init_hidden_share()
-            CVT_SRL_Loss = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
+            CVT_SRL_Loss = model(sentence_in, p_sentence_in, pos_tags_in, sent_mask, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
                         targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in, Predicate_indicator_in, False,
-                        unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sen_lengths, True)
+                        unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sent_mask, unlabeled_sen_lengths, True)
             Loss_CVT = CVT_SRL_Loss
             #Loss_CVT.backward()
             #optimizer.step()
@@ -318,11 +321,11 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         Link_right_b, Link_all_b, \
                         POS_right_b, POS_all_b, \
                         PI_right_b, PI_all_b \
-                            = model(sentence_in, p_sentence_in, pos_tags_in, sen_lengths, target_idx_in, region_mark_in,
+                            = model(sentence_in, p_sentence_in, pos_tags_in, sent_mask, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
-                        targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in, Predicate_indicator_in, True,
-                        None, None, None, False)
+                        targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in, Predicate_indicator_in, False,
+                        None, None, None, None, False)
 
 
                         Link_right += Link_right_b
