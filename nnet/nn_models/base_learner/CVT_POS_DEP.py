@@ -243,7 +243,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, TagProbs_use, sentence,  unlabeled_lengths):
+    def Semi_DEP_Loss(self, hidden_forward, hidden_backward, TagProbs_use, sentence,  lengths):
 
         tag_mask = np.zeros(TagProbs_use.size(), dtype='float32')
         for i in range(self.batch_size):
