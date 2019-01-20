@@ -259,7 +259,7 @@ class BiLSTMTagger(nn.Module):
 
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
         sample_nums = lengths.sum()
-        unlabeled_loss_function = nn.KLDivLoss(size_average = False)
+        unlabeled_loss_function = nn.KLDivLoss(reduce = False)
         ## Dependency Extractor FF
         Head_hidden = F.relu(self.hidLayerFOH_FF(hidden_forward))
         Dependent_hidden = F.relu(self.hidLayerFOM_FF(hidden_forward))
@@ -319,7 +319,18 @@ class BiLSTMTagger(nn.Module):
 
         DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss
 
-        #DEP_Semi_loss = torch.sum(DEP_Semi_loss)
+        loss_mask = np.ones(TagProbs_use.size(), dtype='float32')
+        for i in range(self.batch_size):
+            for j in range(len(sentence[0]) + 1):
+                if j == 0 or j > lengths[i]:
+                    loss_mask[i][j] = 0.0
+                    continue
+                for k in range(len(sentence[0]) + 1):
+                    if k > lengths[i]:
+                        loss_mask[i, j, k] = 0.0
+        loss_mask = torch.from_numpy(loss_mask).to(device)
+        DEP_Semi_loss = DEP_Semi_loss * loss_mask
+        DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         return DEP_Semi_loss/sample_nums
 
     def find_predicate_embeds(self, hidden_states, target_idx_in):
