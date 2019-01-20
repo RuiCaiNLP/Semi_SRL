@@ -388,7 +388,7 @@ class BiLSTMTagger(nn.Module):
 
         if cvt_train:
             CVT_SRL_Loss = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_sent_mask, unlabeled_lengths)
-            return 0 #CVT_SRL_Loss
+            return CVT_SRL_Loss
 
         """
         DEP_learning
