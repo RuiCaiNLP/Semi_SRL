@@ -317,7 +317,7 @@ class BiLSTMTagger(nn.Module):
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
-        DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss, unlabeled_lengths
+        DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss
         #DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         return DEP_Semi_loss
 
