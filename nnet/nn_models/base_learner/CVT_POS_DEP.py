@@ -370,10 +370,21 @@ class BiLSTMTagger(nn.Module):
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
-        tag_space = tag_space[:, 1:]
-        tag_space = tag_space.contiguous().view(self.batch_size * len(sentence[0]), len(sentence[0]) + 1)
 
-        TagProbs_use = tag_space.view(self.batch_size, len(sentence[0]), -1).detach()
+        tag_mask = np.zeros(tag_space.size(), dtype='float32')
+        for i in range(self.batch_size):
+            for j in range(len(sentence[0]) + 1):
+                if j == 0 or j > lengths[i]:
+                    tag_mask[i][j] -= _BIG_NUMBER
+                    continue
+                for k in range(len(sentence[0]) + 1):
+                    if k > lengths[i]:
+                        tag_mask[i, j, k] -= _BIG_NUMBER
+        tag_mask = torch.from_numpy(tag_mask).to(device)
+
+        tag_space = tag_mask + tag_space
+
+        TagProbs_use = tag_space.view(self.batch_size, len(sentence[0])+1, -1).detach()
         CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, TagProbs_use, sentence, lengths)
 
         return CVT_DEP_Loss
