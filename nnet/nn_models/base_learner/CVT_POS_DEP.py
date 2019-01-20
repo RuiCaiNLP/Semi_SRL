@@ -264,7 +264,9 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = F.relu(self.hidLayerFOH_FF(hidden_forward))
         Dependent_hidden = F.relu(self.hidLayerFOM_FF(hidden_forward))
 
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_FF)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
@@ -276,7 +278,9 @@ class BiLSTMTagger(nn.Module):
         ## Dependency Extractor BB
         Head_hidden = F.relu(self.hidLayerFOH_BB(hidden_backward))
         Dependent_hidden = F.relu(self.hidLayerFOM_BB(hidden_backward))
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_BB)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
@@ -288,7 +292,9 @@ class BiLSTMTagger(nn.Module):
         ## Dependency Extractor FB
         Head_hidden = F.relu(self.hidLayerFOH_FB(hidden_forward))
         Dependent_hidden = F.relu(self.hidLayerFOM_FB(hidden_backward))
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_FB)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
@@ -300,7 +306,9 @@ class BiLSTMTagger(nn.Module):
         ## Dependency Extractor BF
         Head_hidden = F.relu(self.hidLayerFOH_BF(hidden_backward))
         Dependent_hidden = F.relu(self.hidLayerFOM_BF(hidden_forward))
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
+        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_BF)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
