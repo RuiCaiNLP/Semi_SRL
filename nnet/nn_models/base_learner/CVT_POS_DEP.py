@@ -439,20 +439,19 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
 
-
-        tag_mask = np.ones(tag_space.size(), dtype='float32')
+        tag_mask = np.zeros(tag_space.size(), dtype='float32')
         for i in range(self.batch_size):
-            for j in range(len(sentence[0])+1):
-                if j ==0 or j>lengths[i]:
-                    tag_mask[i][j] = 0.0
+            for j in range(len(sentence[0]) + 1):
+                if j == 0 or j > lengths[i]:
+                    tag_mask[i][j] -= _BIG_NUMBER
                     continue
-                for k in range(len(sentence[0])+1):
+                for k in range(len(sentence[0]) + 1):
                     if k > lengths[i]:
-                        tag_mask[i,j,k] = 0.0
+                        tag_mask[i, j, k] -= _BIG_NUMBER
 
         tag_mask = torch.from_numpy(tag_mask).to(device)
 
-        tag_space = tag_space * tag_mask
+        tag_space = tag_space + tag_mask
 
         tag_space = tag_space.contiguous().view(self.batch_size * (len(sentence[0])+1), len(sentence[0]) + 1)
         heads = np.argmax(tag_space.cpu().data.numpy(), axis=1)
@@ -515,6 +514,8 @@ class BiLSTMTagger(nn.Module):
         SRLloss = 0
         PI_loss = 0
         SRLprobs = 0
+        POS_loss = 0
+        Tag_DEPloss = 0
 
         return SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, Link_right, Link_all, \
                POS_right, POS_all, PI_right, PI_all \
