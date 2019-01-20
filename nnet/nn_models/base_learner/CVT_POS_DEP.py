@@ -244,71 +244,73 @@ class BiLSTMTagger(nn.Module):
 
 
     def Semi_DEP_Loss(self, hidden_forward, hidden_backward, TagProbs_use, sentence,  unlabeled_lengths):
+
+        tag_mask = np.zeros(TagProbs_use.size(), dtype='float32')
+        for i in range(self.batch_size):
+            for j in range(len(sentence[0]) + 1):
+                if j == 0 or j > lengths[i]:
+                    tag_mask[i][j] -= _BIG_NUMBER
+                    continue
+                for k in range(len(sentence[0]) + 1):
+                    if k > lengths[i]:
+                        tag_mask[i, j, k] -= _BIG_NUMBER
+        tag_mask = torch.from_numpy(tag_mask).to(device)
+
+
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
         sample_nums = unlabeled_lengths.sum()
-        unlabeled_loss_function = nn.KLDivLoss(reduce=False)
+        unlabeled_loss_function = nn.KLDivLoss()
         ## Dependency Extractor FF
         Head_hidden = F.relu(self.hidLayerFOH_FF(hidden_forward))
         Dependent_hidden = F.relu(self.hidLayerFOM_FF(hidden_forward))
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
 
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_FF)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
-        tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
+        tag_space = tag_space + tag_mask
+        dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BB
         Head_hidden = F.relu(self.hidLayerFOH_BB(hidden_backward))
         Dependent_hidden = F.relu(self.hidLayerFOM_BB(hidden_backward))
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
-
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_BB)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
-        tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
+        tag_space = tag_space + tag_mask
+        dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor FB
         Head_hidden = F.relu(self.hidLayerFOH_FB(hidden_forward))
         Dependent_hidden = F.relu(self.hidLayerFOM_FB(hidden_backward))
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
-
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_FB)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
-        tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
+        tag_space = tag_space + tag_mask
+        dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BF
         Head_hidden = F.relu(self.hidLayerFOH_BF(hidden_backward))
         Dependent_hidden = F.relu(self.hidLayerFOM_BF(hidden_forward))
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
-
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link_BF)
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_link)
         left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1), -1)
         Head_hidden = Head_hidden.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
-        tag_space = tag_space[:, 1:]
-        dep_tag_space = tag_space.contiguous().view(self.batch_size, len(sentence[0]), len(sentence[0]) + 1)
+        tag_space = tag_space + tag_mask
+        dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
-        DEP_Semi_loss = self.mask_loss(DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss, unlabeled_lengths)
-        DEP_Semi_loss = torch.sum(DEP_Semi_loss)
+        DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss, unlabeled_lengths
+        #DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         return DEP_Semi_loss/sample_nums
 
     def find_predicate_embeds(self, hidden_states, target_idx_in):
@@ -448,7 +450,6 @@ class BiLSTMTagger(nn.Module):
                 for k in range(len(sentence[0]) + 1):
                     if k > lengths[i]:
                         tag_mask[i, j, k] -= _BIG_NUMBER
-
         tag_mask = torch.from_numpy(tag_mask).to(device)
 
         tag_space = tag_space + tag_mask
