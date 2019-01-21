@@ -352,7 +352,7 @@ class BiLSTMTagger(nn.Module):
         log(DEP_Semi_loss[0][0])
         log(DEP_Semi_loss[0][1])
         log(DEP_Semi_loss[0][-1])
-        log(DEP_Semi_loss)
+        log(torch.sum(DEP_Semi_loss, dim=2))
         DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         return DEP_Semi_loss/sample_nums
 
