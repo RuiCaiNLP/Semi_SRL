@@ -276,6 +276,7 @@ class BiLSTMTagger(nn.Module):
         dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+        log(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BB
         Head_hidden = F.relu(self.hidLayerFOH_BB(hidden_backward))
