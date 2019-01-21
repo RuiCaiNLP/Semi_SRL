@@ -274,17 +274,24 @@ class BiLSTMTagger(nn.Module):
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]) + 1, len(sentence[0]) + 1)
         tag_space = tag_space + tag_mask
         dep_tag_space = tag_space
+        log("dep_tag_space")
         log(dep_tag_space[0][0])
         log(dep_tag_space[0][1])
         log(dep_tag_space[0][-1])
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
+        log("DEPprobs_student")
         log(DEPprobs_student[0][0])
         log(DEPprobs_student[0][1])
         log(DEPprobs_student[0][-1])
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+        log("TagProbs_use_softmax")
         log(TagProbs_use_softmax[0][0])
         log(TagProbs_use_softmax[0][1])
         log(TagProbs_use_softmax[0][-1])
+        log("DEP_FF_loss")
+        log(DEP_FF_loss[0][0])
+        log(DEP_FF_loss[0][1])
+        log(DEP_FF_loss[0][-1])
 
         ## Dependency Extractor BB
         Head_hidden = F.relu(self.hidLayerFOH_BB(hidden_backward))
