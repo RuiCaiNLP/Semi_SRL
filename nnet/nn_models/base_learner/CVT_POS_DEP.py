@@ -259,6 +259,8 @@ class BiLSTMTagger(nn.Module):
 
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
         sample_nums = lengths.sum()
+        log(lengths)
+        log(sample_nums)
         unlabeled_loss_function = nn.KLDivLoss(reduce = False)
         ## Dependency Extractor FF
         Head_hidden = F.relu(self.hidLayerFOH_FF(hidden_forward))
@@ -493,28 +495,6 @@ class BiLSTMTagger(nn.Module):
 
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        Head_hidden_tag = F.relu(self.hidLayerFOH_tag(hidden_states_1))
-        Dependent_hidden_tag = F.relu(self.hidLayerFOM_tag(hidden_states_1))
-
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Head_hidden_tag = torch.cat((Head_hidden_tag, Variable(bias_one)), 2)
-
-        bias_one = torch.ones((self.batch_size, len(sentence[0]) + 1, 1)).to(device)
-        Dependent_hidden_tag = torch.cat((Dependent_hidden_tag, Variable(bias_one)), 2)
-
-        left_part = torch.mm(Dependent_hidden_tag.view(self.batch_size * (len(sentence[0]) + 1), -1), self.W_R_tag)
-        left_part = left_part.view(self.batch_size, (len(sentence[0]) + 1) * self.dep_size, -1)
-        Head_hidden_tag = Head_hidden_tag.view(self.batch_size, (len(sentence[0]) + 1), -1).transpose(1, 2)
-        tag_space_tag = torch.bmm(left_part, Head_hidden_tag).view(
-            (len(sentence[0]) + 1) * self.batch_size, self.dep_size, len(sentence[0]) + 1).transpose(1, 2)
-
-        tag_space_tag = tag_space_tag[np.arange(0, (len(sentence[0]) + 1) * self.batch_size), dep_heads.flatten()]
-        tag_space_tag = tag_space_tag.view(self.batch_size, len(sentence[0]) + 1, -1)
-        tag_space_tag = tag_space_tag[:, 1:].contiguous()
-        tag_space_tag = tag_space_tag.view(self.batch_size * len(sentence[0]), -1)
-        ##heads_tag = np.argmax(tag_space_tag.cpu().data.numpy(), axis=1)
-        loss_function = nn.CrossEntropyLoss(ignore_index=0)
-        Tag_DEPloss = loss_function(tag_space_tag, dep_tags.view(-1))
 
         ##########################################
         tag_space = self.POS_MLP(hidden_states_1[:, 1:, :]).view(
