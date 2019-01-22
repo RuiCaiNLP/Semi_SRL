@@ -258,8 +258,8 @@ class BiLSTMTagger(nn.Module):
 
         loss_mask = np.ones(TagProbs_use.size(), dtype='float32')
         for i in range(self.batch_size):
-            for j in range(len(sentence[0]) + 1):
-                if j > lengths[i]:
+            for j in range(len(sentence[0])):
+                if j >= lengths[i]:
                     loss_mask[i][j] = 0.0
                     continue
 
