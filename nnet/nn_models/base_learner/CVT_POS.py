@@ -239,7 +239,7 @@ class BiLSTMTagger(nn.Module):
         unlabeled_loss_function = nn.KLDivLoss(reduce = False)
         ## POS Extractor FF
         tag_space = self.POS_MLP_FF(hidden_forward).view(
-            len(sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(sentence[0]), -1)
         dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
@@ -247,7 +247,7 @@ class BiLSTMTagger(nn.Module):
 
         ## Dependency Extractor BB
         tag_space = self.POS_MLP_BB(hidden_backward).view(
-            len(sentence[0]) * self.batch_size, -1)
+            self.batch_size, len(sentence[0]), -1)
         dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
