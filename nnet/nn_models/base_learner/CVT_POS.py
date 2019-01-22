@@ -214,7 +214,17 @@ class BiLSTMTagger(nn.Module):
         return (torch.zeros(3 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
                 torch.zeros(3 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
-    def init_hidden_spe(self):
+    def init_hidden_DEP_1(self):
+        # Before we've done anything, we dont have any hidden state.
+        # Refer to the Pytorch documentation to see exactly
+        # why they have this dimensionality.
+        # The axes semantics are (num_layers, minibatch_size, hidden_dim)
+        # return (Variable(torch.zeros(1, self.batch_size, self.hidden_dim)),
+        #        Variable(torch.zeros(1, self.batch_size, self.hidden_dim)))
+        return (torch.zeros(1 * 2, self.batch_size, self.hidden_dim*2, requires_grad=False).to(device),
+                torch.zeros(1 * 2, self.batch_size, self.hidden_dim*2, requires_grad=False).to(device))
+
+    def init_hidden_DEP_2(self):
         # Before we've done anything, we dont have any hidden state.
         # Refer to the Pytorch documentation to see exactly
         # why they have this dimensionality.

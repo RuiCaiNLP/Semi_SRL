@@ -58,9 +58,9 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_model_input = unlabeled_converter(unlabeled_batch)
             unlabeled_idx += 1
 
-            model.hidden = model.init_hidden_spe()
+            model.hidden = model.init_hidden_DEP_1()
             #model.hidden_0 = model.init_hidden_spe()
-            model.hidden_2 = model.init_hidden_spe()
+            model.hidden_2 = model.init_hidden_DEP_2()
             model.hidden_3 = model.init_hidden_spe()
             model.hidden_4 = model.init_hidden_share()
 
@@ -247,9 +247,9 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                         record_ids, batch = zip(*batch)
                         model_input = converter(batch)
-                        model.hidden = model.init_hidden_spe()
-                        #model.hidden_0 = model.init_hidden_spe()
-                        model.hidden_2 = model.init_hidden_spe()
+                        model.hidden = model.init_hidden_DEP_1()
+                        # model.hidden_0 = model.init_hidden_spe()
+                        model.hidden_2 = model.init_hidden_DEP_2()
                         model.hidden_3 = model.init_hidden_spe()
                         model.hidden_4 = model.init_hidden_share()
 
