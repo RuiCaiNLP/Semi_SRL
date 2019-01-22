@@ -61,8 +61,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             model.hidden = model.init_hidden_DEP_1()
             #model.hidden_0 = model.init_hidden_spe()
             model.hidden_2 = model.init_hidden_DEP_2()
-            model.hidden_3 = model.init_hidden_spe()
-            model.hidden_4 = model.init_hidden_share()
+
 
             sentence = model_input[0]
             p_sentence = model_input[1]
@@ -166,8 +165,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             del model.hidden
             del model.hidden_2
-            del model.hidden_3
-            del model.hidden_4
 
 
             """
@@ -250,8 +247,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         model.hidden = model.init_hidden_DEP_1()
                         # model.hidden_0 = model.init_hidden_spe()
                         model.hidden_2 = model.init_hidden_DEP_2()
-                        model.hidden_3 = model.init_hidden_spe()
-                        model.hidden_4 = model.init_hidden_share()
+
 
 
                         sentence = model_input[0]
@@ -363,9 +359,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                         del model.hidden
                         del model.hidden_2
-                        del model.hidden_3
-                        del model.hidden_4
-
 
 
                 Predicat_num = 6300
