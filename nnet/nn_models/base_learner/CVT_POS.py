@@ -382,6 +382,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
 
+        hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
 
         ##########################################
         tag_space = self.POS_MLP(hidden_states_1).view(
