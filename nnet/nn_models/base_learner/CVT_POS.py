@@ -23,6 +23,11 @@ _BIG_NUMBER = 10. ** 6.
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def _roll(arr, direction, sparse=False):
+  if sparse:
+    return torch.cat((arr[:, direction:], arr[:, :direction]), axis=1)
+  return torch.cat((arr[:, direction:, :], arr[:, :direction, :]), axis=1)
+
 
 def cat(l, dimension=-1):
     valid_l = l
@@ -194,8 +199,15 @@ class BiLSTMTagger(nn.Module):
 
         self.POS_MLP_FF = nn.Sequential(nn.Linear(2*lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
+
         self.POS_MLP_BB = nn.Sequential(nn.Linear(2*lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
+
+        self.POS_MLP_Future = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+                                        nn.Linear(lstm_hidden_dim, self.pos_size))
+
+        self.POS_MLP_Past = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+                                        nn.Linear(lstm_hidden_dim, self.pos_size))
 
 
         # Init hidden state
@@ -264,9 +276,21 @@ class BiLSTMTagger(nn.Module):
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
+        hidden_future = _roll(hidden_forward, 1)
+        tag_space = self.POS_MLP_Future(hidden_future).view(
+            self.batch_size, len(sentence[0]), -1)
+        dep_tag_space = tag_space
+        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
+        DEP_Future_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
+        hidden_past = _roll(hidden_backward, -1)
+        tag_space = self.POS_MLP_Past(hidden_past).view(
+            self.batch_size, len(sentence[0]), -1)
+        dep_tag_space = tag_space
+        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
+        DEP_Past_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
-        DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss
+        DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_Future_loss + DEP_Past_loss
 
         loss_mask = np.ones(TagProbs_use.size(), dtype='float32')
         for i in range(self.batch_size):
