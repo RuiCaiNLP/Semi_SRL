@@ -127,21 +127,23 @@ class BiLSTMTagger(nn.Module):
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
-        self.SRL_input_dropout = nn.Dropout(p=0.3)
-        self.DEP_input_dropout = nn.Dropout(p=0.3)
-        self.hidden_state_dropout_DEP = nn.Dropout(p=0.3)
-        self.hidden_state_dropout_1 = nn.Dropout(p=0.3)
-        self.hidden_state_dropout_2 = nn.Dropout(p=0.3)
-        self.word_dropout = nn.Dropout(p=0.0)
-        self.predicate_dropout = nn.Dropout(p=0.0)
-        self.label_dropout = nn.Dropout(p=0.5)
-        self.link_dropout = nn.Dropout(p=0.5)
+        self.SRL_input_dropout = nn.Dropout(p=0.5)
+        self.DEP_input_dropout = nn.Dropout(p=0.5)
+        self.hidden_state_dropout_DEP = nn.Dropout(p=0.5)
+        self.hidden_state_dropout_1 = nn.Dropout(p=0.5)
+        self.hidden_state_dropout_2 = nn.Dropout(p=0.5)
+
+        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.2)
+        self.DEP_input_dropout_unlabeled = nn.Dropout(p=0.5)
+        self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
+        self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
+
         # self.use_dropout = nn.Dropout(p=0.2)
 
         # The LSTM takes word embeddings as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
         self.num_layers = 1
-        self.BiLSTM_0 = nn.LSTM(input_size=sent_embedding_dim_DEP, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_0 = nn.LSTM(input_size=sent_embedding_dim_DEP, hidden_size=2*lstm_hidden_dim, batch_first=True,
                                 bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_0.all_weights[0][0])
@@ -150,7 +152,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_0.all_weights[1][1])
 
         self.num_layers = 1
-        self.BiLSTM_1 = nn.LSTM(input_size=lstm_hidden_dim * 2, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_1 = nn.LSTM(input_size=lstm_hidden_dim * 4, hidden_size=lstm_hidden_dim, batch_first=True,
                                 bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_1.all_weights[0][0])
@@ -187,12 +189,12 @@ class BiLSTMTagger(nn.Module):
 
         self.mid_hidden = lstm_hidden_dim
 
-        self.POS_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+        self.POS_MLP = nn.Sequential(nn.Linear(6 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
 
-        self.POS_MLP_FF = nn.Sequential(nn.Linear(lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+        self.POS_MLP_FF = nn.Sequential(nn.Linear(2*lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
-        self.POS_MLP_BB = nn.Sequential(nn.Linear(lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+        self.POS_MLP_BB = nn.Sequential(nn.Linear(2*lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
 
 
@@ -286,7 +288,7 @@ class BiLSTMTagger(nn.Module):
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP), 2)
-        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
+        embeds_forDEP = self.DEP_input_dropout_unlabeled(embeds_forDEP)
 
         # first layer
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths)
@@ -298,7 +300,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_0 = hidden_states[unsort_idx]
-        hidden_states_0 = self.hidden_state_dropout_1(hidden_states_0)
+        hidden_states_0 = self.hidden_state_dropout_1_unlabeled(hidden_states_0)
 
         # second_layer
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths)
@@ -310,9 +312,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
+        hidden_states_1 = self.hidden_state_dropout_2_unlabeled(hidden_states_1)
 
         ##########################################
+        hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
         tag_space = self.POS_MLP(hidden_states_1).view(
             len(sentence[0]) * self.batch_size, -1)
 
