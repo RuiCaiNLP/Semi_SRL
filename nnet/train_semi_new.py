@@ -170,7 +170,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             del model.hidden_4
 
 
-
+            """
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
@@ -192,7 +192,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             del model.hidden_3
             del model.hidden_4
 
-
+            """
             #if idx % 10000 == 0:
             #    optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.75
 
