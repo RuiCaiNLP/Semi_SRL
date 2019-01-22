@@ -199,9 +199,9 @@ class BiLSTMTagger(nn.Module):
 
 
         # Init hidden state
-        model.hidden = model.init_hidden_DEP_1()
+        model.hidden = self.init_hidden_DEP_1()
         # model.hidden_0 = model.init_hidden_spe()
-        model.hidden_2 = model.init_hidden_DEP_2()
+        model.hidden_2 = self.init_hidden_DEP_2()
 
 
     def init_hidden_share(self):
