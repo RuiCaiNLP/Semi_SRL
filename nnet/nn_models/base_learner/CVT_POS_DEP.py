@@ -374,6 +374,9 @@ class BiLSTMTagger(nn.Module):
     def CVT_train(self, sentence, p_sentence, sent_mask, lengths):
         ## start unlabeled training:
 
+        log(sentence)
+        log(p_sentence)
+        log(lengths)
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
