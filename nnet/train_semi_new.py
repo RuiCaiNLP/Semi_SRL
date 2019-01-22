@@ -167,15 +167,13 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             del model.hidden_2
 
 
-            """
+
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
-            model.hidden = model.init_hidden_spe()
+            model.hidden = model.init_hidden_DEP_1()
             # model.hidden_0 = model.init_hidden_spe()
-            model.hidden_2 = model.init_hidden_spe()
-            model.hidden_3 = model.init_hidden_spe()
-            model.hidden_4 = model.init_hidden_share()
+            model.hidden_2 = model.init_hidden_DEP_2()
             CVT_SRL_Loss = model(sentence_in, p_sentence_in, pos_tags_in, sent_mask, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
@@ -186,10 +184,9 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             optimizer.step()
             del model.hidden
             del model.hidden_2
-            del model.hidden_3
-            del model.hidden_4
 
-            """
+
+
             #if idx % 10000 == 0:
             #    optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * 0.75
 
