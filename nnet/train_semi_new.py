@@ -167,7 +167,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             del model.hidden_2
 
 
-
+            """
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
@@ -184,7 +184,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             optimizer.step()
             del model.hidden
             del model.hidden_2
-
+            """
 
 
             #if idx % 10000 == 0:
@@ -204,7 +204,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("PI_loss")
                 log(PI_loss)
                 log("Loss_CVT")
-                log(Loss_CVT)
+                #log(Loss_CVT)
                 #log("sum")
                 #log(loss)
 
