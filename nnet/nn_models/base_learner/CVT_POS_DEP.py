@@ -212,7 +212,7 @@ class BiLSTMTagger(nn.Module):
             torch.from_numpy(np.ones((1, sent_embedding_dim_DEP), dtype='float32')))
 
         self.mid_hidden = lstm_hidden_dim
-        self.POS_MLP = nn.Sequential(nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+        self.POS_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
 
         self.hidden = self.init_hidden_DEP_1()
