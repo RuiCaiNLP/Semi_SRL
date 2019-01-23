@@ -155,7 +155,7 @@ class BiLSTMTagger(nn.Module):
         # The LSTM takes word embeddings as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
         self.num_layers = 1
-        self.BiLSTM_0 = nn.LSTM(input_size=sent_embedding_dim_DEP, hidden_size=lstm_hidden_dim*2, batch_first=True,
+        self.BiLSTM_0 = nn.LSTM(input_size=sent_embedding_dim_DEP, hidden_size=lstm_hidden_dim, batch_first=True,
                                 bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_0.all_weights[0][0])
@@ -164,7 +164,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_0.all_weights[1][1])
 
         self.num_layers = 1
-        self.BiLSTM_1 = nn.LSTM(input_size=lstm_hidden_dim * 4, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_1 = nn.LSTM(input_size=lstm_hidden_dim * 2, hidden_size=lstm_hidden_dim, batch_first=True,
                                 bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_1.all_weights[0][0])
@@ -188,21 +188,21 @@ class BiLSTMTagger(nn.Module):
         self.map_dim = lstm_hidden_dim
 
         self.ldims = lstm_hidden_dim
-        self.hidLayerFOH = nn.Linear(self.ldims * 6, self.ldims)
-        self.hidLayerFOM = nn.Linear(self.ldims * 6, self.ldims)
+        self.hidLayerFOH = nn.Linear(self.ldims * 4, self.ldims)
+        self.hidLayerFOM = nn.Linear(self.ldims * 4, self.ldims)
         self.W_R_link = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
 
-        self.hidLayerFOH_FF = nn.Linear(self.ldims*2, self.ldims)
-        self.hidLayerFOM_FF = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOH_FF = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_FF = nn.Linear(self.ldims, self.ldims)
         self.W_R_link_FF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
-        self.hidLayerFOH_BB = nn.Linear(self.ldims*2, self.ldims)
-        self.hidLayerFOM_BB = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOH_BB = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_BB = nn.Linear(self.ldims, self.ldims)
         self.W_R_link_BB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
-        self.hidLayerFOH_BF = nn.Linear(self.ldims*2, self.ldims)
-        self.hidLayerFOM_BF = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOH_BF = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_BF = nn.Linear(self.ldims, self.ldims)
         self.W_R_link_BF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
-        self.hidLayerFOH_FB = nn.Linear(self.ldims*2, self.ldims)
-        self.hidLayerFOM_FB = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOH_FB = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOM_FB = nn.Linear(self.ldims, self.ldims)
         self.W_R_link_FB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
 
 
@@ -212,7 +212,7 @@ class BiLSTMTagger(nn.Module):
             torch.from_numpy(np.ones((1, sent_embedding_dim_DEP), dtype='float32')))
 
         self.mid_hidden = lstm_hidden_dim
-        self.POS_MLP = nn.Sequential(nn.Linear(6 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+        self.POS_MLP = nn.Sequential(nn.Linear(4 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
 
         self.hidden = self.init_hidden_DEP_1()
@@ -236,8 +236,8 @@ class BiLSTMTagger(nn.Module):
         # The axes semantics are (num_layers, minibatch_size, hidden_dim)
         # return (Variable(torch.zeros(1, self.batch_size, self.hidden_dim)),
         #        Variable(torch.zeros(1, self.batch_size, self.hidden_dim)))
-        return (torch.zeros(1 * 2, self.batch_size, self.hidden_dim*2, requires_grad=False).to(device),
-                torch.zeros(1 * 2, self.batch_size, self.hidden_dim*2, requires_grad=False).to(device))
+        return (torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
+                torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
     def init_hidden_DEP_2(self):
         # Before we've done anything, we dont have any hidden state.
