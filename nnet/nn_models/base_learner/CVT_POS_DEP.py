@@ -127,21 +127,35 @@ class BiLSTMTagger(nn.Module):
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
-        self.SRL_input_dropout = nn.Dropout(p=0.3)
-        self.DEP_input_dropout = nn.Dropout(p=0.3)
+        self.SRL_input_dropout = nn.Dropout(p=0.5)
+        self.DEP_input_dropout = nn.Dropout(p=0.5)
         self.hidden_state_dropout_DEP = nn.Dropout(p=0.3)
-        self.hidden_state_dropout_1 = nn.Dropout(p=0.3)
-        self.hidden_state_dropout_2 = nn.Dropout(p=0.3)
-        self.word_dropout = nn.Dropout(p=0.0)
-        self.predicate_dropout = nn.Dropout(p=0.0)
-        self.label_dropout = nn.Dropout(p=0.5)
-        self.link_dropout = nn.Dropout(p=0.5)
+
+        self.hidden_state_dropout_1 = nn.Dropout(p=0.5)
+        self.hidden_state_dropout_2 = nn.Dropout(p=0.5)
+        self.head_dropout = nn.Dropout(p=0.5)
+        self.dep_dropout = nn.Dropout(p=0.5)
+
+        self.DEP_input_dropout_unlabeled = nn.Dropout(p=0.2)
+        self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
+        self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled = nn.Dropout(p=0.2)
+
+        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.2)
         # self.use_dropout = nn.Dropout(p=0.2)
 
         # The LSTM takes word embeddings as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
         self.num_layers = 1
-        self.BiLSTM_0 = nn.LSTM(input_size=sent_embedding_dim_DEP, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_0 = nn.LSTM(input_size=sent_embedding_dim_DEP, hidden_size=lstm_hidden_dim*2, batch_first=True,
                                 bidirectional=True, num_layers=self.num_layers)
 
         init.orthogonal_(self.BiLSTM_0.all_weights[0][0])
@@ -174,31 +188,25 @@ class BiLSTMTagger(nn.Module):
         self.map_dim = lstm_hidden_dim
 
         self.ldims = lstm_hidden_dim
-        self.hidLayerFOH = nn.Linear(self.ldims * 2, self.ldims)
-        self.hidLayerFOM = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOH = nn.Linear(self.ldims * 6, self.ldims)
+        self.hidLayerFOM = nn.Linear(self.ldims * 6, self.ldims)
         self.W_R_link = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
 
-        self.hidLayerFOH_FF = nn.Linear(self.ldims, self.ldims)
-        self.hidLayerFOM_FF = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOH_FF = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOM_FF = nn.Linear(self.ldims*2, self.ldims)
         self.W_R_link_FF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
-        self.hidLayerFOH_BB = nn.Linear(self.ldims, self.ldims)
-        self.hidLayerFOM_BB = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOH_BB = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOM_BB = nn.Linear(self.ldims*2, self.ldims)
         self.W_R_link_BB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
-        self.hidLayerFOH_BF = nn.Linear(self.ldims, self.ldims)
-        self.hidLayerFOM_BF = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOH_BF = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOM_BF = nn.Linear(self.ldims*2, self.ldims)
         self.W_R_link_BF = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
-        self.hidLayerFOH_FB = nn.Linear(self.ldims, self.ldims)
-        self.hidLayerFOM_FB = nn.Linear(self.ldims, self.ldims)
+        self.hidLayerFOH_FB = nn.Linear(self.ldims*2, self.ldims)
+        self.hidLayerFOM_FB = nn.Linear(self.ldims*2, self.ldims)
         self.W_R_link_FB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim))
 
 
-        self.hidLayerFOH_tag = nn.Linear(self.ldims * 2, self.ldims)
-        self.hidLayerFOM_tag = nn.Linear(self.ldims * 2, self.ldims)
-        self.W_R_tag = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.dep_size*(1 + lstm_hidden_dim)))
 
-        self.Non_Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
-        self.Predicate_Proj = nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim)
-        self.W_R = nn.Parameter(torch.rand(self.map_dim + 1, self.tagset_size * (self.map_dim + 1)))
 
         self.VR_embedding = nn.Parameter(
             torch.from_numpy(np.ones((1, sent_embedding_dim_DEP), dtype='float32')))
@@ -207,11 +215,9 @@ class BiLSTMTagger(nn.Module):
         self.POS_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
 
-        # Init hidden state
-        self.hidden = self.init_hidden_spe()
-        self.hidden_2 = self.init_hidden_spe()
-        self.hidden_3 = self.init_hidden_spe()
-        self.hidden_4 = self.init_hidden_share()
+        self.hidden = self.init_hidden_DEP_1()
+        # model.hidden_0 = model.init_hidden_spe()
+        self.hidden_2 = self.init_hidden_DEP_2()
 
     def init_hidden_share(self):
         # Before we've done anything, we dont have any hidden state.
@@ -223,7 +229,17 @@ class BiLSTMTagger(nn.Module):
         return (torch.zeros(3 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
                 torch.zeros(3 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
-    def init_hidden_spe(self):
+    def init_hidden_DEP_1(self):
+        # Before we've done anything, we dont have any hidden state.
+        # Refer to the Pytorch documentation to see exactly
+        # why they have this dimensionality.
+        # The axes semantics are (num_layers, minibatch_size, hidden_dim)
+        # return (Variable(torch.zeros(1, self.batch_size, self.hidden_dim)),
+        #        Variable(torch.zeros(1, self.batch_size, self.hidden_dim)))
+        return (torch.zeros(1 * 2, self.batch_size, self.hidden_dim*2, requires_grad=False).to(device),
+                torch.zeros(1 * 2, self.batch_size, self.hidden_dim*2, requires_grad=False).to(device))
+
+    def init_hidden_DEP_2(self):
         # Before we've done anything, we dont have any hidden state.
         # Refer to the Pytorch documentation to see exactly
         # why they have this dimensionality.
@@ -232,6 +248,7 @@ class BiLSTMTagger(nn.Module):
         #        Variable(torch.zeros(1, self.batch_size, self.hidden_dim)))
         return (torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
                 torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
+
 
     def mask_loss(self, Semi_loss, lengths):
 
@@ -261,8 +278,8 @@ class BiLSTMTagger(nn.Module):
         sample_nums = lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce = False)
         ## Dependency Extractor FF
-        Head_hidden = F.relu(self.hidLayerFOH_FF(hidden_forward))
-        Dependent_hidden = F.relu(self.hidLayerFOM_FF(hidden_forward[:, 1:, :]))
+        Head_hidden = self.head_dropout_unlabeled_FF(F.relu(self.hidLayerFOH_FF(hidden_forward)))
+        Dependent_hidden = self.dep_dropout_unlabeled_FF(F.relu(self.hidLayerFOM_FF(hidden_forward[:, 1:, :])))
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
@@ -278,8 +295,8 @@ class BiLSTMTagger(nn.Module):
 
 
         ## Dependency Extractor BB
-        Head_hidden = F.relu(self.hidLayerFOH_BB(hidden_backward))
-        Dependent_hidden = F.relu(self.hidLayerFOM_BB(hidden_backward[:, 1:, :]))
+        Head_hidden = self.head_dropout_unlabeled_BB(F.relu(self.hidLayerFOH_BB(hidden_backward)))
+        Dependent_hidden = self.dep_dropout_unlabeled_BB(F.relu(self.hidLayerFOM_BB(hidden_backward[:, 1:, :])))
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
 
@@ -293,8 +310,8 @@ class BiLSTMTagger(nn.Module):
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor FB
-        Head_hidden = F.relu(self.hidLayerFOH_FB(hidden_forward))
-        Dependent_hidden = F.relu(self.hidLayerFOM_FB(hidden_backward[:, 1:, :]))
+        Head_hidden = self.head_dropout_unlabeled_FB(F.relu(self.hidLayerFOH_FB(hidden_forward)))
+        Dependent_hidden = self.dep_dropout_unlabeled_FB(F.relu(self.hidLayerFOM_FB(hidden_backward[:, 1:, :])))
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
 
@@ -308,8 +325,8 @@ class BiLSTMTagger(nn.Module):
         DEP_FB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         ## Dependency Extractor BF
-        Head_hidden = F.relu(self.hidLayerFOH_BF(hidden_backward))
-        Dependent_hidden = F.relu(self.hidLayerFOM_BF(hidden_forward[:, 1:, :]))
+        Head_hidden = self.head_dropout_unlabeled_BF(F.relu(self.hidLayerFOH_BF(hidden_backward)))
+        Dependent_hidden = self.dep_dropout_unlabeled_BF(F.relu(self.hidLayerFOM_BF(hidden_forward[:, 1:, :])))
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
 
@@ -352,16 +369,14 @@ class BiLSTMTagger(nn.Module):
     def CVT_train(self, sentence, p_sentence, sent_mask, lengths):
         ## start unlabeled training:
 
-        log(sentence)
-        log(p_sentence)
-        log(lengths)
+
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP), 2)
         add_zero = torch.zeros((self.batch_size, 1, self.sent_embedding_dim_DEP)).to(device)
         embeds_forDEP_cat = torch.cat((self.VR_embedding + add_zero, embeds_forDEP), 1)
-        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP_cat)
+        embeds_forDEP = self.DEP_input_dropout_unlabeled(embeds_forDEP_cat)
 
         # first layer
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths + 1)
@@ -373,7 +388,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_0 = hidden_states[unsort_idx]
-        hidden_states_0 = self.hidden_state_dropout_1(hidden_states_0)
+        hidden_states_0 = self.hidden_state_dropout_1_unlabeled(hidden_states_0)
 
         hidden_forward, hidden_backward = hidden_states_0.split(self.hidden_dim, 2)
 
@@ -387,10 +402,12 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
+        hidden_states_1 = self.hidden_state_dropout_2_unlabeled(hidden_states_1)
 
-        Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
-        Dependent_hidden = F.relu(self.hidLayerFOM(hidden_states_1[:, 1:, :]))
+        hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
+
+        Head_hidden = self.head_dropout_unlabeled(F.relu(self.hidLayerFOH(hidden_states_1)))
+        Dependent_hidden = self.dep_dropout_unlabeled(F.relu(self.hidLayerFOM(hidden_states_1[:, 1:, :])))
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
@@ -465,9 +482,10 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
         hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
+        hidden_states_1 = torch.cat((hidden_states_0, hidden_states_1), 2)
 
-        Head_hidden = F.relu(self.hidLayerFOH(hidden_states_1))
-        Dependent_hidden = F.relu(self.hidLayerFOM(hidden_states_1[:, 1:, :]))
+        Head_hidden = self.head_dropout(F.relu(self.hidLayerFOH(hidden_states_1)))
+        Dependent_hidden = self.dep_dropout(F.relu(self.hidLayerFOM(hidden_states_1[:, 1:, :])))
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
