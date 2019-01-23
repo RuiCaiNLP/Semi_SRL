@@ -264,7 +264,7 @@ class BiLSTMTagger(nn.Module):
 
         tag_mask = np.zeros(TagProbs_use.size(), dtype='float32')
         for i in range(self.batch_size):
-            for j in range(len(sentence[0]) + 1):
+            for j in range(len(sentence[0])):
                 if j >= lengths[i]:
                     tag_mask[i][j] -= _BIG_NUMBER
                     continue
@@ -343,7 +343,7 @@ class BiLSTMTagger(nn.Module):
 
         loss_mask = np.ones(TagProbs_use.size(), dtype='float32')
         for i in range(self.batch_size):
-            for j in range(len(sentence[0]) + 1):
+            for j in range(len(sentence[0])):
                 if j >= lengths[i]:
                     loss_mask[i][j] = 0.0
                     continue
@@ -419,7 +419,7 @@ class BiLSTMTagger(nn.Module):
 
         tag_mask = np.zeros(tag_space.size(), dtype='float32')
         for i in range(self.batch_size):
-            for j in range(len(sentence[0]) + 1):
+            for j in range(len(sentence[0])):
                 if j == 0 or j > lengths[i]:
                     tag_mask[i][j] -= _BIG_NUMBER
                     continue
@@ -497,7 +497,7 @@ class BiLSTMTagger(nn.Module):
 
         tag_mask = np.zeros(tag_space.size(), dtype='float32')
         for i in range(self.batch_size):
-            for j in range(len(sentence[0]) + 1):
+            for j in range(len(sentence[0])):
                 if j >= lengths[i]:
                     tag_mask[i][j] -= _BIG_NUMBER
                     continue
