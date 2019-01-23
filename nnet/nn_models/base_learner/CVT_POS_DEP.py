@@ -430,7 +430,7 @@ class BiLSTMTagger(nn.Module):
 
         tag_space = tag_mask + tag_space
 
-        TagProbs_use = tag_space.view(self.batch_size, len(sentence[0])+1, -1).detach()
+        TagProbs_use = tag_space.view(self.batch_size, len(sentence[0]), -1).detach()
         CVT_DEP_Loss = self.Semi_DEP_Loss(hidden_forward, hidden_backward, TagProbs_use, sentence, lengths)
 
         return CVT_DEP_Loss
