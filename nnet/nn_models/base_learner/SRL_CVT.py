@@ -139,6 +139,7 @@ class BiLSTMTagger(nn.Module):
         self.head_dropout = nn.Dropout(p=0.5)
         self.dep_dropout = nn.Dropout(p=0.5)
 
+        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.2)
         self.DEP_input_dropout_unlabeled = nn.Dropout(p=0.2)
         self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
         self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
@@ -440,7 +441,7 @@ class BiLSTMTagger(nn.Module):
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
         pos_embeds = self.pos_embeddings(POS_label)
         embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, unlabeled_region_mark_embeds), 2)
-        embeds_forSRL = self.SRL_input_dropout(embeds_forSRL)
+        embeds_forSRL = self.SRL_input_dropout_unlabeled(embeds_forSRL)
 
         # first layer
         embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forSRL, lengths)
@@ -461,12 +462,12 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
+        hidden_states_1 = self.hidden_state_dropout_2_unlabeled(hidden_states_1)
 
         #########################################3
-        predicate_embeds = hidden_states_1[np.arange(0, hidden_states_1.size()[0]), target_idx_in]
-        Head_hidden = self.head_dropout(F.relu(self.hidLayerFOH_SRL(predicate_embeds)))
-        Dependent_hidden = self.dep_dropout(F.relu(self.hidLayerFOM_SRL(hidden_states_1)))
+        predicate_embeds = hidden_states_1[np.arange(0, hidden_states_1.size()[0]), Predicate_idx_batch]
+        Head_hidden = self.head_dropout_unlabeled(F.relu(self.hidLayerFOH_SRL(predicate_embeds)))
+        Dependent_hidden = self.dep_dropout_unlabeled(F.relu(self.hidLayerFOM_SRL(hidden_states_1)))
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
         bias_one = torch.ones((self.batch_size, 1)).to(device)
