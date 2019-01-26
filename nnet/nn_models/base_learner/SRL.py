@@ -234,19 +234,19 @@ class BiLSTMTagger(nn.Module):
 
     def init_SA_primary(self):
         return (torch.zeros(self.SA_primary_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
-                torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
+                torch.zeros(self.SA_primary_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
     def init_SA_high(self):
         return (torch.zeros(self.SA_high_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
-                torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
+                torch.zeros(self.SA_high_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
     def init_SRL_primary(self):
         return (torch.zeros(self.SRL_primary_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
-                torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
+                torch.zeros(self.SRL_primary_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
     def init_SRL_high(self):
         return (torch.zeros(self.SRL_high_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device),
-                torch.zeros(1 * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
+                torch.zeros(self.SRL_high_num_layers * 2, self.batch_size, self.hidden_dim, requires_grad=False).to(device))
 
 
 
