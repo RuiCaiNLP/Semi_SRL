@@ -340,7 +340,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                                     NonNullTruth += 1
                                 if true != best:
                                     errors += 1
-                                if best != -1 and best != 0 and true != 0:
+                                if best != 0 and true != -1:
                                     NonNullPredict += 1
                                     if true == best:
                                         right_NonNullPredict += 1
