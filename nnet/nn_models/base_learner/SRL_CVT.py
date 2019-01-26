@@ -418,6 +418,13 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
 
+        unlabeled_region_mark = np.zeros(unlabeled_sentence.size(), dtype='int64')
+        for i in range(len(unlabeled_region_mark)):
+            unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
+
+        unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
+        unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
+
 
         tag_space = self.POS_MLP(hidden_states_1).view(
               self.batch_size, len(sentence[0]), -1)
@@ -432,8 +439,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = self.word_embeddings_SRL(sentence)
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
         pos_embeds = self.pos_embeddings(POS_label)
-        region_marks = self.region_embeddings(Predicate_idx_batch).view(self.batch_size, len(sentence[0]), 16)
-        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, region_marks), 2)
+        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, unlabeled_region_mark_embeds), 2)
         embeds_forSRL = self.SRL_input_dropout(embeds_forSRL)
 
         # first layer
