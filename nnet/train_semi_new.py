@@ -164,13 +164,15 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             optimizer.step()
 
 
-            """
+
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
-            model.hidden = model.init_hidden_DEP_1()
-            # model.hidden_0 = model.init_hidden_spe()
-            model.hidden_2 = model.init_hidden_DEP_2()
+
+            model.SRL_primary_hidden = model.init_SRL_primary()
+            model.SRL_high_hidden = model.init_SRL_high()
+            model.SA_primary_hidden = model.init_SA_primary()
+            model.SA_high_hidden = model.init_SA_high()
             CVT_SRL_Loss = model(sentence_in, p_sentence_in, pos_tags_in, sent_mask, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
@@ -179,9 +181,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Loss_CVT = CVT_SRL_Loss
             Loss_CVT.backward()
             optimizer.step()
-            del model.hidden
-            del model.hidden_2
-            """
+
 
 
             #if idx % 10000 == 0:
@@ -201,7 +201,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("PI_loss")
                 log(PI_loss)
                 log("Loss_CVT")
-                #log(Loss_CVT)
+                log(Loss_CVT)
                 #log("sum")
                 #log(loss)
 
