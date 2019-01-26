@@ -68,7 +68,7 @@ class BiLSTMTagger(nn.Module):
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
         sent_embedding_dim_DEP = 2 * hps['sent_edim']
-        sent_embedding_dim_SRL = 3 * hps['sent_edim'] + 1 * hps['pos_edim'] + 16
+        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 1 * hps['pos_edim'] + 16
 
         self.sent_embedding_dim_DEP = sent_embedding_dim_DEP
         ## for the region mark
@@ -173,7 +173,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SA_high.all_weights[1][1])
 
         self.SRL_primary_num_layers = 1
-        self.BiLSTM_SRL_primary = nn.LSTM(input_size=lstm_hidden_dim * 2, hidden_size=lstm_hidden_dim, batch_first=True,
+        self.BiLSTM_SRL_primary = nn.LSTM(input_size=sent_embedding_dim_SRL, hidden_size=lstm_hidden_dim, batch_first=True,
                                 bidirectional=True, num_layers=self.SRL_primary_num_layers)
 
         init.orthogonal_(self.BiLSTM_SRL_primary.all_weights[0][0])
@@ -182,7 +182,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SRL_primary.all_weights[1][1])
 
         self.SRL_high_num_layers = 2
-        self.BiLSTM_SRL_high = nn.LSTM(input_size=sent_embedding_dim_SRL,
+        self.BiLSTM_SRL_high = nn.LSTM(input_size=2*lstm_hidden_dim,
                                   hidden_size=lstm_hidden_dim, batch_first=True,
                                   bidirectional=True, num_layers=self.SRL_high_num_layers)
 
@@ -453,7 +453,9 @@ class BiLSTMTagger(nn.Module):
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP), 2)
+        pos_embeds = self.pos_embeddings(pos_tags)
+        region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
+        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, pos_embeds, region_marks), 2)
         embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
 
 
