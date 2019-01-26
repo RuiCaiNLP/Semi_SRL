@@ -418,7 +418,7 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
 
-        unlabeled_region_mark = np.zeros(unlabeled_sentence.size(), dtype='int64')
+        unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
         for i in range(len(unlabeled_region_mark)):
             unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
 
