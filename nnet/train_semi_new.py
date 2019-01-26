@@ -327,8 +327,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         PI_right += PI_right_b
                         PI_all += PI_all_b
 
-                        if SRLprobs == 0:
-                            continue
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)
 
