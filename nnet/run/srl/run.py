@@ -254,7 +254,7 @@ class SRLRunner(Runner):
             for line in labels_voc_mask:
                 line[0] = 0
 
-            labels_batch, _ = mask_batch(labels)
+            labels_batch, _ = mask_batch(labels, for_Head=True)
             frames_batch, _ = mask_batch(frames)
 
 

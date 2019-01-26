@@ -58,10 +58,10 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_model_input = unlabeled_converter(unlabeled_batch)
             unlabeled_idx += 1
 
-            model.hidden = model.init_hidden_DEP_1()
-            #model.hidden_0 = model.init_hidden_spe()
-            model.hidden_2 = model.init_hidden_DEP_2()
-
+            self.SRL_primary_hidden = self.init_SRL_primary()
+            self.SRL_high_hidden = self.init_SRL_high()
+            self.SA_primary_hidden = self.init_SA_primary()
+            self.SA_high_hidden = self.init_SA_high()
 
             sentence = model_input[0]
             p_sentence = model_input[1]
@@ -163,9 +163,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             #DEPloss.backward()
             optimizer.step()
 
-            del model.hidden
-            del model.hidden_2
-
 
             """
             model.zero_grad()
@@ -241,9 +238,11 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                         record_ids, batch = zip(*batch)
                         model_input = converter(batch)
-                        model.hidden = model.init_hidden_DEP_1()
-                        # model.hidden_0 = model.init_hidden_spe()
-                        model.hidden_2 = model.init_hidden_DEP_2()
+
+                        self.SRL_primary_hidden = self.init_SRL_primary()
+                        self.SRL_high_hidden = self.init_SRL_high()
+                        self.SA_primary_hidden = self.init_SA_primary()
+                        self.SA_high_hidden = self.init_SA_high()
 
 
 
