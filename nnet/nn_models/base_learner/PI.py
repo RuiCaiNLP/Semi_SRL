@@ -267,7 +267,7 @@ class BiLSTMTagger(nn.Module):
         ##########################################
         ##########################################
         Link_right, Link_all, \
-        POS_right, POS_all, PI_right, PI_all = 0., 0., 0., 0., 0., 0.
+        POS_right, POS_all, PI_right, PI_nonull_preidcates, PI_nonull_truth = 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
 
         for a, b in zip(PI_label, Predicate_indicator.view(-1).cpu().data.numpy()):
             if b == 0:
@@ -284,7 +284,7 @@ class BiLSTMTagger(nn.Module):
 
 
         return SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, Link_right, Link_all, \
-               POS_right, POS_all, PI_right, PI_all \
+               POS_right, POS_all, PI_right, PI_nonull_preidcates, PI_nonull_truth \
 
     @staticmethod
     def sort_batch(x, l):
