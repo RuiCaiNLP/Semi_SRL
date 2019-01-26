@@ -478,7 +478,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
         hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
-        predicate_embeds = hidden_states_3[np.arange(0, hidden_states_1.size()[0]), target_idx_in]
+        predicate_embeds = hidden_states_1[np.arange(0, hidden_states_1.size()[0]), target_idx_in]
         Head_hidden = self.head_dropout(F.relu(self.hidLayerFOH_SRL(predicate_embeds)))
         Dependent_hidden = self.dep_dropout(F.relu(self.hidLayerFOM_SRL(hidden_states_1)))
 
@@ -486,7 +486,7 @@ class BiLSTMTagger(nn.Module):
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
 
         bias_one = torch.ones((self.batch_size, 1)).to(device)
-        Head_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 1)
+        Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
 
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_SRL)
         left_part = left_part.view(self.batch_size, len(sentence[0])*self.tagset_size, -1)
