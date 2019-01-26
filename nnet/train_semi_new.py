@@ -333,17 +333,15 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         labels = np.reshape(labels, sentence.shape)
 
                         for i, sent_labels in enumerate(labels):
-                            labels_voc = batch[i][-4]
-                            local_voc = make_local_voc(labels_voc)
                             for j in range(len(labels[i])):
-                                best = local_voc[labels[i][j]]
-                                true = local_voc[tags[i][j]]
+                                best = labels[i][j]
+                                true = tags[i][j]
 
-                                if true != '<pad>' and true != 'O':
+                                if true != -1 and true != 0:
                                     NonNullTruth += 1
                                 if true != best:
                                     errors += 1
-                                if best != '<pad>' and best != 'O' and true != '<pad>':
+                                if best != -1 and best != 0 and true != 0:
                                     NonNullPredict += 1
                                     if true == best:
                                         right_NonNullPredict += 1
@@ -352,9 +350,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         NonNullPredicts += NonNullPredict
                         right_NonNullPredicts += right_NonNullPredict
                         NonNullTruths += NonNullTruth
-
-                        del model.hidden
-                        del model.hidden_2
 
 
                 Predicat_num = 6300
