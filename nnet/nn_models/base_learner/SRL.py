@@ -509,6 +509,7 @@ class BiLSTMTagger(nn.Module):
         PI_loss = 0
         POS_loss = 0
         Tag_DEPloss = 0
+        Link_DEPloss = 0
 
         return SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, Link_right, Link_all, \
                POS_right, POS_all, PI_right, PI_all \
