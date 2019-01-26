@@ -58,10 +58,10 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             unlabeled_model_input = unlabeled_converter(unlabeled_batch)
             unlabeled_idx += 1
 
-            self.SRL_primary_hidden = self.init_SRL_primary()
-            self.SRL_high_hidden = self.init_SRL_high()
-            self.SA_primary_hidden = self.init_SA_primary()
-            self.SA_high_hidden = self.init_SA_high()
+            model.SRL_primary_hidden = model.init_SRL_primary()
+            model.SRL_high_hidden = model.init_SRL_high()
+            model.SA_primary_hidden = model.init_SA_primary()
+            model.SA_high_hidden = model.init_SA_high()
 
             sentence = model_input[0]
             p_sentence = model_input[1]
@@ -239,10 +239,10 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         record_ids, batch = zip(*batch)
                         model_input = converter(batch)
 
-                        self.SRL_primary_hidden = self.init_SRL_primary()
-                        self.SRL_high_hidden = self.init_SRL_high()
-                        self.SA_primary_hidden = self.init_SA_primary()
-                        self.SA_high_hidden = self.init_SA_high()
+                        model.SRL_primary_hidden = model.init_SRL_primary()
+                        model.SRL_high_hidden = model.init_SRL_high()
+                        model.SA_primary_hidden = model.init_SA_primary()
+                        model.SA_high_hidden = model.init_SA_high()
 
 
 
