@@ -21,7 +21,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
     best_F1 = -0.1
     Precision_Link_best = 0.
     Precision_POS_best = 0.
-    Precision_PI_best = 0.
+    F_PI_best = 0.
     #optimizer = optim.Adadelta(model.parameters(), rho=0.95, eps=1e-6)
     model.to(device)
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.001)
@@ -216,7 +216,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                 Link_right, Link_all, \
                 POS_right, POS_all, \
-                PI_right, PI_all = 0., 0.1, 0., 0.1, 0., 0.1
+                PI_right, PI_nonull_preidcates, PI_nonull_truth, = 0., 0.1, 0., 0.1, 0., 0.1, 0.1
 
 
 
@@ -312,7 +312,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
                         Link_right_b, Link_all_b, \
                         POS_right_b, POS_all_b, \
-                        PI_right_b, PI_all_b \
+                        PI_right_b, PI_nonull_preidcates_b, PI_nonull_truth_b  \
                             = model(sentence_in, p_sentence_in, pos_tags_in, sent_mask, sen_lengths, target_idx_in, region_mark_in,
                         local_roles_voc_in,
                         frames_in, local_roles_mask_in, sent_pred_lemmas_idx_in, dep_tags_in, dep_heads,
@@ -325,7 +325,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         POS_right += POS_right_b
                         POS_all += POS_all_b
                         PI_right += PI_right_b
-                        PI_all += PI_all_b
+                        PI_nonull_preidcates += PI_nonull_preidcates_b
+                        PI_nonull_truth += PI_nonull_truth_b
 
                         labels = np.argmax(SRLprobs.cpu().data.numpy(), axis=1)
                         labels = np.reshape(labels, sentence.shape)
@@ -376,7 +377,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                     Precision_Link_best = P_Link
                     log('New Link best!: ' + str(Precision_Link_best))
                 else:
-                    log('Link best!: ' + str(Precision_Link_best))
+                    log('Link best: ' + str(Precision_Link_best))
 
                 P_POS = POS_right/POS_all
                 log('POS_Precision' + str(P_POS))
@@ -384,15 +385,17 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                     Precision_POS_best = P_POS
                     log('New POS best!: ' + str(Precision_POS_best))
                 else:
-                    log('POS best!: ' + str(Precision_POS_best))
+                    log('POS best: ' + str(Precision_POS_best))
 
-                P_PI = PI_right/PI_all
+                P_PI = PI_right/PI_nonull_preidcates
+                R_PI = PI_right/PI_nonull_truth
                 log('PI precision' + str(P_PI))
-                if P_PI > Precision_PI_best:
-                    Precision_PI_best = P_PI
-                    log('New PI best!: ' + str(Precision_PI_best))
+                F_PI = 2 * P_PI * R_PI / (P_PI + R_PI)
+                if F_PI > F_PI_best:
+                    F_PI_best = F_PI
+                    log('New PI best!: ' + str(F_PI_best))
                 else:
-                    log('PI best!: ' + str(Precision_PI_best))
+                    log('PI best: ' + str(F_PI_best))
 
 
 
