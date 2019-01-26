@@ -421,7 +421,7 @@ class BiLSTMTagger(nn.Module):
 
         tag_space = self.POS_MLP(hidden_states_1).view(
               self.batch_size, len(sentence[0]), -1)
-        POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=2)
+        POS_label = torch.argmax(tag_space, dim=2)
 
         ######################################################
 
