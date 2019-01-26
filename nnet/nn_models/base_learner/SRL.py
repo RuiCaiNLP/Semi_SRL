@@ -497,7 +497,7 @@ class BiLSTMTagger(nn.Module):
         SRLprobs = F.softmax(tag_space, dim=1)
 
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
-        SRLloss = loss_function(tag_space, torch.from_numpy(targets).to(device).view(-1))
+        SRLloss = loss_function(tag_space, targets.view(-1))
 
         ##########################################
         Link_right, Link_all, \
