@@ -357,6 +357,7 @@ class BiLSTMTagger(nn.Module):
                     loss_mask[i][j] = 0.0
 
         if sample_nums == 0:
+            log("shit")
             sample_nums = 1
         loss_mask = torch.from_numpy(loss_mask).to(device)
         DEP_Semi_loss = DEP_Semi_loss * loss_mask
