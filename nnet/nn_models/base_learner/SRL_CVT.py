@@ -378,7 +378,7 @@ class BiLSTMTagger(nn.Module):
         SA_learning
         """
         embeds_DEP = self.word_embeddings_DEP(sentence)
-        fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
+        fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP), 2)
         embeds_forDEP = self.DEP_input_dropout_unlabeled(embeds_forDEP)
@@ -499,7 +499,7 @@ class BiLSTMTagger(nn.Module):
         SA_learning
         """
         embeds_DEP = self.word_embeddings_DEP(sentence)
-        fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
+        fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP), 2)
         embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
