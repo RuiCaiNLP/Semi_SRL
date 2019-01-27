@@ -462,7 +462,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_2_unlabeled(hidden_states_1)
+        #hidden_states_1 = self.hidden_state_dropout_2_unlabeled(hidden_states_1)
 
         #########################################3
         predicate_embeds = hidden_states_1[np.arange(0, hidden_states_1.size()[0]), Predicate_idx_batch]
@@ -565,7 +565,7 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
-        hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
+        #hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
         #########################################3
         predicate_embeds = hidden_states_1[np.arange(0, hidden_states_1.size()[0]), target_idx_in]
