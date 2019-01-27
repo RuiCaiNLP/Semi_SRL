@@ -407,7 +407,7 @@ class BiLSTMTagger(nn.Module):
               self.batch_size, len(sentence[0]), -1)
         Predicate_identification_space = F.softmax(tag_space, dim=2)
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
-        Predicate_idx_batch = [0] * self.batch_size
+        Predicate_idx_batch = [-1] * self.batch_size
         for i in range(self.batch_size):
             candidate_set = []
             for j in range(len(sentence[0])):
@@ -418,6 +418,8 @@ class BiLSTMTagger(nn.Module):
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
+
+        log(Predicate_idx_batch)
 
         unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
         for i in range(len(unlabeled_region_mark)):
