@@ -356,7 +356,8 @@ class BiLSTMTagger(nn.Module):
                 if j >= lengths[i] or target_idx_in[i]==-1:
                     loss_mask[i][j] = 0.0
 
-
+        if sample_nums == 0:
+            sample_nums = 1
         loss_mask = torch.from_numpy(loss_mask).to(device)
         DEP_Semi_loss = DEP_Semi_loss * loss_mask
         DEP_Semi_loss = torch.sum(DEP_Semi_loss)
