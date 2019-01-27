@@ -350,8 +350,10 @@ class BiLSTMTagger(nn.Module):
 
         loss_mask = np.ones(TagProbs_use.size(), dtype='float32')
         for i in range(self.batch_size):
+            if target_idx_in[i]==-1:
+                sample_nums -= lengths[i]
             for j in range(len(sentence[0])):
-                if j >= lengths[i]:
+                if j >= lengths[i] or target_idx_in[i]==-1:
                     loss_mask[i][j] = 0.0
 
 
@@ -419,7 +421,7 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
 
-        log(Predicate_idx_batch)
+        #log(Predicate_idx_batch)
 
         unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
         for i in range(len(unlabeled_region_mark)):
