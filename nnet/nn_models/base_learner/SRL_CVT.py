@@ -68,7 +68,7 @@ class BiLSTMTagger(nn.Module):
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
         sent_embedding_dim_DEP = 2 * hps['sent_edim']
-        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 0 * hps['pos_edim'] + 16
+        sent_embedding_dim_SRL = 3 * hps['sent_edim'] + 1 * hps['pos_edim'] + 16
 
         self.sent_embedding_dim_DEP = sent_embedding_dim_DEP
         ## for the region mark
@@ -127,7 +127,7 @@ class BiLSTMTagger(nn.Module):
         self.elmo_w = nn.Parameter(torch.Tensor([0.5, 0.5]))
         self.elmo_gamma = nn.Parameter(torch.ones(1))
 
-        self.SRL_input_dropout = nn.Dropout(p=0.5)
+        self.SRL_input_dropout = nn.Dropout(p=0.3)
         self.DEP_input_dropout = nn.Dropout(p=0.5)
         self.hidden_state_dropout_DEP = nn.Dropout(p=0.3)
 
@@ -136,8 +136,8 @@ class BiLSTMTagger(nn.Module):
         self.DEP_hidden_state_dropout_1 = nn.Dropout(p=0.5)
         self.DEP_hidden_state_dropout_2 = nn.Dropout(p=0.5)
 
-        self.head_dropout = nn.Dropout(p=0.5)
-        self.dep_dropout = nn.Dropout(p=0.5)
+        self.head_dropout = nn.Dropout(p=0.3)
+        self.dep_dropout = nn.Dropout(p=0.3)
 
         self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.2)
         self.DEP_input_dropout_unlabeled = nn.Dropout(p=0)
@@ -554,8 +554,9 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = self.word_embeddings_SRL(sentence)
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
         pos_embeds = self.pos_embeddings(pos_tags)
+        sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
-        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, region_marks), 2)
+        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, sent_pred_lemmas_embeds, region_marks), 2)
         embeds_forSRL = self.SRL_input_dropout(embeds_forSRL)
 
         # first layer
