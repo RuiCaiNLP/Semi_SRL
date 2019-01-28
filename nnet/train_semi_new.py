@@ -35,7 +35,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
     for e in range(epochs):
         tic = time.time()
         dataset = [batch for batch in train_set.batches()]
-        init_dataset = [batch for batch in dataset]
         unlabeled_dataset = [batch for batch in unlabeled_set.batches()]
         random.shuffle(dataset)
         #random.shuffle(unlabeled_dataset)
@@ -44,7 +43,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
         unlabeled_idx = 0
         for batch in dataset:
 
-            batch_idx = init_dataset.index(batch)
             sample_count += len(batch)
 
             model.zero_grad()
