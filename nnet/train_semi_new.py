@@ -177,7 +177,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         targets, gold_pos_tags_in, specific_dep_relations_in, Chars_in, Predicate_indicator_in, False,
                         unlabeled_sentence_in, p_unlabeled_sentence_in, unlabeled_sent_mask, unlabeled_sen_lengths, True)
             Loss_CVT = CVT_SRL_Loss
-            #Loss_CVT.backward()
+            Loss_CVT.backward()
             #optimizer.step()
 
 
