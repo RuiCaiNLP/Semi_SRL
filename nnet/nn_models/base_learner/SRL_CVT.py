@@ -423,9 +423,9 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
 
-        for idx in Predicate_idx_batch:
-            log(idx)
-            log(sentence[i][idx])
+        for i in range(len(Predicate_idx_batch)):
+            log(Predicate_idx_batch[i])
+            log(sentence[i][Predicate_idx_batch[i]])
             log("#########")
         #log(Predicate_idx_batch)
 
