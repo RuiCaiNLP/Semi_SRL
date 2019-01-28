@@ -398,8 +398,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                 P_PI = PI_right/PI_nonull_preidcates
                 R_PI = PI_right/PI_nonull_truth
-                log('PI precision' + str(P_PI))
                 F_PI = 2 * P_PI * R_PI / (P_PI + R_PI)
+                log('PI ' + str(F_PI))
                 if F_PI > F_PI_best:
                     F_PI_best = F_PI
                     log('New PI best!: ' + str(F_PI_best))
