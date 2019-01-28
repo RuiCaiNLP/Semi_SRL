@@ -139,7 +139,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                     if j >= sen_lengths[i]:
                         Predicate_indicator[i][j] = -1
             Predicate_indicator_in = torch.from_numpy(Predicate_indicator).to(device)
-            log(Predicate_indicator_in)
+            log(Predicate_indicator_in[0])
 
 
 
