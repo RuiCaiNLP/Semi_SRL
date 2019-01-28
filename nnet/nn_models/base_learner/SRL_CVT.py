@@ -140,11 +140,11 @@ class BiLSTMTagger(nn.Module):
         self.dep_dropout = nn.Dropout(p=0.5)
 
         self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.2)
-        self.DEP_input_dropout_unlabeled = nn.Dropout(p=0.2)
+        self.DEP_input_dropout_unlabeled = nn.Dropout(p=0)
         self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
         self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
         self.DEP_hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
-        self.DEP_hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
+        self.DEP_hidden_state_dropout_2_unlabeled = nn.Dropout(p=0)
         self.head_dropout_unlabeled = nn.Dropout(p=0.2)
         self.dep_dropout_unlabeled = nn.Dropout(p=0.2)
 
@@ -417,7 +417,7 @@ class BiLSTMTagger(nn.Module):
             for j in range(len(sentence[0])):
                 if j >= lengths[i]:
                     break
-                if Predicate_probs[i][j][1] > Predicate_probs[i][j][0]:
+                if Predicate_probs[i][j][1] > 2*Predicate_probs[i][j][0]:
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
