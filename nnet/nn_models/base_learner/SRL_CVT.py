@@ -425,7 +425,7 @@ class BiLSTMTagger(nn.Module):
 
         for idx in Predicate_idx_batch:
             log(idx)
-            log(sentence[idx])
+            log(sentence[i][idx])
             log("#########")
         #log(Predicate_idx_batch)
 
