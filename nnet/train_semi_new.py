@@ -37,7 +37,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
         dataset = [batch for batch in train_set.batches()]
         init_dataset = [batch for batch in dataset]
         unlabeled_dataset = [batch for batch in unlabeled_set.batches()]
-        #random.shuffle(dataset)
+        random.shuffle(dataset)
         #random.shuffle(unlabeled_dataset)
         dataset_len = len(dataset)
         unlabeled_dataset_len = len(unlabeled_dataset)
@@ -139,7 +139,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                     if j >= sen_lengths[i]:
                         Predicate_indicator[i][j] = -1
             Predicate_indicator_in = torch.from_numpy(Predicate_indicator).to(device)
-            log(Predicate_indicator_in[0])
+            #log(Predicate_indicator_in[0])
 
 
 
