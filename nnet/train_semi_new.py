@@ -134,8 +134,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Chars_in = torch.from_numpy(Chars).to(device)
 
             Predicate_indicator = model_input[17]
-            for i in len(Predicate_indicator):
-                for j in len(Predicate_indicator[i]):
+            for i in range(len(Predicate_indicator)):
+                for j in range(len(Predicate_indicator[i])):
                     if j >= sen_lengths[i]:
                         Predicate_indicator[i][j] = -1
             Predicate_indicator_in = torch.from_numpy(Predicate_indicator).to(device)
@@ -310,8 +310,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                         Chars_in = torch.from_numpy(Chars).to(device)
 
                         Predicate_indicator = model_input[17]
-                        for i in len(Predicate_indicator):
-                            for j in len(Predicate_indicator[i]):
+                        for i in range(len(Predicate_indicator)):
+                            for j in range(len(Predicate_indicator[i])):
                                 if j >= sen_lengths[i]:
                                     Predicate_indicator[i][j] = -1
                         Predicate_indicator_in = torch.from_numpy(Predicate_indicator).to(device)
