@@ -273,6 +273,7 @@ class BiLSTMTagger(nn.Module):
 
 
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
+        Entroy_Weights = 1 + F.log2(TagProbs_use_softmax) * TagProbs_use_softmax
         sample_nums = lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
 
@@ -358,7 +359,7 @@ class BiLSTMTagger(nn.Module):
 
 
         loss_mask = torch.from_numpy(loss_mask).to(device)
-        DEP_Semi_loss = DEP_Semi_loss * loss_mask
+        DEP_Semi_loss = DEP_Semi_loss * loss_mask * Entroy_Weights
         DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         if sample_nums == 0:
             log("shit")
