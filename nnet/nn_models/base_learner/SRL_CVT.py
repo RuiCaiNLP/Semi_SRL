@@ -424,6 +424,10 @@ class BiLSTMTagger(nn.Module):
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
+            else:
+                candidate_set = range(lengths[i])
+                index = random.sample(candidate_set, 1)
+                Predicate_idx_batch[i] = index[0]
 
 
         #log(Predicate_idx_batch)
