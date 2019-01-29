@@ -430,7 +430,7 @@ class BiLSTMTagger(nn.Module):
         for i in range(30):
             unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
 
-        log(unlabeled_region_mark)
+        log(unlabeled_region_mark[0])
 
         unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
         unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
