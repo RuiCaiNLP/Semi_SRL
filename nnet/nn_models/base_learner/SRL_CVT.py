@@ -353,7 +353,7 @@ class BiLSTMTagger(nn.Module):
 
 
         DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) / Entroy_Weights
-        loss_mask = np.ones(TagProbs_use.size(), dtype='float32')
+        loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
             if target_idx_in[i] == -1:
                 sample_nums -= lengths[i]
