@@ -148,14 +148,14 @@ class BiLSTMTagger(nn.Module):
         self.head_dropout_unlabeled = nn.Dropout(p=0.2)
         self.dep_dropout_unlabeled = nn.Dropout(p=0.2)
 
-        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.1)
         # self.use_dropout = nn.Dropout(p=0.2)
 
         # The LSTM takes word embeddings as inputs, and outputs hidden states
@@ -356,12 +356,14 @@ class BiLSTMTagger(nn.Module):
                 if j >= lengths[i] or target_idx_in[i]==-1:
                     loss_mask[i][j] = 0.0
 
-        if sample_nums == 0:
-            log("shit")
-            sample_nums = 1
+
         loss_mask = torch.from_numpy(loss_mask).to(device)
         DEP_Semi_loss = DEP_Semi_loss * loss_mask
         DEP_Semi_loss = torch.sum(DEP_Semi_loss)
+        if sample_nums == 0:
+            log("shit")
+            sample_nums = 1
+            log(DEP_Semi_loss)
         return DEP_Semi_loss/sample_nums
 
     def find_predicate_embeds(self, hidden_states, target_idx_in):
@@ -417,7 +419,7 @@ class BiLSTMTagger(nn.Module):
             for j in range(len(sentence[0])):
                 if j >= lengths[i]:
                     break
-                if Predicate_probs[i][j][1] > Predicate_probs[i][j][0] :
+                if Predicate_probs[i][j][1] > Predicate_probs[i][j][0]:
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
@@ -430,8 +432,6 @@ class BiLSTMTagger(nn.Module):
         for i in range(30):
             unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
 
-        log(unlabeled_region_mark[0])
-        log(unlabeled_region_mark[1])
 
         unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
         unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
