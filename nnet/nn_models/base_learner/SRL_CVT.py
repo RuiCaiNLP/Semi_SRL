@@ -273,7 +273,7 @@ class BiLSTMTagger(nn.Module):
 
 
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
-        Entroy_Weights = 1 + torch.sum(torch.log2(TagProbs_use_softmax) * TagProbs_use_softmax, dim=2).detach()
+        Entroy_Weights = -torch.sum(torch.log2(TagProbs_use_softmax) * TagProbs_use_softmax, dim=2).detach()
         log(Entroy_Weights)
 
         sample_nums = lengths.sum()
@@ -351,18 +351,18 @@ class BiLSTMTagger(nn.Module):
 
         DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss
 
+
+        DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) / Entroy_Weights
         loss_mask = np.ones(TagProbs_use.size(), dtype='float32')
         for i in range(self.batch_size):
-            if target_idx_in[i]==-1:
+            if target_idx_in[i] == -1:
                 sample_nums -= lengths[i]
             for j in range(len(sentence[0])):
-                if j >= lengths[i] or target_idx_in[i]==-1:
+                if j >= lengths[i] or target_idx_in[i] == -1:
                     loss_mask[i][j] = 0.0
-
-
         loss_mask = torch.from_numpy(loss_mask).to(device)
+
         DEP_Semi_loss = DEP_Semi_loss * loss_mask
-        DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) * Entroy_Weights
         DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         if sample_nums == 0:
             log("shit")
