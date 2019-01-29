@@ -139,7 +139,7 @@ class BiLSTMTagger(nn.Module):
         self.head_dropout = nn.Dropout(p=0.3)
         self.dep_dropout = nn.Dropout(p=0.3)
 
-        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.2)
+        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.1)
         self.DEP_input_dropout_unlabeled = nn.Dropout(p=0)
         self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
         self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
@@ -423,15 +423,14 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
 
-        for i in range(30):
-            log(Predicate_idx_batch[i])
-            log(sentence[i][Predicate_idx_batch[i]])
-            log("#########")
+
         #log(Predicate_idx_batch)
 
         unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
         for i in range(30):
             unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
+
+        log(unlabeled_region_mark)
 
         unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
         unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
