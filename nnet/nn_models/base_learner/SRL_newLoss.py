@@ -501,12 +501,12 @@ class BiLSTMTagger(nn.Module):
 
         word_space = tag_space.view(self.batch_size, len(sentence[0]), -1).transpose(1, 2).contiguous().view(self.batch_size*self.tagset_size, len(sentence[0]))
         targets_np = targets.cpu().numpy()
-        word_labels = np.zeros((self.batch_size, self.tagset_size, len(sentence[0])), 'int64') - 1
+        word_labels = np.zeros((self.batch_size, self.tagset_size, 1), 'int64') - 1
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
                 if targets_np[i][j] > 0:
                     word_labels[i][targets_np[i][j]] = j
-        word_labels = torch.from_numpy(word_labels).view(self.batch_size*self.tagset_size, len(sentence[0])).to(device)
+        word_labels = torch.from_numpy(word_labels).view(self.batch_size*self.tagset_size, 1).to(device)
         SRL_word_loss = loss_function(word_space, word_labels)
 
         ##########################################
