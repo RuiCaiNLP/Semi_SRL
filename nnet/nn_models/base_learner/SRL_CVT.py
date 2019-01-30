@@ -202,26 +202,30 @@ class BiLSTMTagger(nn.Module):
 
         self.map_dim = lstm_hidden_dim
 
+
+
         self.ldims = lstm_hidden_dim
         self.hidLayerFOH_SRL = nn.Linear(self.ldims * 2, self.ldims)
         self.hidLayerFOM_SRL = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_SRL = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size*(lstm_hidden_dim+1)))
 
-        self.hidLayerFOH_SRL_FF = nn.Linear(self.ldims, self.ldims/2)
-        self.hidLayerFOM_SRL_FF = nn.Linear(self.ldims, self.ldims/2)
-        self.W_R_SRL_FF = nn.Parameter(torch.rand(lstm_hidden_dim/2 + 1, self.tagset_size*(lstm_hidden_dim/2+1)))
+        self.biaffine_mid = int(self.ldims/2)
 
-        self.hidLayerFOH_SRL_BB = nn.Linear(self.ldims, self.ldims/2)
-        self.hidLayerFOM_SRL_BB = nn.Linear(self.ldims, self.ldims/2)
-        self.W_R_SRL_BB = nn.Parameter(torch.rand(lstm_hidden_dim/2 + 1, self.tagset_size*(lstm_hidden_dim/2+1)))
+        self.hidLayerFOH_SRL_FF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_FF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.W_R_SRL_FF = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size*(self.biaffine_mid+1)))
 
-        self.hidLayerFOH_SRL_BF = nn.Linear(self.ldims, self.ldims/2)
-        self.hidLayerFOM_SRL_BF = nn.Linear(self.ldims, self.ldims/2)
-        self.W_R_SRL_BF = nn.Parameter(torch.rand(lstm_hidden_dim/2 + 1, self.tagset_size*(lstm_hidden_dim/2+1)))
+        self.hidLayerFOH_SRL_BB = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_BB = nn.Linear(self.ldims, sself.biaffine_mid)
+        self.W_R_SRL_BB = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size*(self.biaffine_mid+1)))
 
-        self.hidLayerFOH_SRL_FB = nn.Linear(self.ldims, self.ldims/2)
-        self.hidLayerFOM_SRL_FB = nn.Linear(self.ldims, self.ldims/2)
-        self.W_R_SRL_FB = nn.Parameter(torch.rand(lstm_hidden_dim/2 + 1, self.tagset_size*(lstm_hidden_dim/2+1)))
+        self.hidLayerFOH_SRL_BF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_BF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.W_R_SRL_BF = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size*(self.biaffine_mid+1)))
+
+        self.hidLayerFOH_SRL_FB = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_FB = nn.Linear(self.ldims, sself.biaffine_mid)
+        self.W_R_SRL_FB = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size*(self.biaffine_mid+1)))
 
 
 
