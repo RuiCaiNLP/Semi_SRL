@@ -499,7 +499,7 @@ class BiLSTMTagger(nn.Module):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         SRLloss = loss_function(tag_space, targets.view(-1))
 
-        word_space = tag_space.view(self.batch_size, len(sentence[0]), -1).transpose(1, 2).view(self.batch_size*self.tagset_size, len(sentence[0]))
+        word_space = tag_space.view(self.batch_size, len(sentence[0]), -1).transpose(1, 2).contiguous().view(self.batch_size*self.tagset_size, len(sentence[0]))
         targets_np = targets.cpu().numpy()
         word_labels = np.zeros_like(word_space) - 1
         for i in range(self.batch_size):
