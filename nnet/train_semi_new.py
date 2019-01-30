@@ -144,7 +144,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             #log(dep_tags_in)
             #log(specific_dep_relations)
-            SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
+            SRLloss, SRL_word_loss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
             Link_right, Link_all, \
             POS_right, POS_all, \
             PI_right, PI_nonull_preidcates, PI_nonull_truth \
@@ -159,7 +159,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             idx += 1
 
-            Final_loss = SRLloss + Link_DEPloss + Tag_DEPloss + POS_loss + PI_loss
+            Final_loss = SRLloss + Link_DEPloss + Tag_DEPloss + POS_loss + PI_loss + SRL_word_loss
 
             Final_loss.backward()
             #clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
@@ -168,7 +168,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             #DEPloss.backward()
             optimizer.step()
 
-
+            """
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
@@ -185,6 +185,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Loss_CVT = CVT_SRL_Loss
             Loss_CVT.backward()
             optimizer.step()
+            """
 
 
 
@@ -196,6 +197,8 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 log('SRLloss')
                 log(SRLloss)
+                log('SRL_word loss')
+                log(SRL_word_loss)
                 log("Link_DEPloss")
                 log(Link_DEPloss)
                 log("Tag_DEPloss")
@@ -317,7 +320,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                         # log(dep_tags_in)
                         # log(specific_dep_relations)
-                        SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
+                        SRLloss, SRL_word_loss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
                         Link_right_b, Link_all_b, \
                         POS_right_b, POS_all_b, \
                         PI_right_b, PI_nonull_preidcates_b, PI_nonull_truth_b  \
