@@ -424,7 +424,9 @@ class BiLSTMTagger(nn.Module):
         Predicate_idx_batch = [-1] * self.batch_size
         for i in range(self.batch_size):
             candidate_set = []
+            probs_set = []
             for j in range(len(sentence[0])):
+                probs_set.append(Predicate_probs[i][j][1])
                 if j >= lengths[i]:
                     break
                 if Predicate_probs[i][j][1] > 2*Predicate_probs[i][j][0]:
@@ -433,9 +435,7 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
             else:
-                candidate_set = range(lengths[i])
-                index = random.sample(candidate_set, 1)
-                Predicate_idx_batch[i] = index[0]
+                Predicate_idx_batch[i] = np.argmax(probs_set)
 
 
         #log(Predicate_idx_batch)
