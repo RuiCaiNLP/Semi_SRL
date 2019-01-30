@@ -505,6 +505,7 @@ class BiLSTMTagger(nn.Module):
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
                 if targets_np[i][j] > 0:
+                    log(i, j, targets_np[i][j])
                     word_labels[i][targets_np[i][j]] = j
         word_labels = torch.from_numpy(word_labels).view(self.batch_size*self.tagset_size, len(sentence[0]))
         SRL_word_loss = loss_function(word_space, word_labels)
