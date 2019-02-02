@@ -24,17 +24,70 @@ def normalize(token):
         pass
     return token
 
+Vocabulary = set()
+file_voc = open('words.voc.conll2009', 'r')
+for line in file_voc.readlines():
+    word = line.strip()
+    Vocabulary.add(word)
 
-file_in = open('news.en-00001-of-00100', 'r')
+file_in_1 = open('news.en-00001-of-00100', 'r')
 file_out = open('1BilionBenchMark', 'w')
+idx = 0
 
-for line in file_in.readlines():
+for line in file_in_1.readlines():
     sents = line.strip().split()
-    if len(sents) > 100 or len(sents) < 10:
+    if len(sents) > 60 or len(sents) < 15:
         continue
-    sent = ' '.join([normalize(w) for w in sents])
-    file_out.write(sent)
-    file_out.write('\n')
+    words = [normalize(w) for w in sents]
+    all_in = True
+    for w in words:
+        if w not in Vocabulary:
+            all_in = False
+            break
+    if all_in:
+        sent = ' '.join(words)
+        file_out.write(sent)
+        file_out.write('\n')
+        idx += 1
 
-file_in.close()
+file_in_2 = open('news.2011.en.shuffled', 'r')
+
+for line in file_in_2.readlines():
+    sents = line.strip().split()
+    if len(sents) > 60 or len(sents) < 15:
+        continue
+    words = [normalize(w) for w in sents]
+    all_in = True
+    for w in words:
+        if w not in Vocabulary:
+            all_in = False
+            break
+    if all_in:
+        sent = ' '.join(words)
+        file_out.write(sent)
+        file_out.write('\n')
+        idx += 1
+
+file_in_3 = open('news.en-00002-of-00100', 'r')
+
+for line in file_in_3.readlines():
+    sents = line.strip().split()
+    if len(sents) > 60 or len(sents) < 15:
+        continue
+    words = [normalize(w) for w in sents]
+    all_in = True
+    for w in words:
+        if w not in Vocabulary:
+            all_in = False
+            break
+    if all_in:
+        sent = ' '.join(words)
+        file_out.write(sent)
+        file_out.write('\n')
+        idx += 1
+
+
+print(idx)
+file_in_1.close()
+file_in_2.close()
 file_out.close()
