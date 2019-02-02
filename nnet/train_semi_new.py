@@ -197,8 +197,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 log('SRLloss')
                 log(SRLloss)
-                log('SRL_word loss')
-                log(SRL_word_loss)
                 log("Link_DEPloss")
                 log(Link_DEPloss)
                 log("Tag_DEPloss")
