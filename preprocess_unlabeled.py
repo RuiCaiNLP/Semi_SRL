@@ -86,6 +86,24 @@ for line in file_in_3.readlines():
         file_out.write('\n')
         idx += 1
 
+file_in_4 = open('news.en-00004-of-00100', 'r')
+
+for line in file_in_4.readlines():
+    sents = line.strip().split()
+    if len(sents) > 60 or len(sents) < 15:
+        continue
+    words = [normalize(w) for w in sents]
+    all_in = True
+    for w in words:
+        if w not in Vocabulary:
+            all_in = False
+            break
+    if all_in:
+        sent = ' '.join(words)
+        file_out.write(sent)
+        file_out.write('\n')
+        idx += 1
+
 
 print(idx)
 file_in_1.close()
