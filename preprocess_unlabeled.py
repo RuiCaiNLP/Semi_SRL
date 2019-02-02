@@ -50,7 +50,7 @@ for line in file_in_1.readlines():
         file_out.write('\n')
         idx += 1
 
-file_in_2 = open('news.2011.en.shuffled', 'r')
+file_in_2 = open('news.en-00002-of-00100', 'r')
 
 for line in file_in_2.readlines():
     sents = line.strip().split()
@@ -68,7 +68,7 @@ for line in file_in_2.readlines():
         file_out.write('\n')
         idx += 1
 
-file_in_3 = open('news.en-00002-of-00100', 'r')
+file_in_3 = open('news.en-00003-of-00100', 'r')
 
 for line in file_in_3.readlines():
     sents = line.strip().split()
