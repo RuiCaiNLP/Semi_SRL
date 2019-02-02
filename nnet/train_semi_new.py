@@ -144,7 +144,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             #log(dep_tags_in)
             #log(specific_dep_relations)
-            SRLloss, SRL_word_loss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
+            SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
             Link_right, Link_all, \
             POS_right, POS_all, \
             PI_right, PI_nonull_preidcates, PI_nonull_truth \
@@ -320,7 +320,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
                         # log(dep_tags_in)
                         # log(specific_dep_relations)
-                        SRLloss, SRL_word_loss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
+                        SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, \
                         Link_right_b, Link_all_b, \
                         POS_right_b, POS_all_b, \
                         PI_right_b, PI_nonull_preidcates_b, PI_nonull_truth_b  \
