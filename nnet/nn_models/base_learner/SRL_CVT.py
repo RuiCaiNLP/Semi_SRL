@@ -356,7 +356,7 @@ class BiLSTMTagger(nn.Module):
         DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss
 
 
-        DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) / Entroy_Weights
+        DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
             if target_idx_in[i] == -1:
