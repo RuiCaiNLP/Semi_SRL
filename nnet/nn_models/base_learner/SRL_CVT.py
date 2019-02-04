@@ -353,6 +353,10 @@ class BiLSTMTagger(nn.Module):
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
+        DEP_FF_loss = torch.sum(DEP_FF_loss, dim=2)
+        DEP_BB_loss = torch.sum(DEP_BB_loss, dim=2)
+        DEP_BF_loss = torch.sum(DEP_BF_loss, dim=2)
+        DEP_FB_loss = torch.sum(DEP_FB_loss, dim=2)
         wordBeforePre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
@@ -370,7 +374,7 @@ class BiLSTMTagger(nn.Module):
         DEP_Semi_loss = wordAfterPre_mask*(DEP_FF_loss + DEP_FB_loss) + wordBeforePre_mask(DEP_BB_loss + DEP_BF_loss)
 
 
-        DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
+        #DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
             if target_idx_in[i] == -1:
