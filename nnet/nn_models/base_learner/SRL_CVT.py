@@ -68,7 +68,7 @@ class BiLSTMTagger(nn.Module):
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
         sent_embedding_dim_DEP = 2 * hps['sent_edim']
-        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 1 * hps['pos_edim'] + 16
+        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 0 * hps['pos_edim'] + 16
 
         self.sent_embedding_dim_DEP = sent_embedding_dim_DEP
         ## for the region mark
@@ -353,7 +353,21 @@ class BiLSTMTagger(nn.Module):
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
-        DEP_Semi_loss = DEP_FF_loss + DEP_BB_loss + DEP_BF_loss + DEP_FB_loss
+        wordBeforePre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
+        for i in range(self.batch_size):
+            for j in range(len(sentence[0])):
+                if j >= target_idx_in[i] :
+                    wordBeforePre_mask[i][j] = 0.0
+        wordBeforePre_mask = torch.from_numpy(wordBeforePre_mask).to(device)
+
+        wordAfterPre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
+        for i in range(self.batch_size):
+            for j in range(len(sentence[0])):
+                if j <= target_idx_in[i]:
+                    wordAfterPre_mask[i][j] = 0.0
+        wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
+
+        DEP_Semi_loss = wordAfterPre_mask*(DEP_FF_loss + DEP_FB_loss) + wordBeforePre_mask(DEP_BB_loss + DEP_BF_loss)
 
 
         DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
@@ -466,7 +480,7 @@ class BiLSTMTagger(nn.Module):
         embeds_SRL = self.word_embeddings_SRL(sentence)
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
         pos_embeds = self.pos_embeddings(POS_label)
-        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, unlabeled_region_mark_embeds), 2)
+        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, unlabeled_region_mark_embeds), 2)
         embeds_forSRL = self.SRL_input_dropout_unlabeled(embeds_forSRL)
 
         # first layer
@@ -572,7 +586,7 @@ class BiLSTMTagger(nn.Module):
         pos_embeds = self.pos_embeddings(pos_tags)
         #sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
-        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, region_marks), 2)
+        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, region_marks), 2)
         embeds_forSRL = self.SRL_input_dropout(embeds_forSRL)
 
         # first layer
