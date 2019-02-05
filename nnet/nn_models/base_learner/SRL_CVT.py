@@ -280,7 +280,8 @@ class BiLSTMTagger(nn.Module):
         TagProbs_use_softmax_log = F.log_softmax(TagProbs_use, dim=2).detach()
         Entroy_Weights = 1-torch.sum(TagProbs_use_softmax_log * TagProbs_use_softmax, dim=2).detach()
 
-        log(Entroy_Weights)
+        log(TagProbs_use_softmax[0][0])
+        log(Entroy_Weights[0][0])
 
         sample_nums = lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
