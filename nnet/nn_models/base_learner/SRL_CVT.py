@@ -372,7 +372,7 @@ class BiLSTMTagger(nn.Module):
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
         DEP_Semi_loss = wordAfterPre_mask*(DEP_FF_loss + DEP_FB_loss) + wordBeforePre_mask*(DEP_BB_loss + DEP_BF_loss)
-        DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
+       # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
 
         #DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
@@ -450,7 +450,7 @@ class BiLSTMTagger(nn.Module):
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
-                if Predicate_probs[i][j][1] > 2*Predicate_probs[i][j][0]:
+                if Predicate_probs[i][j][1] > Predicate_probs[i][j][0]:
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
