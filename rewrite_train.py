@@ -32,6 +32,20 @@ print(idx)
 file.close()
 file2.close()
 
+file = open('conll2009.ood.dep_l', 'r')
+file2 = open('conll2009_batch.ood.dep_l', 'w')
+idx = 1
+
+for line in file.readlines():
+    file2.write(line)
+    if idx == 1200:
+        break
+    idx += 1
+print(idx)
+file.close()
+file2.close()
+
+
 file = open('1BilionBenchMark', 'r')
 file2 = open('1BilionBenchMark_batch', 'w')
 idx = 1
@@ -39,6 +53,19 @@ idx = 1
 for line in file.readlines():
     file2.write(line)
     if idx == 18000:
+        break
+    idx += 1
+print(idx)
+file.close()
+file2.close()
+
+file = open('conll2009.dev.dep_l', 'r')
+file2 = open('conll2009_batch.dev.dep_l', 'w')
+idx = 1
+
+for line in file.readlines():
+    file2.write(line)
+    if idx == 6360:
         break
     idx += 1
 print(idx)
