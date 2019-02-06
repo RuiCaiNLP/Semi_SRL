@@ -169,7 +169,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SA_primary.all_weights[1][0])
         init.orthogonal_(self.BiLSTM_SA_primary.all_weights[1][1])
 
-        self.SA_high_num_layers = 1
+        self.SA_high_num_layers = 2
         self.BiLSTM_SA_high = nn.LSTM(input_size=lstm_hidden_dim * 2, hidden_size=lstm_hidden_dim, batch_first=True,
                                 bidirectional=True, num_layers=self.SA_high_num_layers)
 
