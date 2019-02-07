@@ -434,8 +434,8 @@ class BiLSTMTagger(nn.Module):
         Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
         Predicate_idx_batch = [-1] * self.batch_size
 
-        idx_sort = torch.argsort(Predicate_probs, dim=1, descending=True)
-        idx_sort = idx_sort.cpu().data.numpy()
+        sorted, indices = torch.sort(Predicate_probs, dim=1, descending=True)
+        idx_sort = indices.cpu().data.numpy()
         log(idx_sort)
         """
 
