@@ -439,9 +439,6 @@ class BiLSTMTagger(nn.Module):
         for i in range(self.batch_size):
             random_index = np.random.randint(low=0, high=int(lengths[i]*0.4))
             Predicate_idx_batch[i] = idx_sort[i][random_index]
-            log(idx_sort[i])
-            log(lengths[i])
-            log(Predicate_idx_batch[i])
         """
 
         for i in range(self.batch_size):
@@ -468,7 +465,7 @@ class BiLSTMTagger(nn.Module):
         # log(Predicate_idx_batch)
 
         unlabeled_region_mark = np.zeros(sentence.size(), dtype='int64')
-        for i in range(30):
+        for i in range(self.batch_size):
             unlabeled_region_mark[i][Predicate_idx_batch[i]] = 1
 
         unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
