@@ -605,6 +605,7 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = Head_hidden.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]), 2)
         tag_space = tag_space.view(self.batch_size * len(sentence[0]), -1)
+        PI_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         PI_loss = loss_function(tag_space, Predicate_indicator.view(-1))
 
