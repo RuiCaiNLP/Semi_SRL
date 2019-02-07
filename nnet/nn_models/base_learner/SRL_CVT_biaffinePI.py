@@ -501,7 +501,7 @@ class BiLSTMTagger(nn.Module):
         #########################################################
         embeds_SRL = self.word_embeddings_SRL(sentence)
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
-        pos_embeds = self.pos_embeddings(POS_label)
+        #pos_embeds = self.pos_embeddings(POS_label)
         embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, unlabeled_region_mark_embeds), 2)
         embeds_forSRL = self.SRL_input_dropout_unlabeled(embeds_forSRL)
 
