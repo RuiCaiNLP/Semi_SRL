@@ -458,7 +458,7 @@ class BiLSTMTagger(nn.Module):
         sorted, indices = torch.sort(Predicate_probs, dim=1, descending=True)
         idx_sort = indices.cpu().data.numpy()
         for i in range(self.batch_size):
-            random_index = np.random.randint(low=0, high=int(lengths[i]*0.6))
+            random_index = np.random.randint(low=0, high=int(lengths[i]*0.2))
             Predicate_idx_batch[i] = idx_sort[i][random_index]
         """
 
