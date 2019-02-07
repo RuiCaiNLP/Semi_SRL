@@ -19,6 +19,7 @@ import torch.nn.init as init
 from numpy import random as nr
 from operator import itemgetter
 
+
 _BIG_NUMBER = 10. ** 6.
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
