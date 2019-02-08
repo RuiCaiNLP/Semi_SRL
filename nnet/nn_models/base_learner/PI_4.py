@@ -600,7 +600,7 @@ class BiLSTMTagger(nn.Module):
         bias_one = torch.ones((self.batch_size, 1)).to(device)
         Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
 
-        self.W_R_PI = self.W_R_PI.transpose(1,2).contiguous().view(1025, 2*1225)
+        self.W_R_PI = self.W_R_PI.transpose(1,2).contiguous().view(513, 2*513)
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_PI)
         left_part = left_part.view(self.batch_size, len(sentence[0]) * 2, -1)
         Head_hidden = Head_hidden.view(self.batch_size, 1, -1).transpose(1, 2)
