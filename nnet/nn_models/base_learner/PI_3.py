@@ -436,8 +436,8 @@ class BiLSTMTagger(nn.Module):
         word_embeds = hidden_states_1[:, 1:]
         VR_embeds = hidden_states_1[:, 0]
 
-        Head_hidden = self.head_dropout(F.relu(self.hidLayerFOH_PI(VR_embeds)))
-        Dependent_hidden = self.dep_dropout(F.relu(self.hidLayerFOM_PI(word_embeds)))
+        Head_hidden = F.relu(self.hidLayerFOH_PI(VR_embeds))
+        Dependent_hidden = F.relu(self.hidLayerFOM_PI(word_embeds))
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
@@ -591,8 +591,8 @@ class BiLSTMTagger(nn.Module):
         word_embeds = hidden_states_1[:, 1:]
         VR_embeds = hidden_states_1[:, 0]
 
-        Head_hidden = self.head_dropout(F.relu(self.hidLayerFOH_PI(VR_embeds)))
-        Dependent_hidden = self.dep_dropout(F.relu(self.hidLayerFOM_PI(word_embeds)))
+        Head_hidden = F.relu(self.hidLayerFOH_PI(VR_embeds))
+        Dependent_hidden = F.relu(self.hidLayerFOM_PI(word_embeds))
 
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
