@@ -449,7 +449,7 @@ class BiLSTMTagger(nn.Module):
 
         left_part = left_part.view(self.batch_size, len(sentence[0]), 513, 2).transpose(2,3)
         left_part = left_part.contiguous().view(self.batch_size, len(sentence[0])*2, 513)
-        Head_hidden = Head_hidden.view(self.batch_size, -1, 1)
+        Head_hidden = Head_hidden.view(self.batch_size, 1, -1).transpose(1,2)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]), 2)
 
         Predicate_identification_space = F.softmax(tag_space, dim=2)
