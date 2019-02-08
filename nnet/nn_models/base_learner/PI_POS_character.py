@@ -68,7 +68,7 @@ class BiLSTMTagger(nn.Module):
 
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
-        sent_embedding_dim_DEP = 2 * hps['sent_edim'] + 50
+        sent_embedding_dim_DEP = 2 * hps['sent_edim'] + 100
         sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 0 * hps['pos_edim'] + 16
 
         self.sent_embedding_dim_DEP = sent_embedding_dim_DEP
