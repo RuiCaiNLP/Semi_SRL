@@ -83,6 +83,7 @@ class BiLSTMTagger(nn.Module):
         self.num_layers = hps['rec_layers']
         self.batch_size = batch_size
         self.hidden_dim = lstm_hidden_dim
+        self.char_size = hps['vchar']
         self.word_emb_dim = hps['sent_edim']
         self.specific_dep_size = hps['svdep']
 
