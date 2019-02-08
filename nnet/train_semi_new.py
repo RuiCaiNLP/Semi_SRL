@@ -207,7 +207,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("PI_loss")
                 log(PI_loss)
                 log("Loss_CVT")
-                log(Loss_CVT)
+                #log(Loss_CVT)
                 #log("sum")
                 #log(loss)
 
