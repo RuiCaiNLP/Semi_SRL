@@ -159,7 +159,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             idx += 1
 
-            Final_loss =  PI_loss #+ 0.05*SRL_word_loss
+            Final_loss =  POS_loss + PI_loss #+ 0.05*SRL_word_loss
 
             Final_loss.backward()
             #clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
