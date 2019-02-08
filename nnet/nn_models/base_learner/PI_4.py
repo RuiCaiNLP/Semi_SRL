@@ -211,7 +211,7 @@ class BiLSTMTagger(nn.Module):
 
         self.hidLayerFOH_PI = nn.Linear(self.ldims * 2, self.ldims)
         self.hidLayerFOM_PI = nn.Linear(self.ldims * 2, self.ldims)
-        self.W_R_PI = nn.Parameter(torch.rand(lstm_hidden_dim + 1, lstm_hidden_dim + 1, 2))
+        self.W_R_PI = nn.Parameter(torch.rand(lstm_hidden_dim + 1, (lstm_hidden_dim + 1) * 2))
 
         self.biaffine_mid = int(self.ldims)
 
@@ -446,7 +446,9 @@ class BiLSTMTagger(nn.Module):
         Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
 
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_PI)
-        left_part = left_part.view(self.batch_size, len(sentence[0]) * 2, -1)
+
+        left_part = left_part.view(self.batch_size, len(sentence[0]), 513, 2).transpose(2,3)
+        left_part = left_part.contiguous().view(self.batch_size, len(sentence[0])*2, 513)
         Head_hidden = Head_hidden.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]), 2)
 
@@ -600,7 +602,6 @@ class BiLSTMTagger(nn.Module):
         bias_one = torch.ones((self.batch_size, 1)).to(device)
         Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
 
-        self.W_R_PI = self.W_R_PI.transpose(1,2).contiguous().view(513, 2*513)
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_PI)
         left_part = left_part.view(self.batch_size, len(sentence[0]) * 2, -1)
         Head_hidden = Head_hidden.view(self.batch_size, 1, -1).transpose(1, 2)
