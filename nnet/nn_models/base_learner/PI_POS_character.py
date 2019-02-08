@@ -18,6 +18,7 @@ import torch.nn.utils.rnn as rnn
 import torch.nn.init as init
 from numpy import random as nr
 from operator import itemgetter
+import nnet.layer as layer
 
 _BIG_NUMBER = 10. ** 6.
 
