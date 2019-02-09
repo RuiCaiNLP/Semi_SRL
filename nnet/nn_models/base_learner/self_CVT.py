@@ -468,8 +468,8 @@ class BiLSTMTagger(nn.Module):
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
-        DEP_Semi_loss = wordBeforePre_mask * (DEP_FF_loss + DEP_BF_loss + DEP_BB_loss + DEP_FB_loss) \
-                      + wordAfterPre_mask * (DEP_FF_loss_2 + DEP_BF_loss_2 + DEP_BB_loss_2 + DEP_FB_loss_2)
+        DEP_Semi_loss = wordBeforePre_mask * (DEP_FF_loss + DEP_BF_loss) + wordAfterPre_mask * (
+                    DEP_BB_loss + DEP_FB_loss)
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
         # DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
