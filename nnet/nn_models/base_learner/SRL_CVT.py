@@ -139,7 +139,7 @@ class BiLSTMTagger(nn.Module):
         self.head_dropout = nn.Dropout(p=0.3)
         self.dep_dropout = nn.Dropout(p=0.3)
 
-        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.1)
+        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.2)
         self.DEP_input_dropout_unlabeled = nn.Dropout(p=0)
         self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
         self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
@@ -148,14 +148,14 @@ class BiLSTMTagger(nn.Module):
         self.head_dropout_unlabeled = nn.Dropout(p=0)
         self.dep_dropout_unlabeled = nn.Dropout(p=0)
 
-        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.1)
-        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.1)
-        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.1)
-        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.1)
-        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.1)
-        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.1)
-        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.1)
-        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.2)
+        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.2)
         # self.use_dropout = nn.Dropout(p=0.2)
 
         # The LSTM takes word embeddings as inputs, and outputs hidden states
@@ -437,7 +437,7 @@ class BiLSTMTagger(nn.Module):
         sorted, indices = torch.sort(Predicate_probs, dim=1, descending=True)
         idx_sort = indices.cpu().data.numpy()
         for i in range(self.batch_size):
-            random_index = np.random.randint(low=0, high=int(lengths[i]*0.2))
+            random_index = np.random.randint(low=0, high=int(lengths[i]*0.5))
             Predicate_idx_batch[i] = idx_sort[i][random_index]
         """
 
