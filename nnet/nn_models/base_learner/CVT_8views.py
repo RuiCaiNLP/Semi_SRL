@@ -591,7 +591,7 @@ class BiLSTMTagger(nn.Module):
         unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
         unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
 
-        tag_space = self.POS_MLP(hidden_states_1).view(
+        tag_space = self.POS_MLP(hidden_states_1[:, 1:]).view(
             self.batch_size, len(sentence[0]), -1)
         POS_label = torch.argmax(tag_space, dim=2)
 
@@ -711,7 +711,7 @@ class BiLSTMTagger(nn.Module):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         PI_loss = loss_function(tag_space, Predicate_indicator.view(-1))
 
-        tag_space = self.POS_MLP(hidden_states_0[:, 1:, ]).view(
+        tag_space = self.POS_MLP(hidden_states_0[:, 1:]).view(
             len(sentence[0]) * self.batch_size, -1)
         POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
