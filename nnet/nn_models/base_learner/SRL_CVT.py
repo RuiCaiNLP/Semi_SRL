@@ -170,7 +170,7 @@ class BiLSTMTagger(nn.Module):
         init.orthogonal_(self.BiLSTM_SA_primary.all_weights[1][0])
         init.orthogonal_(self.BiLSTM_SA_primary.all_weights[1][1])
 
-        self.SA_high_num_layers = 2
+        self.SA_high_num_layers = 1
         self.BiLSTM_SA_high = nn.LSTM(input_size=lstm_hidden_dim * 2, hidden_size=lstm_hidden_dim, batch_first=True,
                                       bidirectional=True, num_layers=self.SA_high_num_layers)
 
@@ -365,8 +365,8 @@ class BiLSTMTagger(nn.Module):
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
-        DEP_Semi_loss = wordAfterPre_mask * (DEP_FF_loss + DEP_FB_loss) + wordBeforePre_mask * (
-                    DEP_BB_loss + DEP_BF_loss)
+        DEP_Semi_loss = wordAfterPre_mask * (DEP_FF_loss + DEP_BF_loss) + wordBeforePre_mask * (
+                    DEP_BB_loss + DEP_FB_loss)
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
         # DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
@@ -430,10 +430,11 @@ class BiLSTMTagger(nn.Module):
         tag_space = self.PI_MLP(hidden_states_1).view(
             self.batch_size, len(sentence[0]), -1)
         Predicate_identification_space = F.softmax(tag_space, dim=2)
-        # Predicate_probs = Predicate_identification_space.cpu().data.numpy()
-        Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
+        Predicate_probs = Predicate_identification_space.cpu().data.numpy()
+        #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
         Predicate_idx_batch = [-1] * self.batch_size
 
+        """
         sorted, indices = torch.sort(Predicate_probs, dim=1, descending=True)
         idx_sort = indices.cpu().data.numpy()
         for i in range(self.batch_size):
@@ -450,17 +451,17 @@ class BiLSTMTagger(nn.Module):
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
-                if Predicate_probs[i][j][1] > Predicate_probs[i][j][0] and False:
+                if Predicate_probs[i][j][1] > 2*Predicate_probs[i][j][0]:
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
             else:
-                #Predicate_idx_batch[i] = np.argmax(probs_set)
+                Predicate_idx_batch[i] = np.argmax(probs_set)
                 #index = random.sample(index_set, 1)
                 #Predicate_idx_batch[i] = index[0]
 
-        """
+
 
         # log(Predicate_idx_batch)
 
