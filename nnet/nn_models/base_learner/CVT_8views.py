@@ -572,11 +572,11 @@ class BiLSTMTagger(nn.Module):
             probs_set = []
             index_set = []
             for j in range(len(sentence[0])):
-                probs_set.append(Predicate_probs[i][j][1])
+                #probs_set.append(Predicate_probs[i][j][1])
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
-                if Predicate_probs[i][j][1] > Predicate_probs[i][j][0] and False:
+                if False and Predicate_probs[i][j][1] > Predicate_probs[i][j][0] :
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
