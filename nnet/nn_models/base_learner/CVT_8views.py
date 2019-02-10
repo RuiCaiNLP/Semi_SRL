@@ -597,9 +597,6 @@ class BiLSTMTagger(nn.Module):
         unlabeled_region_mark_in = torch.from_numpy(unlabeled_region_mark).to(device)
         unlabeled_region_mark_embeds = self.region_embeddings(unlabeled_region_mark_in)
 
-        tag_space = self.POS_MLP(hidden_states_1[:, 1:]).view(
-            self.batch_size, len(sentence[0]), -1)
-        POS_label = torch.argmax(tag_space, dim=2)
 
         ######################################################
 
