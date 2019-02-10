@@ -468,9 +468,14 @@ class BiLSTMTagger(nn.Module):
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
-        DEP_Semi_loss = wordBeforePre_mask * (DEP_FF_loss + DEP_BF_loss + DEP_BB_loss + DEP_FB_loss) \
-                      + wordAfterPre_mask * (DEP_FF_loss_2 + DEP_BF_loss_2 + DEP_BB_loss_2 + DEP_FB_loss_2)
+        #DEP_Semi_loss = wordBeforePre_mask * (DEP_FF_loss + DEP_BF_loss + DEP_BB_loss + DEP_FB_loss) \
+        #              + wordAfterPre_mask * (DEP_FF_loss_2 + DEP_BF_loss_2 + DEP_BB_loss_2 + DEP_FB_loss_2)
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
+
+        DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
 
         # DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
@@ -504,7 +509,7 @@ class BiLSTMTagger(nn.Module):
 
         """
         SA_learning
-        """
+
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
@@ -551,6 +556,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_identification_space = F.softmax(tag_space, dim=2)
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
         #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
+          """
         Predicate_idx_batch = [-1] * self.batch_size
 
         """

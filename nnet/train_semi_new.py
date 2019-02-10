@@ -159,7 +159,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             idx += 1
 
-            Final_loss =  SRLloss + POS_loss + PI_loss #+ 0.05*SRL_word_loss
+            Final_loss = SRLloss #+ POS_loss + PI_loss #+ 0.05*SRL_word_loss
 
             Final_loss.backward()
             #clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
@@ -169,7 +169,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             optimizer.step()
 
 
-            """
             model.zero_grad()
             optimizer.zero_grad()
             model.train()
@@ -186,7 +185,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
             Loss_CVT = CVT_SRL_Loss
             Loss_CVT.backward()
             optimizer.step()
-            """
+
 
 
 
@@ -207,7 +206,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                 log("PI_loss")
                 log(PI_loss)
                 log("Loss_CVT")
-                #log(Loss_CVT)
+                log(Loss_CVT)
                 #log("sum")
                 #log(loss)
 
