@@ -139,32 +139,32 @@ class BiLSTMTagger(nn.Module):
         self.head_dropout = nn.Dropout(p=0.3)
         self.dep_dropout = nn.Dropout(p=0.3)
 
-        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.2)
+        self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.1)
         self.DEP_input_dropout_unlabeled = nn.Dropout(p=0)
         self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
         self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
-        self.DEP_hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
+        self.DEP_hidden_state_dropout_1_unlabeled = nn.Dropout(p=0)
         self.DEP_hidden_state_dropout_2_unlabeled = nn.Dropout(p=0)
         self.head_dropout_unlabeled = nn.Dropout(p=0)
         self.dep_dropout_unlabeled = nn.Dropout(p=0)
 
-        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.1)
 
-        self.head_dropout_unlabeled_FF_2 = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_FF_2 = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_BB_2 = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_BB_2 = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_FB_2 = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_FB_2 = nn.Dropout(p=0.2)
-        self.head_dropout_unlabeled_BF_2 = nn.Dropout(p=0.2)
-        self.dep_dropout_unlabeled_BF_2 = nn.Dropout(p=0.2)
+        self.head_dropout_unlabeled_FF_2 = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FF_2 = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BB_2 = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BB_2 = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_FB_2 = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FB_2 = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BF_2 = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BF_2 = nn.Dropout(p=0.1)
         # self.use_dropout = nn.Dropout(p=0.2)
 
         # The LSTM takes word embeddings as inputs, and outputs hidden states
@@ -472,10 +472,10 @@ class BiLSTMTagger(nn.Module):
         #              + wordAfterPre_mask * (DEP_FF_loss_2 + DEP_BF_loss_2 + DEP_BB_loss_2 + DEP_FB_loss_2)
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
+        DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
-        DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
 
         # DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
