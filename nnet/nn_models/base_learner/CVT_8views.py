@@ -474,8 +474,8 @@ class BiLSTMTagger(nn.Module):
 
         #DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
-        DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
+        DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
 
         # DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
