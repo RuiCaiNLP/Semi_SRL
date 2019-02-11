@@ -557,7 +557,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
         #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
 
-        Predicate_idx_batch = [-1] * self.batch_size
+        Predicate_idx_batch = sent_mask
 
         """
         sorted, indices = torch.sort(Predicate_probs, dim=1, descending=True)
@@ -565,7 +565,7 @@ class BiLSTMTagger(nn.Module):
         for i in range(self.batch_size):
             random_index = np.random.randint(low=0, high=int(lengths[i]*0.5))
             Predicate_idx_batch[i] = idx_sort[i][random_index]
-        """
+        
 
         for i in range(self.batch_size):
             candidate_set = []
@@ -587,7 +587,7 @@ class BiLSTMTagger(nn.Module):
                 #index = random.sample(index_set, 1)
                 #Predicate_idx_batch[i] = index[0]
 
-
+          """
 
 
         # log(Predicate_idx_batch)
@@ -660,8 +660,8 @@ class BiLSTMTagger(nn.Module):
                 cvt_train=False):
 
         if cvt_train:
-            CVT_SRL_Loss = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_sent_mask,
-                                          unlabeled_lengths)
+            CVT_SRL_Loss = self.CVT_train(sentence, p_sentence, target_idx_in,
+                                          lengths)
             return CVT_SRL_Loss
 
         """
