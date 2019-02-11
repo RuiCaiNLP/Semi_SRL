@@ -473,9 +473,9 @@ class BiLSTMTagger(nn.Module):
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
         #DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
+        DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
-        DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
 
         # DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
@@ -579,6 +579,8 @@ class BiLSTMTagger(nn.Module):
                 if Predicate_probs[i][j][1] > 0.33 :
                     candidate_set.append(j)
             if len(candidate_set) > 0:
+                if i==0:
+                    log(candidate_set)
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
             else:
@@ -586,6 +588,8 @@ class BiLSTMTagger(nn.Module):
                 #index = random.sample(index_set, 1)
                 #Predicate_idx_batch[i] = index[0]
 
+            log(Predicate_probs[0])
+            log(Predicate_idx_batch[0])
 
 
         # log(Predicate_idx_batch)
