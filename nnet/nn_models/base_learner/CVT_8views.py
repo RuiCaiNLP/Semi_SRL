@@ -472,18 +472,18 @@ class BiLSTMTagger(nn.Module):
         #              + wordAfterPre_mask * (DEP_FF_loss_2 + DEP_BF_loss_2 + DEP_BB_loss_2 + DEP_FB_loss_2)
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
+        DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
-        DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
 
         # DEP_Semi_loss = torch.sum(DEP_Semi_loss, dim=2) # / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
             if target_idx_in[i] == -1:
-                sample_nums -= lengths[i]
+                log("error")
             for j in range(len(sentence[0])):
-                if j >= lengths[i] or target_idx_in[i] == -1:
+                if j >= lengths[i]:
                     loss_mask[i][j] = 0.0
         loss_mask = torch.from_numpy(loss_mask).to(device)
 
@@ -509,7 +509,7 @@ class BiLSTMTagger(nn.Module):
 
         """
         SA_learning
-
+        """
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
@@ -556,7 +556,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_identification_space = F.softmax(tag_space, dim=2)
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
         #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
-          """
+
         Predicate_idx_batch = [-1] * self.batch_size
 
         """
@@ -572,19 +572,19 @@ class BiLSTMTagger(nn.Module):
             probs_set = []
             index_set = []
             for j in range(len(sentence[0])):
-                #probs_set.append(Predicate_probs[i][j][1])
+                probs_set.append(Predicate_probs[i][j][1])
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
-                if False and Predicate_probs[i][j][1] > Predicate_probs[i][j][0] :
+                if Predicate_probs[i][j][1] > 0.33 :
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
             else:
-                #Predicate_idx_batch[i] = np.argmax(probs_set)
-                index = random.sample(index_set, 1)
-                Predicate_idx_batch[i] = index[0]
+                Predicate_idx_batch[i] = np.argmax(probs_set)
+                #index = random.sample(index_set, 1)
+                #Predicate_idx_batch[i] = index[0]
 
 
 
