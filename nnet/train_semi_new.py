@@ -159,7 +159,7 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
 
             idx += 1
 
-            Final_loss = SRLloss #+ POS_loss + PI_loss #+ 0.05*SRL_word_loss
+            Final_loss = SRLloss + PI_loss #+ 0.05*SRL_word_loss
 
             Final_loss.backward()
             #clip_grad_norm_(parameters=model.hidden2tag_M.parameters(), max_norm=norm)
@@ -406,19 +406,6 @@ def train_semi(model, train_set, dev_set, unlabeled_set, epochs, converter, unla
                     log('New PI best!: ' + str(F_PI_best))
                 else:
                     log('PI best: ' + str(F_PI_best))
-
-
-
-
-                log('Best F1: ' + str(best_F1))
-                if F1 > best_F1:
-                    best_F1 = F1
-                    torch.save(model.state_dict(), params_path)
-                    log('New best, model saved')
-
-
-
-
 
 
        ##########################################################################################
