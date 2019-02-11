@@ -584,12 +584,15 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
             else:
+                if i==0:
+                    log('no choice')
                 Predicate_idx_batch[i] = np.argmax(probs_set)
+
                 #index = random.sample(index_set, 1)
                 #Predicate_idx_batch[i] = index[0]
 
-            log(Predicate_probs[0])
-            log(Predicate_idx_batch[0])
+        log(Predicate_probs[0])
+        log(Predicate_idx_batch[0])
 
 
         # log(Predicate_idx_batch)
