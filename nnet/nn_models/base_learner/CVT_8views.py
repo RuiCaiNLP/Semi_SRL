@@ -509,7 +509,7 @@ class BiLSTMTagger(nn.Module):
 
         """
         SA_learning
-        """
+
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
@@ -556,7 +556,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_identification_space = F.softmax(tag_space, dim=2)
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
         #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
-
+         """
         Predicate_idx_batch = sent_mask
 
         """
