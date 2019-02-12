@@ -1,7 +1,7 @@
 from nnet.run.runner import *
 from nnet.ml.voc import *
 from functools import partial
-from nnet.nn_models.base_learner.CVT_8views import BiLSTMTagger
+from nnet.nn_models.base_learner.old_version import BiLSTMTagger
 
 
 all_labels_voc = []
