@@ -473,7 +473,7 @@ class BiLSTMTagger(nn.Module):
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
         #DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
-        DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
+        DEP_Semi_loss = wordBeforePre_mask * (DEP_BB_loss + DEP_FF_loss) + wordAfterPre_mask * (DEP_FF_loss_2 + DEP_BB_loss_2)
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
 
@@ -509,6 +509,7 @@ class BiLSTMTagger(nn.Module):
 
         """
         SA_learning
+        """
 
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
@@ -556,8 +557,8 @@ class BiLSTMTagger(nn.Module):
         Predicate_identification_space = F.softmax(tag_space, dim=2)
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
         #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
-         """
-        Predicate_idx_batch = sent_mask
+
+        Predicate_idx_batch = [-1] * self.batch_size
 
         """
         sorted, indices = torch.sort(Predicate_probs, dim=1, descending=True)
@@ -566,6 +567,7 @@ class BiLSTMTagger(nn.Module):
             random_index = np.random.randint(low=0, high=int(lengths[i]*0.5))
             Predicate_idx_batch[i] = idx_sort[i][random_index]
         
+        """
 
         for i in range(self.batch_size):
             candidate_set = []
@@ -587,7 +589,7 @@ class BiLSTMTagger(nn.Module):
                 #index = random.sample(index_set, 1)
                 #Predicate_idx_batch[i] = index[0]
 
-          """
+
 
 
         # log(Predicate_idx_batch)
@@ -660,13 +662,13 @@ class BiLSTMTagger(nn.Module):
                 cvt_train=False):
 
         if cvt_train:
-            CVT_SRL_Loss = self.CVT_train(sentence, p_sentence, target_idx_in,
-                                          lengths)
+            CVT_SRL_Loss = self.CVT_train(unlabeled_sentence, p_unlabeled_sentence, unlabeled_sent_mask,
+                                          unlabeled_lengths)
             return CVT_SRL_Loss
 
         """
         SA_learning
-       
+        """
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
@@ -721,7 +723,7 @@ class BiLSTMTagger(nn.Module):
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
         ######################################################
-         """
+
         """
         SRL_learning
         """
@@ -793,7 +795,7 @@ class BiLSTMTagger(nn.Module):
 
         Tag_DEPloss = 0
         Link_DEPloss = 0
-        PI_loss = 0
+        #PI_loss = 0
         POS_loss = 0
 
         return SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, Link_right, Link_all, \
