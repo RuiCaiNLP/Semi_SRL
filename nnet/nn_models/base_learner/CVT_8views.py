@@ -457,14 +457,14 @@ class BiLSTMTagger(nn.Module):
         wordBeforePre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
-                if j >= target_idx_in[i]:
+                if j > target_idx_in[i]:
                     wordBeforePre_mask[i][j] = 0.0
         wordBeforePre_mask = torch.from_numpy(wordBeforePre_mask).to(device)
 
         wordAfterPre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
-                if j <= target_idx_in[i]:
+                if j < target_idx_in[i]:
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
@@ -579,7 +579,7 @@ class BiLSTMTagger(nn.Module):
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
-                if Predicate_probs[i][j][1] > 0.9:
+                if Predicate_probs[i][j][1] > 0.6:
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
