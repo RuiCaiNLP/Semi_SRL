@@ -472,13 +472,13 @@ class BiLSTMTagger(nn.Module):
         #              + wordAfterPre_mask * (DEP_FF_loss_2 + DEP_BF_loss_2 + DEP_BB_loss_2 + DEP_FB_loss_2)
         # DEP_Semi_loss = DEP_Semi_loss * Entroy_Weights
 
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
-        DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
+        DEP_Semi_loss = wordBeforePre_mask * DEP_FF_loss + wordAfterPre_mask * DEP_BB_loss_2
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_BF_loss + wordAfterPre_mask * DEP_FB_loss_2
         #DEP_Semi_loss = wordBeforePre_mask * DEP_FB_loss + wordAfterPre_mask * DEP_BF_loss_2
 
 
-        DEP_Semi_loss = DEP_Semi_loss / Entroy_Weights
+        DEP_Semi_loss = DEP_Semi_loss #/ Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
             if target_idx_in[i] == -1:
@@ -579,7 +579,7 @@ class BiLSTMTagger(nn.Module):
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
-                if Predicate_probs[i][j][1] > 0.8:
+                if Predicate_probs[i][j][1] > 0.6:
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
