@@ -291,7 +291,7 @@ class BiLSTMTagger(nn.Module):
         wordAfterPre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
-                if j < target_idx_in[i]:
+                if j <= target_idx_in[i]:
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
@@ -327,7 +327,7 @@ class BiLSTMTagger(nn.Module):
 
         """
         SA_learning
-
+        """
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
@@ -374,7 +374,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_identification_space = F.softmax(tag_space, dim=2)
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
         #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
-          """
+
         Predicate_idx_batch = [-1] * self.batch_size
 
         """
@@ -394,7 +394,7 @@ class BiLSTMTagger(nn.Module):
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
-                if False and Predicate_probs[i][j][1] > Predicate_probs[i][j][0] :
+                if Predicate_probs[i][j][1] > 0.6 :
                     candidate_set.append(j)
             if len(candidate_set) > 0:
                 index = random.sample(candidate_set, 1)
@@ -609,7 +609,7 @@ class BiLSTMTagger(nn.Module):
 
         Tag_DEPloss = 0
         Link_DEPloss = 0
-
+        POS_loss = 0
         return SRLloss, Link_DEPloss, Tag_DEPloss, POS_loss, PI_loss, SRLprobs, Link_right, Link_all, \
                POS_right, POS_all, PI_right, PI_nonull_preidcates, PI_nonull_truth \
 
