@@ -329,40 +329,6 @@ class BiLSTMTagger(nn.Module):
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
-        ## SRL FF
-        predicate_embeds = hidden_forward[np.arange(0, self.batch_size), target_idx_in]
-        Head_hidden = self.head_dropout_unlabeled_FF(F.relu(self.hidLayerFOH_SRL_FF(predicate_embeds)))
-        Dependent_hidden = self.dep_dropout_unlabeled_FF(F.relu(self.hidLayerFOM_SRL_FF(hidden_forward)))
-        bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
-        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
-        bias_one = torch.ones((self.batch_size, 1)).to(device)
-        Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_SRL_FF)
-        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.tagset_size, -1)
-        Head_hidden = Head_hidden.view(self.batch_size, -1, 1)
-        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]), self.tagset_size)
-        tag_space = tag_space.view(self.batch_size, len(sentence[0]), -1)
-        dep_tag_space = tag_space
-        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
-        DEP_FF_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
-
-        ## SRL BB
-        predicate_embeds = hidden_backward[np.arange(0, self.batch_size), target_idx_in]
-        Head_hidden = self.head_dropout_unlabeled_BB(F.relu(self.hidLayerFOH_SRL_BB(predicate_embeds)))
-        Dependent_hidden = self.dep_dropout_unlabeled_BB(F.relu(self.hidLayerFOM_SRL_BB(hidden_backward)))
-        bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
-        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
-        bias_one = torch.ones((self.batch_size, 1)).to(device)
-        Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
-        left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_SRL_BB)
-        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.tagset_size, -1)
-        Head_hidden = Head_hidden.view(self.batch_size, -1, 1)
-        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]), self.tagset_size)
-        tag_space = tag_space.view(self.batch_size, len(sentence[0]), -1)
-        dep_tag_space = tag_space
-        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
-        DEP_BB_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
-
         ## SRL Past
         hidden_past = _roll(hidden_backward, 1)
         predicate_embeds = hidden_backward[np.arange(0, self.batch_size), target_idx_in]
@@ -422,8 +388,8 @@ class BiLSTMTagger(nn.Module):
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
 
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss
-        DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
+        DEP_Semi_loss = wordBeforePre_mask * DEP_BB_loss + wordAfterPre_mask * DEP_FF_loss
+        DEP_Semi_loss += wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
 
 
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
