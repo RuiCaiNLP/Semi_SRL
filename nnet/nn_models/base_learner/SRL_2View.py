@@ -293,7 +293,7 @@ class BiLSTMTagger(nn.Module):
         DEP_B_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
         hidden_future = _roll(hidden_forward, 1)
-        tag_space = self.SRL_MLP_Future(self.hidden_future_unlabeled_unlabeled(hidden_future))
+        tag_space = self.SRL_MLP_Future(self.hidden_future_unlabeled(hidden_future))
         tag_space = tag_space.view(self.batch_size, len(sentence[0]), -1)
         dep_tag_space = tag_space
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
