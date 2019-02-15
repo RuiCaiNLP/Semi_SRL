@@ -23,6 +23,11 @@ _BIG_NUMBER = 10. ** 6.
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def _roll(arr, direction, sparse=False):
+  if sparse:
+    return torch.cat((arr[:, direction:], arr[:, :direction]), dim=1)
+  return torch.cat((arr[:, direction:, :], arr[:, :direction, :]),  dim=1)
+
 
 def cat(l, dimension=-1):
     valid_l = l
