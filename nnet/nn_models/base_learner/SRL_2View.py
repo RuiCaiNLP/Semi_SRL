@@ -23,6 +23,11 @@ _BIG_NUMBER = 10. ** 6.
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def _roll(arr, direction, sparse=False):
+  if sparse:
+    return torch.cat((arr[:, direction:], arr[:, :direction]), dim=1)
+  return torch.cat((arr[:, direction:, :], arr[:, :direction, :]),  dim=1)
+
 
 def cat(l, dimension=-1):
     valid_l = l
@@ -145,6 +150,8 @@ class BiLSTMTagger(nn.Module):
         self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
         self.hidden_forward_unlabeled = nn.Dropout(p=0.2)
         self.hidden_backward_unlabeled = nn.Dropout(p=0.2)
+        self.hidden_future_unlabeled = nn.Dropout(p=0.2)
+        self.hidden_past_unlabeled = nn.Dropout(p=0.2)
         self.DEP_hidden_state_dropout_1_unlabeled = nn.Dropout(p=0)
         self.DEP_hidden_state_dropout_2_unlabeled = nn.Dropout(p=0)
         self.head_dropout_unlabeled = nn.Dropout(p=0)
@@ -155,6 +162,12 @@ class BiLSTMTagger(nn.Module):
 
         self.SRL_MLP_Backward = nn.Sequential(nn.Linear(lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                              nn.Linear(lstm_hidden_dim, self.tagset_size))
+
+        self.SRL_MLP_Future = nn.Sequential(nn.Linear(lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+                                             nn.Linear(lstm_hidden_dim, self.tagset_size))
+
+        self.SRL_MLP_Past = nn.Sequential(nn.Linear(lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+                                              nn.Linear(lstm_hidden_dim, self.tagset_size))
 
 
 
@@ -279,6 +292,21 @@ class BiLSTMTagger(nn.Module):
         DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
         DEP_B_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
 
+        hidden_future = _roll(hidden_forward, 1)
+        tag_space = self.SRL_MLP_Future(self.hidden_future_unlabeled_unlabeled(hidden_future))
+        tag_space = tag_space.view(self.batch_size, len(sentence[0]), -1)
+        dep_tag_space = tag_space
+        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
+        DEP_Future_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+
+        hidden_past = _roll(hidden_backward, -1)
+        tag_space = self.SRL_MLP_Past(self.hidden_past_unlabeled(hidden_past))
+        tag_space = tag_space.view(self.batch_size, len(sentence[0]), -1)
+        dep_tag_space = tag_space
+        DEPprobs_student = F.log_softmax(dep_tag_space, dim=2)
+        DEP_Past_loss = unlabeled_loss_function(DEPprobs_student, TagProbs_use_softmax)
+
+
         DEP_F_loss = torch.sum(DEP_F_loss, dim=2)
         DEP_B_loss = torch.sum(DEP_B_loss, dim=2)
         wordBeforePre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
@@ -295,7 +323,7 @@ class BiLSTMTagger(nn.Module):
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
-        DEP_Semi_loss = wordBeforePre_mask * DEP_B_loss + wordAfterPre_mask * DEP_F_loss
+        DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
 
 
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
