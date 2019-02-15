@@ -406,7 +406,7 @@ class BiLSTMTagger(nn.Module):
         Predicate_probs = Predicate_identification_space.cpu().data.numpy()
         #Predicate_probs = Predicate_identification_space[:, :, 1].view(self.batch_size, len(sentence[0]))
 
-        tag_space = self.POS_MLP(hidden_states_1).view(
+        tag_space = self.POS_MLP(hidden_states_1[:, 1:]).view(
             self.batch_size, len(sentence[0]), -1)
         POS_label = torch.argmax(tag_space, dim=2)
 
