@@ -325,9 +325,10 @@ class BiLSTMTagger(nn.Module):
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
-        DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
+        #DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
+        DEP_Semi_loss = wordBeforePre_mask * DEP_B_loss + wordAfterPre_mask * DEP_F_loss
 
-
+        DEP_Semi_loss = DEP_Semi_loss / Entroy_Weights
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
             for j in range(len(sentence[0])):
@@ -336,6 +337,7 @@ class BiLSTMTagger(nn.Module):
         loss_mask = torch.from_numpy(loss_mask).to(device)
 
         DEP_Semi_loss = DEP_Semi_loss * loss_mask
+
         DEP_Semi_loss = torch.sum(DEP_Semi_loss)
         if sample_nums == 0:
             log("shit")
