@@ -404,6 +404,8 @@ class BiLSTMTagger(nn.Module):
 
         DEP_FF_loss = torch.sum(DEP_FF_loss, dim=2)
         DEP_BB_loss = torch.sum(DEP_BB_loss, dim=2)
+        DEP_Future_loss = torch.sum(DEP_Future_loss, dim=2)
+        DEP_Past_loss = torch.sum(DEP_Past_loss, dim=2)
 
         wordBeforePre_mask = np.ones((self.batch_size, len(sentence[0])), dtype='float32')
         for i in range(self.batch_size):
