@@ -274,8 +274,8 @@ class BiLSTMTagger(nn.Module):
     def Semi_SRL_Loss(self, hidden_forward, hidden_backward, TagProbs_use, sentence, lengths, target_idx_in):
 
         TagProbs_use_softmax = F.softmax(TagProbs_use, dim=2).detach()
-        # TagProbs_use_softmax_log = F.log_softmax(TagProbs_use, dim=2).detach()
-        Entroy_Weights = torch.max(TagProbs_use_softmax, dim=2)[0].detach()
+        TagProbs_use_softmax_log = F.log_softmax(TagProbs_use, dim=2).detach()
+        Entroy_Weights = 1 - torch.sum(TagProbs_use_softmax_log * TagProbs_use_softmax, dim=2).detach()
 
         sample_nums = lengths.sum()
         unlabeled_loss_function = nn.KLDivLoss(reduce=False)
