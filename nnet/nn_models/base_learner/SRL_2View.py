@@ -573,6 +573,8 @@ class BiLSTMTagger(nn.Module):
         POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
+
+        pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
         ######################################################
 
         """
@@ -581,7 +583,7 @@ class BiLSTMTagger(nn.Module):
         #########################################################
         embeds_SRL = self.word_embeddings_SRL(sentence)
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
-        pos_embeds = self.pos_embeddings(pos_tags)
+        pos_embeds = self.pos_embeddings(pos_tags_predicated)
         # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
         embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, region_marks), 2)
