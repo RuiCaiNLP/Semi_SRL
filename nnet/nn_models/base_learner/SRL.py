@@ -303,7 +303,7 @@ class BiLSTMTagger(nn.Module):
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
 
         #pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
-        pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
+        pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2).detach()
 
         """
         SRL_learning
