@@ -294,15 +294,9 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
         hidden_states_1 = self.DEP_hidden_state_dropout_2(hidden_states_1)
 
-        tag_space = self.PI_MLP(hidden_states_1).view(
-            len(sentence[0]) * self.batch_size, -1)
 
-        PI_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
-        loss_function = nn.CrossEntropyLoss(ignore_index=-1)
-        PI_loss = loss_function(tag_space, Predicate_indicator.view(-1))
         tag_space = self.POS_MLP(hidden_states_1).view(
             len(sentence[0]) * self.batch_size, -1)
-
         POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
@@ -366,15 +360,6 @@ class BiLSTMTagger(nn.Module):
         Link_right, Link_all, \
         POS_right, POS_all, PI_right, PI_nonull_preidcates, PI_nonull_truth = 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
 
-        for a, b in zip(PI_label, Predicate_indicator.view(-1).cpu().data.numpy()):
-            if b == -1:
-                continue
-            if a == 1:
-                PI_nonull_preidcates += 1
-            if b == 1:
-                PI_nonull_truth += 1
-                if a == b:
-                    PI_right += 1
 
         for a, b in zip(POS_label, gold_pos_tag.view(-1).cpu().data.numpy()):
             if b == 0:
