@@ -298,10 +298,12 @@ class BiLSTMTagger(nn.Module):
         tag_space = self.POS_MLP(hidden_states_1).view(
             len(sentence[0]) * self.batch_size, -1)
         POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
+
         loss_function = nn.CrossEntropyLoss(ignore_index=0)
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
 
-        pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
+        #pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
+        pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
 
         """
         SRL_learning
