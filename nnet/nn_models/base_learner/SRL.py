@@ -394,7 +394,7 @@ class BiLSTMTagger(nn.Module):
 
 
         for a, b in zip(POS_label, gold_pos_tag.view(-1).cpu().data.numpy()):
-            if b == 0:
+            if b == -1:
                 continue
             POS_all += 1
             if a == b:
