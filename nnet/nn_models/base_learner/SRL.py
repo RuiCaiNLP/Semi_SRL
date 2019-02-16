@@ -68,7 +68,7 @@ class BiLSTMTagger(nn.Module):
         batch_size = hps['batch_size']
         lstm_hidden_dim = hps['sent_hdim']
         sent_embedding_dim_DEP = 2 * hps['sent_edim']
-        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 1 * hps['vpos'] + 16
+        sent_embedding_dim_SRL = 2 * hps['sent_edim'] + 1 * hps['pos_edim'] + 16
 
         self.sent_embedding_dim_DEP = sent_embedding_dim_DEP
         ## for the region mark
@@ -111,6 +111,8 @@ class BiLSTMTagger(nn.Module):
         self.hidden2tag_spe = nn.Linear(2 * lstm_hidden_dim, 2 * lstm_hidden_dim)
         self.MLP_spe = nn.Linear(2 * lstm_hidden_dim, 4)
         self.tag2hidden_spe = nn.Linear(4, self.pos_size)
+
+        self.postag2hidden = nn.Linear(self.pos_size, hps['pos_edim'])
 
         # self.elmo_embeddings_0 = nn.Embedding(vocab_size, 1024)
         # self.elmo_embeddings_0.weight.data.copy_(torch.from_numpy(hps['elmo_embeddings_0']))
@@ -304,6 +306,8 @@ class BiLSTMTagger(nn.Module):
 
         #pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
         pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2).detach()
+
+        h1 = F.tanh(self.tag2hidden(pos_tags_predicated))
 
         """
         SRL_learning
