@@ -275,17 +275,19 @@ class BiLSTMTagger(nn.Module):
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP), 2)
-        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
+        add_zero = torch.zeros((self.batch_size, 1, self.sent_embedding_dim_DEP)).to(device)
+        embeds_forDEP_cat = torch.cat((self.VR_embedding + add_zero, embeds_forDEP), 1)
+        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP_cat)
 
         # first layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths + 1)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         hidden_states, self.SA_primary_hidden = self.BiLSTM_SA_primary(embeds_sort, self.SA_primary_hidden)
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         hidden_states_0 = hidden_states[unsort_idx]
 
         # second_layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths + 1)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
         hidden_states, self.SA_high_hidden = self.BiLSTM_SA_high(embeds_sort, self.SA_high_hidden)
@@ -296,11 +298,30 @@ class BiLSTMTagger(nn.Module):
         hidden_states_1 = hidden_states[unsort_idx]
         hidden_states_1 = self.DEP_hidden_state_dropout_2(hidden_states_1)
 
+        word_embeds = hidden_states_1[:, 1:]
+        VR_embeds = hidden_states_1[:, 0]
 
-        tag_space = self.POS_MLP(hidden_states_1).view(
+        Head_hidden = F.relu(self.hidLayerFOH_PI(VR_embeds))
+        Dependent_hidden = F.relu(self.hidLayerFOM_PI(word_embeds))
+
+        bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
+        Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+
+        bias_one = torch.ones((self.batch_size, 1)).to(device)
+        Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
+
+        left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_PI)
+        left_part = left_part.view(self.batch_size, len(sentence[0]) * 2, -1)
+        Head_hidden = Head_hidden.view(self.batch_size, 1, -1).transpose(1, 2)
+        tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]), 2)
+        tag_space = tag_space.view(self.batch_size * len(sentence[0]), -1)
+        PI_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
+        loss_function = nn.CrossEntropyLoss(ignore_index=-1)
+        PI_loss = loss_function(tag_space, Predicate_indicator.view(-1))
+
+        tag_space = self.POS_MLP(hidden_states_0[:, 1:]).view(
             len(sentence[0]) * self.batch_size, -1)
         POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
-
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
 
