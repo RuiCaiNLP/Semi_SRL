@@ -226,7 +226,9 @@ class BiLSTMTagger(nn.Module):
         self.hidLayerFOM_SRL_FB = nn.Linear(self.ldims, self.ldims)
         self.W_R_SRL_FB = nn.Parameter(torch.rand(lstm_hidden_dim + 1, self.tagset_size*(lstm_hidden_dim+1)))
 
-
+        self.hidLayerFOH_PI = nn.Linear(self.ldims * 2, self.ldims)
+        self.hidLayerFOM_PI = nn.Linear(self.ldims * 2, self.ldims)
+        self.W_R_PI = nn.Parameter(torch.rand(lstm_hidden_dim + 1, (lstm_hidden_dim + 1) * 2))
 
 
         self.VR_embedding = nn.Parameter(
@@ -235,6 +237,9 @@ class BiLSTMTagger(nn.Module):
         self.mid_hidden = lstm_hidden_dim
         self.POS_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                      nn.Linear(lstm_hidden_dim, self.pos_size))
+
+        self.PI_MLP = nn.Sequential(nn.Linear(2 * lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
+                                    nn.Linear(lstm_hidden_dim, 2))
 
         self.SRL_primary_hidden = self.init_SRL_primary()
         self.SRL_high_hidden = self.init_SRL_high()
