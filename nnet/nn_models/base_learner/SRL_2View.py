@@ -225,7 +225,7 @@ class BiLSTMTagger(nn.Module):
         self.hidLayerFOH_PI = nn.Linear(self.ldims * 2, self.ldims)
         self.hidLayerFOM_PI = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_PI = nn.Parameter(torch.rand(lstm_hidden_dim + 1, (lstm_hidden_dim + 1) * 2))
-
+        self.postag2hidden = nn.Linear(self.pos_size, hps['pos_edim'])
 
 
         self.VR_embedding = nn.Parameter(
@@ -410,6 +410,10 @@ class BiLSTMTagger(nn.Module):
             self.batch_size, len(sentence[0]), -1)
         POS_label = torch.argmax(tag_space, dim=2)
 
+        pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2).detach()
+
+        h1 = F.tanh(self.postag2hidden(pos_tags_predicated))
+
         Predicate_idx_batch = [-1] * self.batch_size
 
         """
@@ -435,9 +439,9 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
             else:
-                #Predicate_idx_batch[i] = np.argmax(probs_set)
-                index = random.sample(index_set, 1)
-                Predicate_idx_batch[i] = index[0]
+                Predicate_idx_batch[i] = np.argmax(probs_set)
+                #index = random.sample(index_set, 1)
+                #Predicate_idx_batch[i] = index[0]
 
 
 
@@ -459,8 +463,7 @@ class BiLSTMTagger(nn.Module):
         #########################################################
         embeds_SRL = self.word_embeddings_SRL(sentence)
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
-        pos_embeds = self.pos_embeddings(POS_label)
-        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, unlabeled_region_mark_embeds), 2)
+        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, h1, unlabeled_region_mark_embeds), 2)
 
         embeds_forSRL = self.SRL_input_dropout_unlabeled(embeds_forSRL)
 
@@ -529,14 +532,14 @@ class BiLSTMTagger(nn.Module):
         embeds_forDEP = self.DEP_input_dropout(embeds_forDEP_cat)
 
         # first layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths+1)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths + 1)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         hidden_states, self.SA_primary_hidden = self.BiLSTM_SA_primary(embeds_sort, self.SA_primary_hidden)
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         hidden_states_0 = hidden_states[unsort_idx]
 
         # second_layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths+1)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(hidden_states_0, lengths + 1)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         # hidden states [time_steps * batch_size * hidden_units]
         hidden_states, self.SA_high_hidden = self.BiLSTM_SA_high(embeds_sort, self.SA_high_hidden)
@@ -571,28 +574,30 @@ class BiLSTMTagger(nn.Module):
         tag_space = self.POS_MLP(hidden_states_0[:, 1:]).view(
             len(sentence[0]) * self.batch_size, -1)
         POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
-        loss_function = nn.CrossEntropyLoss(ignore_index=0)
+        loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
 
-        pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
-        ######################################################
+        #pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
+        pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2).detach()
+
+        h1 = F.tanh(self.postag2hidden(pos_tags_predicated))
 
         """
         SRL_learning
         """
-        #########################################################
-        embeds_SRL = self.word_embeddings_SRL(sentence)
-        fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
-        pos_embeds = self.pos_embeddings(pos_tags_predicated)
-        # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
+        embeds_DEP = self.word_embeddings_DEP(sentence)
+        fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
+        fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
+        pos_embeds = pos_tags_predicated
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
-        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, pos_embeds, region_marks), 2)
-        embeds_forSRL = self.SRL_input_dropout(embeds_forSRL)
+        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, h1, region_marks), 2)
+        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
+
 
         # first layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forSRL, lengths)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
-        hidden_states, self.SRL_primary_hidden = self.BiLSTM_SRL_primary(embeds_sort, self.SRL_primary_hidden)
+        hidden_states, self.SRL_primary_hidden = self.BiLSTM_SRL_primary(embeds_sort, self.SRL_primary_hidden )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         hidden_states_0 = hidden_states[unsort_idx]
 
@@ -606,28 +611,41 @@ class BiLSTMTagger(nn.Module):
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
         # hidden_states = hidden_states.transpose(0, 1)
         hidden_states_1 = hidden_states[unsort_idx]
-        # hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
+        hidden_states_1 = self.hidden_state_dropout_2(hidden_states_1)
 
-        #########################################3
         predicate_embeds = hidden_states_1[np.arange(0, hidden_states_1.size()[0]), target_idx_in]
         Head_hidden = self.head_dropout(F.relu(self.hidLayerFOH_SRL(predicate_embeds)))
         Dependent_hidden = self.dep_dropout(F.relu(self.hidLayerFOM_SRL(hidden_states_1)))
+
         bias_one = torch.ones((self.batch_size, len(sentence[0]), 1)).to(device)
         Dependent_hidden = torch.cat((Dependent_hidden, Variable(bias_one)), 2)
+
         bias_one = torch.ones((self.batch_size, 1)).to(device)
         Head_hidden = torch.cat((Head_hidden, Variable(bias_one)), 1)
+
         left_part = torch.mm(Dependent_hidden.view(self.batch_size * len(sentence[0]), -1), self.W_R_SRL)
-        left_part = left_part.view(self.batch_size, len(sentence[0]) * self.tagset_size, -1)
+        left_part = left_part.view(self.batch_size, len(sentence[0])*self.tagset_size, -1)
         Head_hidden = Head_hidden.view(self.batch_size, -1, 1)
         tag_space = torch.bmm(left_part, Head_hidden).view(self.batch_size, len(sentence[0]), self.tagset_size)
+
         tag_space = tag_space.view(self.batch_size * len(sentence[0]), -1)
         SRLprobs = F.softmax(tag_space, dim=1)
+
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         SRLloss = loss_function(tag_space, targets.view(-1))
+
         ##########################################
 
         Link_right, Link_all, \
         POS_right, POS_all, PI_right, PI_nonull_preidcates, PI_nonull_truth = 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
+
+
+        for a, b in zip(POS_label, gold_pos_tag.view(-1).cpu().data.numpy()):
+            if b == -1:
+                continue
+            POS_all += 1
+            if a == b:
+                POS_right += 1
 
         for a, b in zip(PI_label, Predicate_indicator.view(-1).cpu().data.numpy()):
             if b == -1:
@@ -639,12 +657,12 @@ class BiLSTMTagger(nn.Module):
                 if a == b:
                     PI_right += 1
 
-        for a, b in zip(POS_label, gold_pos_tag.view(-1).cpu().data.numpy()):
-            if b == 0:
-                continue
-            POS_all += 1
-            if a == b:
-                POS_right += 1
+        Tag_DEPloss = 0
+        Link_DEPloss = 0
+
+
+
+
 
         Tag_DEPloss = 0
         Link_DEPloss = 0
