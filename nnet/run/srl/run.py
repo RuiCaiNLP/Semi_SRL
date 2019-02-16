@@ -1,7 +1,7 @@
 from nnet.run.runner import *
 from nnet.ml.voc import *
 from functools import partial
-from nnet.nn_models.base_learner.SRL_2View import BiLSTMTagger
+from nnet.nn_models.base_learner.SRL import BiLSTMTagger
 
 
 all_labels_voc = []
@@ -230,8 +230,8 @@ class SRLRunner(Runner):
             freq_batch, _ = mask_batch(freq)
             freq_batch = freq_batch.astype(dtype='float32')
 
-            pos_batch, _ = mask_batch(pos_tags)
-            gold_pos_tags_batch, _ = mask_batch(gold_pos_tags)
+            pos_batch, _ = mask_batch(pos_tags, for_Head=True)
+            gold_pos_tags_batch, _ = mask_batch(gold_pos_tags, for_Head=True)
             dep_tag_batch, _ = mask_batch(dep_tags)
 
             specific_dep_relations_batch, _ = mask_batch(specific_dep_relations)

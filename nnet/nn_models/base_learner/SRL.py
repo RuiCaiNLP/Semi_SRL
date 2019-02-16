@@ -301,7 +301,7 @@ class BiLSTMTagger(nn.Module):
             len(sentence[0]) * self.batch_size, -1)
         POS_label = np.argmax(tag_space.cpu().data.numpy(), axis=1)
 
-        loss_function = nn.CrossEntropyLoss(ignore_index=0)
+        loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         POS_loss = loss_function(tag_space, gold_pos_tag.view(-1))
 
         #pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
@@ -374,13 +374,23 @@ class BiLSTMTagger(nn.Module):
             if a == b:
                 POS_right += 1
 
+        for a, b in zip(PI_label, Predicate_indicator.view(-1).cpu().data.numpy()):
+            if b == -1:
+                continue
+            if a == 1:
+                PI_nonull_preidcates += 1
+            if b == 1:
+                PI_nonull_truth += 1
+                if a == b:
+                    PI_right += 1
+
         Tag_DEPloss = 0
         Link_DEPloss = 0
 
 
 
 
-        PI_loss = 0
+
         Tag_DEPloss = 0
         Link_DEPloss = 0
 
