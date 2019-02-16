@@ -663,7 +663,7 @@ class BiLSTMTagger(nn.Module):
 
 
 
-
+        POS_loss = 0
         Tag_DEPloss = 0
         Link_DEPloss = 0
 
