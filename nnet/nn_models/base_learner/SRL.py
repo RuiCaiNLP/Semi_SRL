@@ -307,7 +307,7 @@ class BiLSTMTagger(nn.Module):
         #pos_tags_predicated = torch.argmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2)
         pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2).detach()
 
-        h1 = F.tanh(self.tag2hidden(pos_tags_predicated))
+        h1 = F.tanh(self.postag2hidden(pos_tags_predicated))
 
         """
         SRL_learning
