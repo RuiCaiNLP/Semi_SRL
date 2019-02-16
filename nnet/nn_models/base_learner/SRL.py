@@ -131,6 +131,13 @@ class BiLSTMTagger(nn.Module):
         self.DEP_input_dropout = nn.Dropout(p=0.5)
         self.hidden_state_dropout_DEP = nn.Dropout(p=0.3)
 
+
+
+
+        self.DEP_hidden_state_dropout_1 = nn.Dropout(p=0.5)
+        self.DEP_hidden_state_dropout_2 = nn.Dropout(p=0.5)
+
+
         self.hidden_state_dropout_1 = nn.Dropout(p=0.5)
         self.hidden_state_dropout_2 = nn.Dropout(p=0.5)
         self.head_dropout = nn.Dropout(p=0.5)
