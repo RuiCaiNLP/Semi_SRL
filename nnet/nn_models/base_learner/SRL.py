@@ -311,7 +311,7 @@ class BiLSTMTagger(nn.Module):
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        pos_embeds = self.pos_embeddings(pos_tags_predicated)
+        pos_embeds = pos_tags_predicated
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
         embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, pos_embeds, region_marks), 2)
         embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
