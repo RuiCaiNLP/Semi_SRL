@@ -325,8 +325,8 @@ class BiLSTMTagger(nn.Module):
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
-        DEP_Semi_loss = wordBeforePre_mask * DEP_B_loss + wordAfterPre_mask * DEP_F_loss
+        DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
+        DEP_Semi_loss += wordBeforePre_mask * DEP_B_loss + wordAfterPre_mask * DEP_F_loss
 
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
@@ -429,7 +429,7 @@ class BiLSTMTagger(nn.Module):
             probs_set = []
             index_set = []
             for j in range(len(sentence[0])):
-                #probs_set.append(Predicate_probs[i][j][1])
+                probs_set.append(Predicate_probs[i][j][1])
                 index_set.append(j)
                 if j >= lengths[i]:
                     break
