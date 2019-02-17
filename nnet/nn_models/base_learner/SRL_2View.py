@@ -640,7 +640,7 @@ class BiLSTMTagger(nn.Module):
         Link_right, Link_all, \
         POS_right, POS_all, PI_right, PI_nonull_preidcates, PI_nonull_truth = 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
 
-
+        """
         for a, b in zip(POS_label, gold_pos_tag.view(-1).cpu().data.numpy()):
             if b == -1:
                 continue
@@ -660,11 +660,12 @@ class BiLSTMTagger(nn.Module):
 
         Tag_DEPloss = 0
         Link_DEPloss = 0
-
+        """
 
 
 
         POS_loss = 0
+        PI_loss = 0
         Tag_DEPloss = 0
         Link_DEPloss = 0
 
