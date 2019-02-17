@@ -146,16 +146,26 @@ class BiLSTMTagger(nn.Module):
 
         self.SRL_input_dropout_unlabeled = nn.Dropout(p=0.1)
         self.DEP_input_dropout_unlabeled = nn.Dropout(p=0)
-        self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.2)
-        self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.2)
-        self.hidden_forward_unlabeled = nn.Dropout(p=0.2)
-        self.hidden_backward_unlabeled = nn.Dropout(p=0.2)
-        self.hidden_future_unlabeled = nn.Dropout(p=0.2)
-        self.hidden_past_unlabeled = nn.Dropout(p=0.2)
+        self.hidden_state_dropout_1_unlabeled = nn.Dropout(p=0.1)
+        self.hidden_state_dropout_2_unlabeled = nn.Dropout(p=0.1)
+        self.hidden_forward_unlabeled = nn.Dropout(p=0.1)
+        self.hidden_backward_unlabeled = nn.Dropout(p=0.1)
+        self.hidden_future_unlabeled = nn.Dropout(p=0.1)
+        self.hidden_past_unlabeled = nn.Dropout(p=0.1)
         self.DEP_hidden_state_dropout_1_unlabeled = nn.Dropout(p=0)
         self.DEP_hidden_state_dropout_2_unlabeled = nn.Dropout(p=0)
         self.head_dropout_unlabeled = nn.Dropout(p=0)
         self.dep_dropout_unlabeled = nn.Dropout(p=0)
+
+        self.head_dropout_unlabeled_FF = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FF = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BB = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BB = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_FB = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_FB = nn.Dropout(p=0.1)
+        self.head_dropout_unlabeled_BF = nn.Dropout(p=0.1)
+        self.dep_dropout_unlabeled_BF = nn.Dropout(p=0.1)
+
 
         self.SRL_MLP_Forward = nn.Sequential(nn.Linear(lstm_hidden_dim, lstm_hidden_dim), nn.ReLU(),
                                         nn.Linear(lstm_hidden_dim, self.tagset_size))
@@ -226,6 +236,22 @@ class BiLSTMTagger(nn.Module):
         self.hidLayerFOM_PI = nn.Linear(self.ldims * 2, self.ldims)
         self.W_R_PI = nn.Parameter(torch.rand(lstm_hidden_dim + 1, (lstm_hidden_dim + 1) * 2))
         self.postag2hidden = nn.Linear(self.pos_size, hps['pos_edim'])
+
+        self.hidLayerFOH_SRL_FF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_FF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.W_R_SRL_FF = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size * (self.biaffine_mid + 1)))
+
+        self.hidLayerFOH_SRL_BB = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_BB = nn.Linear(self.ldims, self.biaffine_mid)
+        self.W_R_SRL_BB = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size * (self.biaffine_mid + 1)))
+
+        self.hidLayerFOH_SRL_BF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_BF = nn.Linear(self.ldims, self.biaffine_mid)
+        self.W_R_SRL_BF = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size * (self.biaffine_mid + 1)))
+
+        self.hidLayerFOH_SRL_FB = nn.Linear(self.ldims, self.biaffine_mid)
+        self.hidLayerFOM_SRL_FB = nn.Linear(self.ldims, self.biaffine_mid)
+        self.W_R_SRL_FB = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size * (self.biaffine_mid + 1)))
 
 
         self.VR_embedding = nn.Parameter(
