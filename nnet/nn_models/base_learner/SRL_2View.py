@@ -522,7 +522,7 @@ class BiLSTMTagger(nn.Module):
 
         """
         SA_learning
-        """
+        
         embeds_DEP = self.word_embeddings_DEP(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings_DEP(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
@@ -581,6 +581,8 @@ class BiLSTMTagger(nn.Module):
         pos_tags_predicated = F.softmax(tag_space.view(self.batch_size, len(sentence[0]), -1), 2).detach()
 
         h1 = F.tanh(self.postag2hidden(pos_tags_predicated))
+
+        """
 
         """
         SRL_learning
