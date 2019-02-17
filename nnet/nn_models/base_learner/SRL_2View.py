@@ -585,17 +585,16 @@ class BiLSTMTagger(nn.Module):
         """
         SRL_learning
         """
-        embeds_DEP = self.word_embeddings_SRL(sentence)
-        fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
-        fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
-        pos_embeds = pos_tags_predicated
+        embeds_SRL = self.word_embeddings_SRL(sentence)
+        fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
+        # pos_embeds = self.pos_embeddings(pos_tags)
+        # sent_pred_lemmas_embeds = self.p_lemma_embeddings(sent_pred_lemmas_idx)
         region_marks = self.region_embeddings(region_marks).view(self.batch_size, len(sentence[0]), 16)
-        embeds_forDEP = torch.cat((embeds_DEP, fixed_embeds_DEP, region_marks), 2)
-        embeds_forDEP = self.DEP_input_dropout(embeds_forDEP)
-
+        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, region_marks), 2)
+        embeds_forSRL = self.SRL_input_dropout(embeds_forSRL)
 
         # first layer
-        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forDEP, lengths)
+        embeds_sort, lengths_sort, unsort_idx = self.sort_batch(embeds_forSRL, lengths)
         embeds_sort = rnn.pack_padded_sequence(embeds_sort, lengths_sort, batch_first=True)
         hidden_states, self.SRL_primary_hidden = self.BiLSTM_SRL_primary(embeds_sort, self.SRL_primary_hidden )
         hidden_states, lens = rnn.pad_packed_sequence(hidden_states, batch_first=True)
