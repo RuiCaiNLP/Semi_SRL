@@ -237,6 +237,7 @@ class BiLSTMTagger(nn.Module):
         self.W_R_PI = nn.Parameter(torch.rand(lstm_hidden_dim + 1, (lstm_hidden_dim + 1) * 2))
         self.postag2hidden = nn.Linear(self.pos_size, hps['pos_edim'])
 
+        self.biaffine_mid = lstm_hidden_dim
         self.hidLayerFOH_SRL_FF = nn.Linear(self.ldims, self.biaffine_mid)
         self.hidLayerFOM_SRL_FF = nn.Linear(self.ldims, self.biaffine_mid)
         self.W_R_SRL_FF = nn.Parameter(torch.rand(self.biaffine_mid + 1, self.tagset_size * (self.biaffine_mid + 1)))
