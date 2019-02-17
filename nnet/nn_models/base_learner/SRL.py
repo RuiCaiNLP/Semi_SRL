@@ -338,7 +338,7 @@ class BiLSTMTagger(nn.Module):
         """
         SRL_learning
         """
-        embeds_DEP = self.word_embeddings_DEP(sentence)
+        embeds_DEP = self.word_embeddings_SRL(sentence)
         fixed_embeds_DEP = self.word_fixed_embeddings(p_sentence)
         fixed_embeds_DEP = fixed_embeds_DEP.view(self.batch_size, len(sentence[0]), self.word_emb_dim)
         pos_embeds = pos_tags_predicated
