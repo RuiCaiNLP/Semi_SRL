@@ -325,8 +325,8 @@ class BiLSTMTagger(nn.Module):
                     wordAfterPre_mask[i][j] = 0.0
         wordAfterPre_mask = torch.from_numpy(wordAfterPre_mask).to(device)
 
-        #DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
-        DEP_Semi_loss  = wordBeforePre_mask * DEP_B_loss + wordAfterPre_mask * DEP_F_loss
+        DEP_Semi_loss = wordBeforePre_mask * DEP_Past_loss + wordAfterPre_mask * DEP_Future_loss
+        DEP_Semi_loss += wordBeforePre_mask * DEP_B_loss + wordAfterPre_mask * DEP_F_loss
 
         loss_mask = np.ones(DEP_Semi_loss.size(), dtype='float32')
         for i in range(self.batch_size):
@@ -439,9 +439,9 @@ class BiLSTMTagger(nn.Module):
                 index = random.sample(candidate_set, 1)
                 Predicate_idx_batch[i] = index[0]
             else:
-                #Predicate_idx_batch[i] = np.argmax(probs_set)
-                index = random.sample(index_set, 1)
-                Predicate_idx_batch[i] = index[0]
+                Predicate_idx_batch[i] = np.argmax(probs_set)
+                #index = random.sample(index_set, 1)
+                #Predicate_idx_batch[i] = index[0]
 
 
 
@@ -463,7 +463,7 @@ class BiLSTMTagger(nn.Module):
         #########################################################
         embeds_SRL = self.word_embeddings_SRL(sentence)
         fixed_embeds_SRL = self.word_fixed_embeddings(p_sentence)
-        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, unlabeled_region_mark_embeds), 2)
+        embeds_forSRL = torch.cat((embeds_SRL, fixed_embeds_SRL, h1, unlabeled_region_mark_embeds), 2)
 
         embeds_forSRL = self.SRL_input_dropout_unlabeled(embeds_forSRL)
 
